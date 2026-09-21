@@ -3,6 +3,7 @@
 **Dataset Version:** Elliptic++ (Transactions + Wallets/Addresses Heterogeneous Temporal Graph)  
 **Verification Date:** 2026-09-21  
 **Verification Mode:** Pure Streaming / Zero Memory Leak (compatible with low-resource environments)
+**Implementation Architecture:** `ARCHITECTURE.md` (laptop vs Kaggle/Colab compute split)
 
 ---
 
@@ -115,14 +116,15 @@ Total Raw Size: **~2.10 GB** across **9 CSV files**.
    - Evaluation protocol must strictly train on historical time steps (e.g. steps 1–34) and evaluate on future unseen steps (e.g. steps 35–49) to prevent lookahead bias.
 
 4. **Resource Constraints & Optimization:**
-   - Total graph representation contains ~1.02M nodes and ~4.3M heterogeneous edges.
+   - Total graph representation contains ~1.03M unique nodes (203,769 transactions + 822,942 wallets) and ~4.42M heterogeneous directed edges.
    - For a machine with 5.6 GB RAM, graph batching (NeighborLoader / HeteroNeighborLoader / mini-batch sampling) and streaming chunk pipelines are required rather than full-graph in-memory training.
+   - Heavy GNN training runs on Kaggle/Google Colab, not on the laptop (`ARCHITECTURE.md`).
 
 ---
 
 ## 7. Verification Status (2026-09-21)
 
-Re-confirmed by re-running `scripts/verify_dataset.py` (memory-safe revision) on the
+Re-confirmed by re-running `../scripts/verify_dataset.py` (memory-safe revision) on the
 small/medium files, with peak RSS documented per run:
 
 | Check | Independent re-run result | Status |
