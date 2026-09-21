@@ -1,0 +1,71 @@
+# ==========================================
+# 1. Environment & Sensitive Data (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.cert
+
+# ==========================================
+# 2. Operating System Files
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+
+# ==========================================
+# 3. Common Package Managers & Dependencies
+# ==========================================
+node_modules/
+jspm_packages/
+bower_components/
+.pnp
+.pnp.js
+
+# ==========================================
+# 4. Build Outputs & Logs
+# ==========================================
+dist/
+build/
+out/
+bin/
+obj/
+*.log
+*.tmp
+*.bak
+
+# ==========================================
+# 5. IDEs and Code Editors
+# ==========================================
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# IntelliJ / WebStorm / PyCharm
+.idea/
+*.iml
+*.iws
+
+# Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+
+Og data/
+
