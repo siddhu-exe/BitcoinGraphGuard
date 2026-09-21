@@ -19,16 +19,17 @@ The project direction is fixed around **BitcoinGraphGuard**, using the real Elli
 * [x] Explainability strategy defined
 * [x] Graph drift monitoring strategy defined
 * [x] MLOps strategy defined
+* [x] Download and verify Elliptic++ raw dataset
+* [x] Inspect dataset structure and record statistics (203,769 txs, 822,942 wallets, 4 edge types, 49 time steps)
+* [x] Verify data quality, missing values, duplicates, and integrity constraints
+* [x] Complete Data Inventory report (`docs/DATA_INVENTORY.md`) and reproducible script (`scripts/verify_dataset.py`)
 
 ## Current Task
 
-* [ ] Download Elliptic++ dataset
-* [ ] Verify downloaded files
-* [ ] Inspect dataset structure
-* [ ] Record dataset statistics
-* [ ] Set up project environment
-* [ ] Initialize DVC
-* [ ] Initialize MLflow experiment tracking
+* [ ] Set up project Python dependencies (user-managed)
+* [ ] Initial temporal and class-imbalance EDA
+* [ ] Configure DVC and project directory structure (`src/`)
+* [ ] Initialize MLflow tracking
 
 ## Next
 

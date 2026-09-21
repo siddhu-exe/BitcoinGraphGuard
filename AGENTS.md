@@ -17,6 +17,14 @@
 * Do not fabricate metrics, experimental results, or dataset statistics.
 * Clearly distinguish experimental results from assumptions or expected outcomes.
 
+## Hardware & Low-Resource Constraints (CRITICAL)
+
+* **Low Hardware Specs**: This laptop has limited memory (5.6 GB total RAM, ~3.0 GB available) and an older dual-core/4-thread Intel Core i3 CPU.
+* **No Heavy Unconstrained Tasks**: Never run heavy full-graph in-memory jobs, massive concurrent multiprocessing pools, or unconstrained training runs that can freeze the machine or trigger OOM errors.
+* **Streaming & Chunking Mandate**: Always process raw CSVs and graph data using chunked readers (`chunksize`), streaming iterators, or generator pipelines.
+* **Mini-Batching**: For GNNs and graph operations, use mini-batch sampling (`NeighborLoader`, `HeteroNeighborLoader`) instead of loading or training on the entire 1M-node / 4.4M-edge graph in RAM at once.
+* **Memory Management**: Explicitly delete large transient objects and invoke garbage collection (`gc.collect()`) after memory-intensive processing steps.
+
 ## Machine Learning Rules
 
 * Establish classical ML baselines before claiming improvements from GNNs.

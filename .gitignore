@@ -31,6 +31,14 @@ Desktop.ini
 # ==========================================
 # 3. Common Package Managers & Dependencies
 # ==========================================
+.venv/
+venv/
+bit/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
 node_modules/
 jspm_packages/
 bower_components/
@@ -68,4 +76,5 @@ obj/
 .settings/
 
 Og data/
+pipeline.png
 
