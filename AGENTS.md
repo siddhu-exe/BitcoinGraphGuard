@@ -6,6 +6,7 @@
 * Make small, focused, reversible changes.
 * Do not rewrite working code unnecessarily.
 * Follow the existing project structure and coding conventions.
+* **Production-quality code**: all committed code must be production quality — clear, readable, typed where practical, error-handled, tested, and free of dead code, debug leftovers, and hardcoded values.
 * Keep data processing, training, evaluation, inference, and monitoring clearly separated.
 * Run relevant tests and validation checks after changes.
 * Document important assumptions and design decisions.
@@ -17,12 +18,31 @@
 * Do not fabricate metrics, experimental results, or dataset statistics.
 * Clearly distinguish experimental results from assumptions or expected outcomes.
 
+## Compute & Training Environments (CRITICAL)
+
+BitcoinGraphGuard uses **two environments**. See `docs/ARCHITECTURE.md` for the full
+pipeline and artifact handoff.
+
+* **Laptop = engineering only.** Repository work, code development/review, data
+  inspection, lightweight EDA/validation, preprocessing scripts, graph schema design,
+  experiment configuration, testing, FastAPI, MLOps, Docker, CI/CD, monitoring,
+  dashboard, and documentation.
+* **Kaggle / Google Colab = all model training.** XGBoost, GraphSAGE, RGCN, HGT,
+  hyperparameter tuning, ablations, temporal/inductive experiments, GNNExplainer, and
+  final training all require GPU/compute and must run remotely.
+* **Never train project models on the laptop.**
+* **Notebooks are an experiment/training interface, not the application.** Put reusable
+  logic (data loading, feature engineering, graph construction, models, metrics, training
+  loops) in project source so notebooks only orchestrate it.
+* **Export artifacts back.** Downloaded checkpoints, predictions, metrics, and
+  explanation outputs are consumed locally by MLflow/DVC, the API, and the dashboard.
+
 ## Hardware & Low-Resource Constraints (CRITICAL)
 
 * **Low Hardware Specs**: This laptop has limited memory (5.6 GB total RAM, ~3.0 GB available) and an older dual-core/4-thread Intel Core i3 CPU.
 * **No Heavy Unconstrained Tasks**: Never run heavy full-graph in-memory jobs, massive concurrent multiprocessing pools, or unconstrained training runs that can freeze the machine or trigger OOM errors.
 * **Streaming & Chunking Mandate**: Always process raw CSVs and graph data using chunked readers (`chunksize`), streaming iterators, or generator pipelines.
-* **Mini-Batching**: For GNNs and graph operations, use mini-batch sampling (`NeighborLoader`, `HeteroNeighborLoader`) instead of loading or training on the entire 1M-node / 4.4M-edge graph in RAM at once.
+* **Mini-Batching**: For GNNs and graph operations, use mini-batch sampling (`NeighborLoader`, `HeteroNeighborLoader`) instead of loading or training on the entire ~1.03M-node / ~4.42M-edge graph in RAM at once. This applies on Kaggle/Colab as well as the laptop.
 * **Memory Management**: Explicitly delete large transient objects and invoke garbage collection (`gc.collect()`) after memory-intensive processing steps.
 
 ## Machine Learning Rules

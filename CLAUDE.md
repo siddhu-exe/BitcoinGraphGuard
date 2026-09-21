@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Core Dataset Architecture (`Og data/`)
 
 The raw dataset in `Og data/` comprises temporal graph and tabular data across 49 discrete time steps:
-- **Transactions (`txId`)**: `txs_features.csv` (165 features + time step), `txs_classes.csv` (1=illicit, 2=licit, 3=unknown), `txs_edgelist.csv` (`txId1 -> txId2`).
+- **Transactions (`txId`)**: `txs_features.csv` is 184 columns = `txId` + `Time step` + 182 features (93 `Local_feature_*`, 72 `Aggregate_feature_*`, 17 domain features). `txs_classes.csv` (1=illicit, 2=licit, 3=unknown), `txs_edgelist.csv` (`txId1 -> txId2`).
 - **Wallets/Addresses (`address`)**: `wallets_features.csv`, `wallets_classes.csv`, `wallets_features_classes_combined.csv`.
 - **Heterogeneous Edges**:
   - `AddrTx_edgelist.csv` (`input_address -> txId`)
@@ -27,7 +27,7 @@ Python 3.10+ / `uv` is recommended for dependency and environment management.
 ```bash
 uv venv .venv
 source .venv/bin/activate
-uv pip install -e ".[dev]"      # or uv pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 ### Testing
@@ -54,6 +54,16 @@ uvicorn src.api.main:app --reload --port 8000  # Run FastAPI inference service
 docker build -t bitcoingraphguard:latest .     # Build container
 ```
 
+## Compute Strategy: Laptop vs Kaggle/Colab
+
+Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
+
+- **Laptop (engineering only)**: repository/Git, code development and review, data inspection, lightweight validation/EDA, preprocessing scripts, graph schema design, experiment configuration, testing, FastAPI backend, MLOps (MLflow/DVC), Docker, CI/CD, monitoring, dashboard, documentation.
+- **Kaggle / Google Colab (all training)**: XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive experiments, GNNExplainer, final training, and heavy evaluation.
+- **Never train project models on the laptop.**
+- **Notebooks are a training interface, not the application** — keep reusable logic in project source and let notebooks orchestrate it.
+- Remote runs export checkpoints, predictions, metrics, and explanation outputs back to the laptop for tracking, serving, and monitoring.
+
 ## Hardware & Execution Constraints (Low-Resource Environment)
 
 **CRITICAL**: This laptop has limited compute resources (**5.6 GB RAM**, ~3.0 GB available, Intel Core i3 4-thread CPU) and cannot execute heavy, unconstrained tasks.
@@ -61,6 +71,10 @@ docker build -t bitcoingraphguard:latest .     # Build container
 - **Streaming & Chunked Processing**: Always use streaming iterators, generator pipelines, or chunked processing (`chunksize`, sqlite/duckdb streaming).
 - **Mini-Batch Graph Learning**: Use sub-graph sampling and mini-batch loaders (`NeighborLoader` / `HeteroNeighborLoader`) for GNN models.
 - **Resource Discipline**: Limit parallel worker threads (max 2 workers), explicitly release large variables, and call `gc.collect()` to prevent system freezing and OOM kills.
+
+## Code Quality Requirements
+
+* **Production-quality code**: all committed code must be production quality — clear, readable, typed where practical, error-handled, tested, and free of dead code, debug leftovers, and hardcoded values. Notebook/prototype code does not belong in project source.
 
 ## Critical Modeling & Evaluation Rules
 
@@ -78,4 +92,4 @@ At the end of every non-trivial task or phase, report:
 - **Tests/checks run**: Commands executed and their status
 - **Results**: Quantitative metrics or validation output
 - **Important assumptions**: Architectural or domain assumptions made
-- **Next recommended step**: Immediate next action in `PLAN.md`
+- **Next recommended step**: Immediate next action in `docs/PLAN.md`
