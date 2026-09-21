@@ -117,3 +117,31 @@ Total Raw Size: **~2.10 GB** across **9 CSV files**.
 4. **Resource Constraints & Optimization:**
    - Total graph representation contains ~1.02M nodes and ~4.3M heterogeneous edges.
    - For a machine with 5.6 GB RAM, graph batching (NeighborLoader / HeteroNeighborLoader / mini-batch sampling) and streaming chunk pipelines are required rather than full-graph in-memory training.
+
+---
+
+## 7. Verification Status (2026-09-21)
+
+Re-confirmed by re-running `scripts/verify_dataset.py` (memory-safe revision) on the
+small/medium files, with peak RSS documented per run:
+
+| Check | Independent re-run result | Status |
+| :--- | :--- | :--- |
+| `txs_edgelist.csv` counts | 234,355 edges, 0 dup, 0 self-loops, 203,769 nodes | Verified (82 MB peak) |
+| `txs_classes.csv` labels | 203,769 rows, 0 dup, {1: 4,545, 2: 42,019, 3: 157,205}, 0 missing | Verified |
+| `wallets_classes.csv` labels | 822,942 rows, 0 dup, {1: 14,266, 2: 251,088, 3: 557,588}, 0 missing | Verified |
+| `AddrTx_edgelist.csv` counts | 477,117 edges, 0 dup, 0 self-loops, 400,212 src / 202,804 dst | Verified |
+| `TxAddr_edgelist.csv` counts | 837,124 edges, 0 dup, 0 self-loops, 202,804 src / 641,043 dst | Verified |
+| Column counts | `txs_features`=184, `wallets_features`=57, `wallets_features_classes_combined`=58 | Verified (headers) |
+| `txs_features.csv` rows/time steps | 203,769 rows, 49 time steps | From prior run; not yet re-run (663 MB) |
+| `wallets_features.csv` rows | 1,268,260 rows, 49 time steps | From prior run; not yet re-run (579 MB) |
+| `wallets_features_classes_combined.csv` rows | 1,268,260 rows | From prior run; not yet re-run (581 MB) |
+| `AddrAddr_edgelist.csv` counts | 2,868,964 edges, 2,784,344 unique, 84,620 dup, 45,981 self-loops | From prior run; not yet re-run (192 MB) |
+
+**Note:** the four large files are marked "not yet re-run" because a full 2.1 GB pass was
+intentionally skipped on this low-resource laptop. Re-run after dependency setup with:
+
+```bash
+source .venv/bin/activate
+python scripts/verify_dataset.py
+```

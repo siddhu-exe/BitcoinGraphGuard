@@ -8,6 +8,7 @@ import os
 import csv
 import sys
 import time
+import gc
 from collections import Counter, defaultdict
 
 RAW_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Og data")
@@ -206,7 +207,7 @@ def inspect_wallets_combined():
     print(f"Class distribution: {dict(classes)}")
     return {"headers": headers, "row_count": row_count, "col_count": col_count}
 
-def inspect_edgelist(filename, src_col, dst_col, sample_size=10):
+def inspect_edgelist(filename, src_col, dst_col):
     filepath = os.path.join(RAW_DATA_DIR, filename)
     print(f"\n--- Inspecting Edge List: {filename} ---")
 
@@ -214,34 +215,39 @@ def inspect_edgelist(filename, src_col, dst_col, sample_size=10):
     src_set = set()
     dst_set = set()
     self_loops = 0
-
-    # We test duplicates with a sample or full set if feasible
-    # For large edge lists, let's track exact edges with set if memory allows or check size
-    seen_edges = set()
     duplicate_edges = 0
-    has_reversed_edges = 0 # only meaningful if src & dst are same node type
+    # Deduplicate on the raw line text (one short string per edge) instead of a
+    # (u, v) tuple of freshly-built str objects. This keeps peak RAM bounded
+    # for the 2.8M-edge AddrAddr_edgelist.csv on a low-memory machine.
+    seen_lines = set()
 
-    with open(filepath, 'r') as f:
-        reader = csv.reader(f)
-        headers = next(reader)
+    with open(filepath, 'r', encoding='utf-8', errors='replace', newline='') as f:
+        headers = next(csv.reader([f.readline()]))
         src_idx = headers.index(src_col)
         dst_idx = headers.index(dst_col)
 
-        for row in reader:
+        for line in f:
+            key = line.rstrip('\r\n')
+            if not key:
+                continue
             edge_count += 1
-            u, v = row[src_idx], row[dst_idx]
+            if key in seen_lines:
+                duplicate_edges += 1
+            else:
+                seen_lines.add(key)
+            fields = key.split(',')
+            u, v = fields[src_idx], fields[dst_idx]
             if u == v:
                 self_loops += 1
             src_set.add(u)
             dst_set.add(v)
-            edge = (u, v)
-            if edge in seen_edges:
-                duplicate_edges += 1
-            else:
-                seen_edges.add(edge)
+
+    unique_edges = len(seen_lines)
+    del seen_lines
+    gc.collect()
 
     print(f"Total edges: {edge_count}")
-    print(f"Unique edges: {len(seen_edges)}")
+    print(f"Unique edges: {unique_edges}")
     print(f"Duplicate edges: {duplicate_edges}")
     print(f"Self-loops: {self_loops}")
     print(f"Unique sources: {len(src_set)}")
@@ -250,7 +256,7 @@ def inspect_edgelist(filename, src_col, dst_col, sample_size=10):
     return {
         "filename": filename,
         "edge_count": edge_count,
-        "unique_edges": len(seen_edges),
+        "unique_edges": unique_edges,
         "duplicate_edges": duplicate_edges,
         "self_loops": self_loops,
         "src_set": src_set,
