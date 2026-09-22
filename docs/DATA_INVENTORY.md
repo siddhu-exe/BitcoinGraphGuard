@@ -1,149 +1,209 @@
 # Elliptic++ Dataset Inventory & Verification Report
 
-**Dataset Version:** Elliptic++ (Transactions + Wallets/Addresses Heterogeneous Temporal Graph)  
-**Verification Date:** 2026-09-21  
-**Verification Mode:** Pure Streaming / Zero Memory Leak (compatible with low-resource environments)
+**Dataset Version:** Elliptic++ (Transactions + Wallets/Addresses Heterogeneous Temporal Graph)
+**Initial Verification:** 2026-09-21
+**Full Streamed Re-verification:** 2026-09-22
+**Verification Mode:** pure streaming; no raw file is loaded into RAM (single core, low priority)
 **Implementation Architecture:** `ARCHITECTURE.md` (laptop vs Kaggle/Colab compute split)
+
+> **Status: Phase 1 dataset verification is COMPLETE.** All nine raw CSVs and all
+> cross-entity relationships were independently re-verified on 2026-09-22 by
+> `scripts/verify_dataset.py`. The run passed every structural assertion
+> (`passed: true`, 0 failures), peak RSS **1.07 GB**, elapsed **457 s**. Machine-readable
+> evidence: `reports/phase1_verification.json`.
+>
+> **Two prior claims were corrected** (details in §6):
+> 1. `txs_features.csv` is **not** free of missing values — it has 16,405 blank cells.
+> 2. `wallets_features.csv` is **not** one row per (address, time step) — it has 347,569
+>    **exact duplicate rows**, so 1,268,260 raw rows collapse to 920,691 distinct
+>    (address, time step) snapshots.
 
 ---
 
 ## 1. Dataset Location & Directory Structure
 
-The dataset is located in the local directory:
 ```
 /home/siddharth/Desktop/Projects/projects/BitcoinGraphGuard/Og data/
 ```
-Total Raw Size: **~2.10 GB** across **9 CSV files**.
+Total raw size: **2,206,089,537 bytes (~2.21 GB / ~2.05 GiB)** across **9 CSV files**.
+Raw data is read-only and gitignored; it was not modified.
 
 ---
 
 ## 2. File Inventory & Specifications
 
-| File Name | Category | Format | Size | Rows (Data) | Columns | Key Identifiers / Target |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `txs_features.csv` | Transactions | CSV | 662.60 MB | 203,769 | 184 | `txId`, `Time step`, Features (182) |
-| `txs_classes.csv` | Transactions | CSV | 2.25 MB | 203,769 | 2 | `txId`, `class` |
-| `txs_edgelist.csv` | Tx Graph | CSV | 4.26 MB | 234,355 | 2 | `txId1` -> `txId2` |
-| `wallets_features.csv` | Wallets | CSV | 578.37 MB | 1,268,260 | 57 | `address`, `Time step`, Features (55) |
-| `wallets_classes.csv` | Wallets | CSV | 29.01 MB | 822,942 | 2 | `address`, `class` |
-| `wallets_features_classes_combined.csv` | Wallets | CSV | 580.79 MB | 1,268,260 | 58 | `address`, `Time step`, `class`, Features (55) |
-| `AddrTx_edgelist.csv` | Bipartite Edge | CSV | 20.26 MB | 477,117 | 2 | `input_address` -> `txId` |
-| `TxAddr_edgelist.csv` | Bipartite Edge | CSV | 35.00 MB | 837,124 | 2 | `txId` -> `output_address` |
-| `AddrAddr_edgelist.csv` | Wallet Graph | CSV | 191.34 MB | 2,868,964 | 2 | `input_address` -> `output_address` |
+All rows/columns below were re-verified on 2026-09-22 (streaming row count + header parse).
+
+| File Name | Category | Size | Rows (raw) | Columns | Key Identifiers |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `txs_features.csv` | Transactions | 662.60 MB | 203,769 | 184 | `txId`, `Time step`, 182 features |
+| `txs_classes.csv` | Transactions | 2.25 MB | 203,769 | 2 | `txId`, `class` |
+| `txs_edgelist.csv` | Tx Graph | 4.26 MB | 234,355 | 2 | `txId1` -> `txId2` |
+| `wallets_features.csv` | Wallets | 578.37 MB | 1,268,260 | 57 | `address`, `Time step`, 55 features |
+| `wallets_classes.csv` | Wallets | 29.01 MB | 822,942 | 2 | `address`, `class` |
+| `wallets_features_classes_combined.csv` | Wallets | 580.79 MB | 1,268,260 | 58 | `address`, `Time step`, `class`, 55 features |
+| `AddrTx_edgelist.csv` | Bipartite Edge | 20.26 MB | 477,117 | 2 | `input_address` -> `txId` |
+| `TxAddr_edgelist.csv` | Bipartite Edge | 35.00 MB | 837,124 | 2 | `txId` -> `output_address` |
+| `AddrAddr_edgelist.csv` | Wallet Graph | 191.34 MB | 2,868,964 | 2 | `input_address` -> `output_address` |
 
 ---
 
 ## 3. Node & Label Statistics
 
 ### 3.1 Transactions (`txId`)
-* **Total Rows:** 203,769
-* **Unique Transaction IDs:** 203,769 (0 duplicates, 0 missing IDs)
-* **Time Steps:** 49 discrete time steps (min: 1, max: 49)
-* **Features (182 total):**
-  - `Local_feature_1` to `Local_feature_93` (93 local transaction features)
-  - `Aggregate_feature_1` to `Aggregate_feature_72` (72 aggregated 1-hop neighborhood features)
-  - 17 explicit domain features: `in_txs_degree`, `out_txs_degree`, `total_BTC`, `fees`, `size`, `num_input_addresses`, `num_output_addresses`, `in_BTC_min`, `in_BTC_max`, `in_BTC_mean`, `in_BTC_median`, `in_BTC_total`, `out_BTC_min`, `out_BTC_max`, `out_BTC_mean`, `out_BTC_median`, `out_BTC_total`.
-* **Label Distribution (`txs_classes.csv`):**
-  - **Class 1 (Illicit):** 4,545 (2.23%)
-  - **Class 2 (Licit):** 42,019 (20.62%)
-  - **Class 3 (Unknown / Unlabeled):** 157,205 (77.15%)
-  - *Labeled Total (1 + 2):* 46,564 (22.85%)
+* **Rows / unique IDs:** 203,769 / 203,769 — 0 duplicates, 0 blank IDs.
+* **Time steps:** 49 discrete, contiguous time steps (min 1, max 49).
+* **Features (182):** 93 `Local_feature_*` + 72 `Aggregate_feature_*` + 17 domain features
+  (`in_txs_degree`, `out_txs_degree`, `total_BTC`, `fees`, `size`, `num_input_addresses`,
+  `num_output_addresses`, 5 `in_BTC_*`, 5 `out_BTC_*`).
+* **Missing values:** 16,405 blank cells — every one of those 17 domain columns is blank
+  for exactly the **965 transactions that have no input/output address links** (verified
+  as an exact set match against the complement of the `AddrTx` transaction set). All 93
+  `Local_feature_*` and 72 `Aggregate_feature_*` columns are complete. 0 non-numeric, 0 NaN.
+* **Labels (`txs_classes.csv`):** 1 (illicit) 4,545 · 2 (licit) 42,019 · 3 (unknown)
+  157,205. Labeled total 46,564 (22.85%).
 
 ### 3.2 Wallets / Addresses (`address`)
-* **Unique Wallet Addresses:** 822,942
-* **Temporal Snapshot Rows in Features:** 1,268,260 (addresses active across multiple time steps appear once per active time step)
-* **Time Steps:** 49 discrete time steps (min: 1, max: 49)
-* **Features (55 total):** Activity metrics including transacted BTC, fees, sent/received totals, block spans, address reuse counts, and temporal gaps.
-* **Label Distribution (`wallets_classes.csv`):**
-  - **Class 1 (Illicit):** 14,266 (1.73%)
-  - **Class 2 (Licit):** 251,088 (30.51%)
-  - **Class 3 (Unknown / Unlabeled):** 557,588 (67.76%)
-  - *Labeled Total (1 + 2):* 265,354 (32.24%)
+* **Unique addresses:** 822,942 (in `wallets_classes.csv`, `wallets_features.csv`, and the
+  combined file) — 0 duplicates, 0 missing, all three sets identical.
+* **Raw feature rows:** 1,268,260 — but only **920,691 distinct (address, time step)
+  snapshots**; **347,569 rows are exact duplicates** (see §6).
+* **Time steps:** 49 discrete, contiguous (min 1, max 49).
+* **Features (55):** activity metrics (BTC transacted/sent/received, fees, block spans,
+  address reuse, temporal gaps); 0 blank cells, 0 non-numeric, 0 NaN.
+* **`num_timesteps_appeared_in` consistency:** equals the number of distinct time steps for
+  **all 822,942 addresses** (0 mismatches), and is internally consistent within each
+  address (0 conflicts).
+* **Labels (`wallets_classes.csv`):** 1 (illicit) 14,266 · 2 (licit) 251,088 · 3 (unknown)
+  557,588. Labeled total 265,354 (32.24%).
+* **Combined file:** exactly `wallets_features` + the `class` column — same row count,
+  same 347,569 duplicates, 0 addresses missing from `wallets_classes`, 0 class mismatches,
+  0 `(address, time step)` pairs absent from `wallets_features`.
 
 ---
 
 ## 4. Edge & Graph Topology
 
-| Edge Relationship | Source Node Type | Destination Node Type | Total Edges | Unique Edges | Duplicate Edges | Self-Loops | Unique Sources | Unique Destinations | Total Nodes Involved |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `txs_edgelist.csv` | Transaction | Transaction | 234,355 | 234,355 | 0 | 0 | 166,345 | 148,447 | 203,769 |
-| `AddrTx_edgelist.csv` | Address/Wallet | Transaction | 477,117 | 477,117 | 0 | 0 | 400,212 | 202,804 | 603,016 |
-| `TxAddr_edgelist.csv` | Transaction | Address/Wallet | 837,124 | 837,124 | 0 | 0 | 202,804 | 641,043 | 843,847 |
-| `AddrAddr_edgelist.csv` | Address/Wallet | Address/Wallet | 2,868,964 | 2,784,344 | 84,620 | 45,981 | 400,212 | 641,043 | 822,942 |
+Uniqueness is defined on the exact parsed `(source, destination)` pair.
+
+| Edge List | Edges | Unique | Duplicates | Self-loops | Unique Src | Unique Dst | Unique Nodes | Endpoints outside universe |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `txs_edgelist.csv` | 234,355 | 234,355 | 0 | 0 | 166,345 | 148,447 | 203,769 | 0 |
+| `AddrTx_edgelist.csv` | 477,117 | 477,117 | 0 | 0 | 400,212 | 202,804 | 603,016 | 0 |
+| `TxAddr_edgelist.csv` | 837,124 | 837,124 | 0 | 0 | 202,804 | 641,043 | 843,847 | 0 |
+| `AddrAddr_edgelist.csv` | 2,868,964 | 2,784,344 | 84,620 | 45,981 | 400,212 | 641,043 | 822,942 | 0 |
+
+* **Total heterogeneous directed edges:** 4,417,560 (4,332,940 unique).
+* **Total unique nodes:** 203,769 transactions + 822,942 wallets = **1,026,711**.
+* 0 blank endpoints and 0 malformed rows in every edge list.
+* `AddrAddr_edgelist.csv` alone touches all 822,942 wallets; its 84,620 duplicates are
+  repeated payments between the same address pair and its 45,981 self-loops are
+  address-to-itself (change/self-transfer) edges.
 
 ---
 
-## 5. Cross-Entity Alignment & Data Integrity
+## 5. Cross-Entity Alignment (all verified 2026-09-22)
 
-1. **Transaction Integrity:**
-   - 100% match between `txs_features.csv` (203,769 txIds) and `txs_classes.csv` (203,769 txIds).
-   - All 203,769 transactions appear in `txs_edgelist.csv`.
-   - 202,804 transactions appear in `AddrTx` and `TxAddr` (965 transactions do not have input/output address mappings, representing coinbase or aggregated transactions).
-
-2. **Wallet Address Integrity:**
-   - 100% match between `wallets_classes.csv` (822,942 addresses) and unique addresses in `wallets_features.csv`.
-   - All 400,212 input addresses from `AddrTx` and `AddrAddr` are present in `wallets_features`.
-  - All 641,043 output addresses from `TxAddr` and `AddrAddr` are present in `wallets_features`.
-
-3. **Data Quality Summary:**
-   - **Missing Values:** 0 missing values or broken rows in transaction files.
-   - **Duplicates:**
-     - 0 duplicate transaction IDs.
-     - 0 duplicate edge definitions in `txs_edgelist`, `AddrTx_edgelist`, and `TxAddr_edgelist`.
-     - `AddrAddr_edgelist` contains 84,620 multi-edges (repeated payments between same wallet pairs across different transactions) and 45,981 self-loops (change addresses / self-transfers).
+| Relationship | Result |
+| :--- | :--- |
+| `txs_features` IDs vs `txs_classes` IDs | 203,769 ↔ 203,769, 0 missing either way |
+| `txs_edgelist` nodes vs `txs_features` IDs | 203,769 ↔ 203,769, 0 missing |
+| Transactions with address links | 202,804 (`AddrTx` destinations == `TxAddr` sources, 0 diff) |
+| Transactions without address links | 965 — exactly the 965 rows with blank domain features |
+| `wallets_features` addresses vs `wallets_classes` | 822,942 ↔ 822,942, 0 missing either way |
+| Addresses in `AddrTx` ∪ `TxAddr` ∪ `AddrAddr` | 822,942 — all in `wallets_features`, 0 outside |
+| Wallets with no incident edge | 0 |
 
 ---
 
-## 6. Key Modeling & Architectural Implications
+## 6. Data-Quality Findings & Corrections
 
-1. **Heterogeneous Graph Formulation (PyG / DGL):**
-   - **Node Types:**
-     - `transaction`: 203,769 nodes, feature dimension = 182
-     - `wallet`: 822,942 nodes, feature dimension = 55
-   - **Edge Types (Canonical Directional):**
-     - `('wallet', 'sends_to', 'transaction')`: 477,117 edges
-     - `('transaction', 'receives_to', 'wallet')`: 837,124 edges
-     - `('transaction', 'flows_to', 'transaction')`: 234,355 edges
-     - `('wallet', 'transacts_with', 'wallet')`: 2,784,344 unique edges
+1. **CORRECTION — `txs_features.csv` missing values.** The prior "0 missing values" claim
+   was wrong. There are **16,405 blank cells**: the 17 value/domain columns are blank for
+   exactly the 965 transactions with no address links. (Structurally clean otherwise:
+   0 malformed rows, 0 non-numeric, 0 NaN.)
 
-2. **Severe Class Imbalance:**
-   - Illicit transactions account for **2.23%** of all transactions (and only 9.76% of labeled transactions).
-   - Illicit wallets account for **1.73%** of all wallets (and 5.38% of labeled wallets).
-   - **Metric Focus:** PR-AUC, F1 (Minority/Illicit), Recall@Precision, Cost-sensitive loss weighting.
+2. **CORRECTION — `wallets_features.csv` duplicate rows.** The prior description ("one row
+   per active time step") was wrong. There are 1,268,260 raw rows but **920,691 distinct
+   (address, time step) snapshots**; **347,569 rows are exact duplicates**. Verified by a
+   one-pass BLAKE2b row-hash check: all 347,569 extra rows are **byte-identical**, with
+   **0 conflicting values**. Duplication affects 234,355 addresses; the most duplicated
+   address has 1,471 identical rows spanning 27 distinct time steps. The same duplication
+   exists in `wallets_features_classes_combined.csv`.
 
-3. **Temporal Dynamics:**
-   - 49 chronological time steps (~2-week intervals per time step in Bitcoin blockchain).
-   - Evaluation protocol must strictly train on historical time steps (e.g. steps 1–34) and evaluate on future unseen steps (e.g. steps 35–49) to prevent lookahead bias.
+3. **Repeated pairs / self-loops in `AddrAddr_edgelist.csv`:** 84,620 repeated
+   `(input_address, output_address)` pairs (multi-edges across transactions) and 45,981
+   self-loops. These are expected multi-edge/self-transfer structure, not corruption.
 
-4. **Resource Constraints & Optimization:**
-   - Total graph representation contains ~1.03M unique nodes (203,769 transactions + 822,942 wallets) and ~4.42M heterogeneous directed edges.
-   - For a machine with 5.6 GB RAM, graph batching (NeighborLoader / HeteroNeighborLoader / mini-batch sampling) and streaming chunk pipelines are required rather than full-graph in-memory training.
-   - Heavy GNN training runs on Kaggle/Google Colab, not on the laptop (`ARCHITECTURE.md`).
+4. **No missing values** in either wallet feature file: 0 blank cells, 0 NaN.
 
 ---
 
-## 7. Verification Status (2026-09-21)
+## 7. Modeling & Architectural Implications
 
-Re-confirmed by re-running `../scripts/verify_dataset.py` (memory-safe revision) on the
-small/medium files, with peak RSS documented per run:
+1. **Deduplicate wallets before graph construction.** Collapse `wallets_features` (and the
+   combined file) to unique `(address, Time step)` rows first; duplicate rows would
+   otherwise inflate node-snapshot counts and can leak identical rows across a temporal
+   split. `num_timesteps_appeared_in` already matches the distinct-step counts, so the
+   deduplicated table is the intended representation.
 
-| Check | Independent re-run result | Status |
-| :--- | :--- | :--- |
-| `txs_edgelist.csv` counts | 234,355 edges, 0 dup, 0 self-loops, 203,769 nodes | Verified (82 MB peak) |
-| `txs_classes.csv` labels | 203,769 rows, 0 dup, {1: 4,545, 2: 42,019, 3: 157,205}, 0 missing | Verified |
-| `wallets_classes.csv` labels | 822,942 rows, 0 dup, {1: 14,266, 2: 251,088, 3: 557,588}, 0 missing | Verified |
-| `AddrTx_edgelist.csv` counts | 477,117 edges, 0 dup, 0 self-loops, 400,212 src / 202,804 dst | Verified |
-| `TxAddr_edgelist.csv` counts | 837,124 edges, 0 dup, 0 self-loops, 202,804 src / 641,043 dst | Verified |
-| Column counts | `txs_features`=184, `wallets_features`=57, `wallets_features_classes_combined`=58 | Verified (headers) |
-| `txs_features.csv` rows/time steps | 203,769 rows, 49 time steps | From prior run; not yet re-run (663 MB) |
-| `wallets_features.csv` rows | 1,268,260 rows, 49 time steps | From prior run; not yet re-run (579 MB) |
-| `wallets_features_classes_combined.csv` rows | 1,268,260 rows | From prior run; not yet re-run (581 MB) |
-| `AddrAddr_edgelist.csv` counts | 2,868,964 edges, 2,784,344 unique, 84,620 dup, 45,981 self-loops | From prior run; not yet re-run (192 MB) |
+2. **Handle the 965 address-less transactions explicitly.** Their 17 domain features are
+   blank and they have no address links. Do not treat blanks as 0; decide on masking or a
+   dedicated "no-address" indicator in Phase 2.
 
-**Note:** the four large files are marked "not yet re-run" because a full 2.1 GB pass was
-intentionally skipped on this low-resource laptop. Re-run after dependency setup with:
+3. **Heterogeneous graph (PyG / DGL):** `transaction` = 203,769 nodes (182 features);
+   `wallet` = 822,942 nodes (55 features); edge types
+   `('wallet','sends_to','transaction')` 477,117 · `('transaction','receives_to','wallet')`
+   837,124 · `('transaction','flows_to','transaction')` 234,355 ·
+   `('wallet','transacts_with','wallet')` 2,784,344 unique.
+
+4. **Severe class imbalance:** illicit transactions ≈2.23% of all (9.76% of labeled);
+   illicit wallets ≈1.73% of all (5.38% of labeled). Use PR-AUC, F1 (illicit), recall@
+   precision, confusion-matrix analysis, and cost-sensitive weighting.
+
+5. **Temporal split:** 49 chronological steps; train on historical steps and evaluate on
+   future unseen steps. Never randomly split temporal graph data.
+
+6. **Resource constraints:** ~1.03M nodes / ~4.42M edges. Use mini-batch sampling
+   (`NeighborLoader` / `HeteroNeighborLoader`) and streaming pipelines. GNN training runs
+   on Kaggle/Colab, never the laptop.
+
+---
+
+## 8. Verification Status & Reproduction
+
+`scripts/verify_dataset.py` is a streaming, CLI-driven verifier (standard library only):
+per-column blank/non-numeric/NaN audit, exact parsed-pair deduplication, cross-reference
+stage, `--low-priority` (`os.nice(19)`), opt-in `--hash`. It releases each stage's working
+set with `del` + `gc.collect()`.
+
+Final 2026-09-22 run (single core, low priority):
+
+| Metric | Value |
+| :--- | :--- |
+| Elapsed | 457 s |
+| Peak RSS | 1,071.6 MB |
+| Structural failures | 0 (`passed: true`) |
+| Quality findings | `txs_features` blanks; wallet duplicate `(address, time step)` pairs |
+| Evidence file | `reports/phase1_verification.json` |
+
+Reproduce:
 
 ```bash
-source .venv/bin/activate
-python scripts/verify_dataset.py
+nice -n 19 python3 -u scripts/verify_dataset.py --low-priority \
+    --json reports/phase1_verification.json
 ```
+
+---
+
+## 9. Assumptions & Unresolved Items
+
+* **Assumption:** the wallet-row duplication is a property of the published Elliptic++
+  file as downloaded; it was not compared against an independent upstream copy/SHA. The
+  bytes were not modified locally.
+* **Assumption:** `AddrAddr` duplicates are multi-edges and self-loops are intra-address
+  transfers; the source transaction IDs behind them were not decomposed in this phase.
+* **Unresolved:** the direction/semantics of `txs_edgelist` (`txId1` -> `txId2`) were not
+  re-derived from raw Bitcoin; the project uses the published edge direction.
+* Class 3 (`unknown`) labels are **not** legitimate/negative; they are excluded from
+  supervised labels unless an experiment explicitly defines otherwise.
