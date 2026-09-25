@@ -22,15 +22,15 @@ awaits review sign-off; GraphSAGE has not been started.
 > to 1500 trees with 100 rounds of patience, runs a seeded 20-trial randomised search scored **on
 > validation PR-AUC only**, ablates `has_addresses` against a pre-registered margin, and tests one
 > label-free, fit-window-only redundancy reduction. The result: the tree budget was **not** what
-> limited test performance. PR-AUC moved 0.8007 -> 0.8013 (+0.0006), ROC-AUC fell 0.9317 -> 0.9281
-> and F1 fell 0.7850 -> 0.7799. Read the two XGBoost rows as one baseline and a re-tuning of it.
+> limited test performance. PR-AUC moved 0.8007 → 0.8013 (+0.0006), ROC-AUC fell 0.9317 → 0.9281
+> and F1 fell 0.7850 → 0.7799. Read the two XGBoost rows as one baseline and a re-tuning of it.
 
 ## Objective
 
 XGBoost is the first serious supervised model in the project, and its job is to set a bar rather
 than to win.
 
-The model progression is `simple baseline -> logistic regression -> XGBoost -> GraphSAGE ->
+The model progression is `simple baseline → logistic regression → XGBoost → GraphSAGE →
 RGCN/HGT`. Everything after XGBoost claims to extract value from **graph structure**. That claim is
 only meaningful against a leakage-safe, reproducible number for what the **transaction features
 alone** achieve. If GraphSAGE does not beat this baseline under an identical temporal protocol, the
@@ -262,7 +262,7 @@ of 169).
 the 35–42 rate, and PR-AUC falls to 0.0427 — a lift of only **1.69×** over that window's own
 prevalence, against 10.06× on 35–42 and 12.33× on the full test period. ROC-AUC drops from 0.9710 to
 0.6839. Both metrics are threshold-free, so the loss is in the ranking itself, not merely in where
-the cut sits. Re-tuning did not change this: 0.0423 -> 0.0427 on 169 positives is the same answer
+the cut sits. Re-tuning did not change this: 0.0423 → 0.0427 on 169 positives is the same answer
 twice.
 
 Two caveats stated rather than glossed. The operating point was frozen on a window with 19.77%
@@ -345,9 +345,9 @@ the answer, in the order the questions were asked:
 2. **Did it beat 0.8007 on test?** Not meaningfully. 0.8013 against 0.8007 — +0.0006 PR-AUC, with
    ROC-AUC down 0.0036 and F1 down 0.0052, on a point estimate from a single split. The
    hyperparameters changed; the performance did not.
-3. **Did 35–42 improve?** Marginally: 0.9211 -> 0.9215 PR-AUC, with ROC-AUC down (0.9729 -> 0.9710)
-   and F1 down (0.8926 -> 0.8876) at the frozen threshold.
-4. **What happened in 43–49?** Nothing changed: 0.0423 -> 0.0427 PR-AUC, ROC-AUC down to 0.6839. The
+3. **Did 35–42 improve?** Marginally: 0.9211 → 0.9215 PR-AUC, with ROC-AUC down (0.9729 → 0.9710)
+   and F1 down (0.8926 → 0.8876) at the frozen threshold.
+4. **What happened in 43–49?** Nothing changed: 0.0423 → 0.0427 PR-AUC, ROC-AUC down to 0.6839. The
    regime collapse is a property of the data and protocol, not of the model configuration.
 5. **Did `has_addresses` help?** It moved validation PR-AUC by +0.000933, below the pre-registered
    +0.005 margin, so it was **dropped**. It could not have done more: no illicit transaction is
