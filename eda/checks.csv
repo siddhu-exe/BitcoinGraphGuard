@@ -1,0 +1,39 @@
+check,value,expected,ok
+transactions: rows match Phase 1,203769,203769,True
+transactions: duplicate ids,0,0,True
+transactions: blank ids,0,0,True
+transactions: label values are a subset of 1/2/3,True,True,True
+wallets: rows match Phase 1,822942,822942,True
+wallets: duplicate ids,0,0,True
+wallets: blank ids,0,0,True
+wallets: label values are a subset of 1/2/3,True,True,True
+transactions: non-numeric feature columns,[],[],True
+transactions: feature rows,203769,203769,True
+transactions: feature rows with no class label,0,0,True
+transactions: rows with blank domain features,965,965,True
+wallets: non-numeric feature columns,[],[],True
+wallets: raw rows,1268260,1268260,True
+"wallets: distinct (address, time step) snapshots",920691,920691,True
+wallets: duplicates dropped,347569,347569,True
+wallets: distinct addresses,822942,822942,True
+wallets: feature rows with no class label,0,0,True
+wallets: blank feature cells,0,0,True
+transactions: illicit count,4545,4545,True
+transactions: licit count,42019,42019,True
+transactions: unknown count,157205,157205,True
+wallets: illicit count,14266,14266,True
+wallets: licit count,251088,251088,True
+wallets: unknown count,557588,557588,True
+edges: rows per type,"{'tx->tx': 234355, 'addr->tx': 477117, 'tx->addr': 837124, 'addr->addr': 2868964}","{'tx->tx': 234355, 'addr->tx': 477117, 'tx->addr': 837124, 'addr->addr': 2868964}",True
+transactions: edge endpoints exist in txs_classes,True,True,True
+transactions: with at least one address link,202804,202804,True
+blank-domain rows == address-less transactions,True,True,True
+wallets: addresses in edge lists == wallets_classes,True,True,True
+combined address+transaction graph: singleton components,965,965,True
+transactions: illicit count,4545,4545,True
+transactions: licit count,42019,42019,True
+transactions: unknown count,157205,157205,True
+wallets: illicit count,14266,14266,True
+wallets: licit count,251088,251088,True
+wallets: unknown count,557588,557588,True
+edges: rows per type,"{'tx->tx': 234355, 'addr->tx': 477117, 'tx->addr': 837124, 'addr->addr': 2868964}","{'tx->tx': 234355, 'addr->tx': 477117, 'tx->addr': 837124, 'addr->addr': 2868964}",True
