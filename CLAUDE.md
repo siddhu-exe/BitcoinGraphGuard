@@ -75,13 +75,17 @@ Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
 
 Phase 1 is complete: dataset verification (`reports/phase1_verification.json`) and exploratory data
 analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.md`). Phase 2 is
-**executed and awaiting review sign-off**: `notebooks/02_xgboost.ipynb` ran on Google Colab on
-2026-09-25 in two passes — the recorded 500-tree baseline and a controlled optimisation pass —
-with artifacts in `xgboost/` and results in `docs/XGBOOST.md`. Protocol: fit 1–24 / validation
-25–34 / refit 1–34 / test 35–49, on the 165 transaction features. Baseline PR-AUC 0.8007 / ROC-AUC
-0.9317, optimised 0.8013 / 0.9281. Read `docs/PROGRESS.md` before starting any phase work.
+complete: `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25 in two passes — the recorded
+500-tree baseline and a controlled optimisation pass — with artifacts in `xgboost/` and results in
+`docs/XGBOOST.md`. Protocol: fit 1–24 / validation 25–34 / refit 1–34 / test 35–49, on 165 transaction
+features. Baseline PR-AUC 0.8007 / ROC-AUC 0.9317, optimised 0.8013 / 0.9281. Phase 3 GraphSAGE baseline
+is **COMPLETE**: `notebooks/03_graphsage.ipynb` executed on Google Colab on 2026-09-25 (artifacts in `GraphSage/`,
+record in `docs/GRAPHSAGE.md`). Evaluates homogeneous transaction graph (`txs_edgelist.csv`) with 165 features:
+GraphSAGE achieves **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759**
+(+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement
+(100% intra-step) proves homogeneous GNNs cannot bridge temporal steps.
 
-**Do not start `notebooks/03_graphsage.ipynb` until Phase 2 has been signed off.**
+**Phase 4 (Heterogeneous GNN — RGCN / HGT): Ready to start (`notebooks/04_heterogeneous_gnn.ipynb`).**
 
 Carry-forward constraints that must not be silently reversed:
 
@@ -94,6 +98,11 @@ Carry-forward constraints that must not be silently reversed:
 * Every GNN result must be reported on both `35–49` and `43–49`, never on the aggregate alone.
 * `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
   link.
+* GraphSAGE in Phase 3 operates strictly on the homogeneous transaction graph (`txs_edgelist.csv`);
+  all 234,355 edges are 100% intra-step, meaning homogeneous GNNs cannot bridge temporal steps.
+* In `txs_edgelist.csv`, 100% of transactions (203,769) have $\text{total\_degree} \ge 1$ (0 isolated nodes),
+  with mean degree 2.30. Phase 4 must incorporate the 822,942 wallet nodes and 4.18M address edges
+  (`AddrTx`, `TxAddr`, `AddrAddr`) to enable cross-step message passing.
 
 - **Laptop (development & documentation only)**: writing/reviewing code, Git management, documentation, system design, notebook code review, FastAPI backend, Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project configuration.
 - **Kaggle / Google Colab (ALL ML execution, in notebooks)**: dataset loading, ML data processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final evaluation, and model-artifact generation.

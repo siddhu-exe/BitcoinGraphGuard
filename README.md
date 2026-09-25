@@ -5,15 +5,13 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified, Phase 1 EDA complete, and the Phase 2 baseline executed twice. Both
-> `notebooks/01_eda.ipynb` and `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25;
-> findings are in `docs/EDA.md` (artifacts in `eda/`) and `docs/XGBOOST.md` (artifacts in
-> `xgboost/`). XGBoost reaches **PR-AUC 0.8013 / ROC-AUC 0.9281** on test 35–49 at a
-> validation-frozen threshold, against a 0.0650 constant-score baseline, but degrades to PR-AUC
-> 0.0427 on the recent 43–49 window. The earlier 500-tree run scored 0.8007 / 0.9317: lifting the
-> tree budget to 1500 and retuning over 20 seeded trials confirmed that the budget was not the
-> constraint. Phase 2 awaits review sign-off; GraphSAGE has not been started. See
-> `docs/PROGRESS.md` and `docs/PLAN.md`.
+> Status: dataset verified, Phase 1 EDA complete, Phase 2 XGBoost baseline complete (baseline +
+> optimisation pass), and Phase 3 GraphSAGE complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
+> and `notebooks/03_graphsage.ipynb` ran on Google Colab on 2026-09-25; findings are in `docs/EDA.md` (artifacts in `eda/`),
+> `docs/XGBOOST.md` (artifacts in `xgboost/`), and `docs/GRAPHSAGE.md` (artifacts in `GraphSage/`).
+> GraphSAGE reaches **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759** (+0.1442 lift over neural baseline)
+> and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement (100% intra-step) proves homogeneous GNNs cannot bridge
+> temporal steps. Ready for Phase 4 (Heterogeneous GNN — RGCN / HGT). See `docs/PROGRESS.md` and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
@@ -61,7 +59,8 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/DATA_INVENTORY.md` | Verified dataset inventory and data-quality report |
 | `docs/EDA.md` | Phase 1 exploratory data analysis — completed run (2026-09-25) |
 | `docs/XGBOOST.md` | Phase 2 XGBoost baseline — design and executed results (leakage controls, metrics, temporal windows, error and feature analysis) |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda.ipynb` and `02_xgboost.ipynb` executed 2026-09-25) |
+| `docs/GRAPHSAGE.md` | Phase 3 GraphSAGE baseline — methodology, executed results, and intra-step analysis (executed 2026-09-25) |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda.ipynb`, `02_xgboost.ipynb`, `03_graphsage.ipynb` executed 2026-09-25; `04_heterogeneous_gnn.ipynb` next) |
 | `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |
@@ -89,6 +88,9 @@ the laptop. All ML execution — EDA onward — happens in the phase notebooks.
 - `docs/ARCHITECTURE.md` — implementation architecture and compute split
 - `docs/TIMELINE.md` — detailed nine-phase roadmap
 - `docs/DATA_INVENTORY.md` — dataset facts, quality, graph relationships
+- `docs/EDA.md` — Phase 1 exploratory data analysis report
+- `docs/XGBOOST.md` — Phase 2 XGBoost baseline report and optimization results
+- `docs/GRAPHSAGE.md` — Phase 3 GraphSAGE baseline methodology and design
 - `docs/OBJECTIVES.md` — goal, requirements, definition of done
 - `docs/PLAN.md` — phased roadmap with execution environments
 - `docs/PROGRESS.md` — current status and next actions

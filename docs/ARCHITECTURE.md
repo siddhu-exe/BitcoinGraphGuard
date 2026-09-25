@@ -35,13 +35,13 @@ Kaggle. There is **one notebook per major project phase** — not one per small 
 
 | Notebook | Phase | Contains |
 | :--- | :--- | :--- |
-| `notebooks/01_eda.ipynb` | Exploratory data analysis | Dataset loading, validation for EDA, temporal analysis, class-imbalance analysis, graph statistics, feature analysis, visualizations, conclusions |
-| `notebooks/02_xgboost.ipynb` | Classical baseline | Leakage audit, temporal split construction, prevalence baseline, Logistic Regression, XGBoost training with a 1500-tree budget, early stopping and a seeded 20-trial validation-PR-AUC search, PR-AUC/precision/recall/F1 evaluation, temporal windows, error and feature-importance analysis |
-| `notebooks/03_graphsage.ipynb` | Homogeneous GNN baseline | Graph construction, GraphSAGE training with neighbour sampling, comparison to XGBoost |
-| `notebooks/04_heterogeneous_gnn.ipynb` | Heterogeneous GNN | Heterogeneous graph build, RGCN (and HGT only if justified), tuning, ablations |
-| `notebooks/05_temporal_inductive_evaluation.ipynb` | Robust evaluation | Temporal degradation, inductive evaluation on unseen nodes, per-step error analysis |
-| `notebooks/06_explainability.ipynb` | Explainability | GNNExplainer on selected fraud, false-positive, and false-negative cases |
-| `notebooks/07_final_evaluation.ipynb` | Finalization | Frozen final runs, final metrics, artifact export |
+| `notebooks/01_eda.ipynb` | Phase 1 — Exploratory data analysis | Dataset loading, validation for EDA, temporal analysis, class-imbalance analysis, graph statistics, feature analysis, visualizations, conclusions |
+| `notebooks/02_xgboost.ipynb` | Phase 2 — Classical baseline (XGBoost) | Leakage audit, temporal split construction, prevalence baseline, Logistic Regression, XGBoost training with a 1500-tree budget, early stopping and a seeded 20-trial validation-PR-AUC search, PR-AUC/precision/recall/F1 evaluation, temporal windows, error and feature-importance analysis |
+| `notebooks/03_graphsage.ipynb` | Phase 3 — Homogeneous GNN baseline | Homogeneous graph build (`txs_edgelist.csv`), empirical intra-step confinement verification, 2-layer GraphSAGE (mean aggregation) with architectural twin MLP ablation, leakage-free scaling, `pos_weight` loss, validation early stopping, sub-windows (35–42 vs 43–49), connected vs isolated breakdown, automated assertions |
+| `notebooks/04_heterogeneous_gnn.ipynb` | Phase 4 — Heterogeneous GNN | Heterogeneous graph build (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`), RGCN (and HGT only if justified), tuning, ablations |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 5 — Robust evaluation | Temporal degradation, inductive evaluation on unseen nodes, per-step error analysis |
+| `notebooks/06_explainability.ipynb` | Phase 6 — Explainability | GNNExplainer on selected fraud, false-positive, and false-negative cases |
+| `notebooks/07_final_evaluation.ipynb` | Phase 9 — Finalization | Frozen final runs, final metrics, artifact export |
 
 Adjust the count only for a genuine reason. A notebook may hold many related steps
 internally; splitting a phase across several notebooks is not allowed.

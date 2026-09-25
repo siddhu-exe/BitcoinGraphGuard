@@ -10,12 +10,12 @@ handles engineering, documentation, and MLOps only. See `ARCHITECTURE.md`.
 | Notebook | Phase |
 | :--- | :--- |
 | `notebooks/01_eda.ipynb` | Phase 1 — EDA |
-| `notebooks/02_xgboost.ipynb` | Phase 2 — XGBoost baseline |
-| `notebooks/03_graphsage.ipynb` | Phase 2 — GraphSAGE baseline |
-| `notebooks/04_heterogeneous_gnn.ipynb` | Phase 3 — RGCN / HGT |
-| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 4 — Temporal & inductive evaluation |
-| `notebooks/06_explainability.ipynb` | Phase 5 — Explainability |
-| `notebooks/07_final_evaluation.ipynb` | Phase 9 — Final evaluation |
+| `notebooks/02_xgboost.ipynb` | Phase 2 — Classical Baseline (XGBoost) |
+| `notebooks/03_graphsage.ipynb` | Phase 3 — Homogeneous Graph Baseline (GraphSAGE) |
+| `notebooks/04_heterogeneous_gnn.ipynb` | Phase 4 — Heterogeneous GNN (RGCN / HGT) |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 5 — Temporal & Inductive Evaluation |
+| `notebooks/06_explainability.ipynb` | Phase 6 — Explainability |
+| `notebooks/07_final_evaluation.ipynb` | Phase 9 — Final Evaluation |
 
 One notebook per phase; do not create a notebook per small step.
 
@@ -39,26 +39,23 @@ One notebook per phase; do not create a notebook per small step.
 * [ ] Configure DVC
 * [ ] Establish reproducibility and configuration system
 
-## Phase 2 — Baselines
+## Phase 2 — Classical Baselines (XGBoost)
 
-*Environment: Kaggle/Colab notebooks `02_xgboost.ipynb` and `03_graphsage.ipynb`; laptop only for MLflow configuration.*
+*Environment: Kaggle/Colab notebook `02_xgboost.ipynb`; laptop for MLflow configuration.*
 
-*Status: executed 2026-09-25 on Colab in two passes and awaiting review sign-off before GraphSAGE
-is designed. The first pass is the recorded 500-tree baseline; the second lifts the budget to 1500
-trees (582 kept, so the cap no longer binds) and adds a controlled 20-trial randomised search, a
-`has_addresses` ablation and one label-free redundancy ablation. `notebooks/02_xgboost.ipynb`
-covers the leakage audit, the prevalence baseline, Logistic Regression and XGBoost on the 165
-non-domain transaction features, evaluated fit 1–24 / validation 25–34 / refit 1–34 / test 35–49.
-It deliberately uses no graph statistics (degrees, components, hub ranks), because the EDA computed
-those over the full transductive graph including future steps; graph features belong to the GNN
-phases and must be step-bounded there. GraphSAGE stays in `03_graphsage.ipynb`.*
+*Status: COMPLETE (executed 2026-09-25 on Colab in two passes). The first pass is the recorded 500-tree
+baseline; the second lifts the budget to 1500 trees (582 kept, so the cap no longer binds) and adds a
+controlled 20-trial randomised search, a `has_addresses` ablation and one label-free redundancy
+ablation. `notebooks/02_xgboost.ipynb` covers the leakage audit, the prevalence baseline, Logistic
+Regression and XGBoost on the 165 non-domain transaction features, evaluated fit 1–24 / validation
+25–34 / refit 1–34 / test 35–49.*
 
 Measured on the test period 35–49 (16,670 labeled, 1,083 illicit): prevalence baseline PR-AUC
 0.0650, Logistic Regression 0.2917, XGBoost baseline 0.8007 (ROC-AUC 0.9317), optimised XGBoost
-0.8013 (ROC-AUC 0.9281). Retuning therefore bought +0.0006 PR-AUC while ROC-AUC and F1 fell: the
-tree budget was not the constraint. Sub-window PR-AUC is 0.9215 on 35–42 but 0.0427 on 43–49, where
-prevalence drops to 2.53%. `has_addresses` was dropped after scoring +0.000933 against a
-pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
+0.8013 (ROC-AUC 0.9281). Retuning bought +0.0006 PR-AUC while ROC-AUC and F1 fell: the tree budget
+was not the constraint and the tabular features set the performance ceiling. Sub-window PR-AUC is
+0.9215 on 35–42 but 0.0427 on 43–49, where prevalence drops to 2.53%. `has_addresses` was dropped
+after scoring +0.000933 against a pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 
 * [x] Build the Phase 2 dataset: 165 non-domain transaction features (`has_addresses` tested and
       dropped by the pre-registered ablation)
@@ -70,26 +67,49 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
       search, `has_addresses` ablation and redundancy ablation
 * [x] Re-execute the revised notebook on Colab/Kaggle (2026-09-25) and record the optimised result
       alongside the 0.8007 baseline rather than replacing it
-* [ ] Compare XGBoost and GraphSAGE
 * [ ] Configure MLflow experiment tracking
-* [ ] Engineer step-bounded transaction-level graph features (Phase 3, not here)
 
-## Phase 3 — Heterogeneous Graph Deep Learning
+## Phase 3 — Homogeneous Graph Baseline (GraphSAGE)
+
+*Environment: Kaggle/Colab notebook `03_graphsage.ipynb` (graph construction, training, ablation).*
+
+*Status: COMPLETE (executed 2026-09-25 on Colab with CUDA GPU; artifacts in `GraphSage/`). Evaluates
+homogeneous transaction graph (`txs_edgelist.csv`) with 165 features under fit 1–24 / validation 25–34 /
+train 1–34 / test 35–49. GraphSAGE reaches **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP
+**0.4768 / 0.8912 / 0.5759** (+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**.
+Intra-step edge confinement empirically verified (100% intra-step, 0 cross-step), explaining why homogeneous
+GNNs cannot bridge temporal steps without wallet nodes. Full record: `docs/GRAPHSAGE.md`.*
+
+* [x] Author `notebooks/03_graphsage.ipynb` — standalone Colab/Kaggle notebook for GraphSAGE & MLP
+* [x] Author `docs/GRAPHSAGE.md` — design, structural verification, ablation, and artifact specification
+* [x] Empirically verify intra-step edge confinement (234,355 intra-step, 0 cross-step)
+* [x] Formulate architectural twin MLP baseline for controlled graph ablation
+* [x] Implement leakage-free feature scaling (`StandardScaler` on fit/train only) and historical `pos_weight`
+* [x] Implement validation PR-AUC early stopping (steps 25–34) and F1-maximizing operating threshold
+* [x] Implement connected (`degree >= 1`, 100%) vs isolated (`degree == 0`, 0%) test decomposition
+* [x] Implement automated sanity assertion suite (`checks.csv`) and artifact export
+* [x] Execute `notebooks/03_graphsage.ipynb` on Google Colab (GPU runtime)
+* [x] Export artifacts to `GraphSage/` and review results against frozen XGBoost baseline (0.8013)
+* [x] Populate experimental results in `docs/GRAPHSAGE.md`
+
+## Phase 4 — Heterogeneous Graph Deep Learning (RGCN / HGT)
 
 *Environment: Kaggle/Colab notebook `04_heterogeneous_gnn.ipynb` (graph construction and training).*
 
-* [ ] Construct heterogeneous transaction + actor/wallet graph
+*Do not start Phase 4 until Phase 3 artifacts are exported and reviewed.*
+
+* [ ] Construct heterogeneous transaction + actor/wallet graph (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`)
 * [ ] Define node and edge types
 * [ ] Build graph preprocessing pipeline
 * [ ] Implement RGCN (remote)
 * [ ] Evaluate HGT as an alternative if justified (remote)
 * [ ] Tune model using validation data (remote)
 * [ ] Handle class imbalance
-* [ ] Compare against XGBoost and GraphSAGE
+* [ ] Compare against XGBoost (0.8013) and GraphSAGE
 * [ ] Run ablation studies (remote)
 * [ ] Analyze model errors
 
-## Phase 4 — Temporal & Inductive Evaluation
+## Phase 5 — Temporal & Inductive Evaluation
 
 *Environment: Kaggle/Colab notebook `05_temporal_inductive_evaluation.ipynb`.*
 
@@ -101,7 +121,7 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 * [ ] Analyze performance across individual time steps
 * [ ] Document temporal failure modes
 
-## Phase 5 — Explainability
+## Phase 6 — Explainability
 
 *Environment: Kaggle/Colab notebook `06_explainability.ipynb` (GNNExplainer).*
 
@@ -113,7 +133,7 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 * [ ] Visualize important graph structures
 * [ ] Document explainability limitations
 
-## Phase 6 — MLOps & Monitoring
+## Phase 7 — MLOps & Monitoring
 
 *Environment: Laptop.*
 
@@ -128,7 +148,7 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 * [ ] Define retraining thresholds
 * [ ] Implement retraining trigger logic
 
-## Phase 7 — ML System & Deployment
+## Phase 8 — ML System & Deployment
 
 *Environment: Laptop.*
 
@@ -143,7 +163,7 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 * [ ] Add model validation checks
 * [ ] Deploy inference service
 
-## Phase 8 — Monitoring & Dashboard
+## Phase 9 — Monitoring & Dashboard
 
 *Environment: Laptop.*
 
@@ -156,7 +176,7 @@ pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
 * [ ] Add representative explainability visualizations
 * [ ] Validate dashboard against tracked experiments
 
-## Phase 9 — Finalization
+## Phase 10 — Finalization
 
 *Environment: Kaggle/Colab notebook `07_final_evaluation.ipynb` for final runs; laptop for documentation and packaging.*
 

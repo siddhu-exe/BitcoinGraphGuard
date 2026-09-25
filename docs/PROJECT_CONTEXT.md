@@ -148,29 +148,37 @@ Application and serving logic lives in `src/`. See `ARCHITECTURE.md`.
 Dataset verification and the exploratory data analysis are **complete** (see `PROGRESS.md` and
 `EDA.md`):
 
-* **Done:** Elliptic++ downloaded and fully verified with a streaming, low-memory verifier
+* **Done (Phase 1):** Elliptic++ downloaded and fully verified with a streaming, low-memory verifier
   (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`;
   `notebooks/01_eda.ipynb` authored as the canonical EDA entrypoint and **executed end to end on
   Google Colab on 2026-09-25**, with results recorded in `EDA.md` and artifacts exported to
   `eda/` (`../scripts/eda_phase2.py` is the superseded reference implementation of the same
   logic); `requirements.txt` created; implementation architecture and compute split defined.
-* **Executed, awaiting review:** `notebooks/02_xgboost.ipynb` — the Phase 2 XGBoost baseline
+* **Done (Phase 2):** `notebooks/02_xgboost.ipynb` — the Phase 2 classical baseline
   (leakage audit, prevalence baseline, Logistic Regression, XGBoost, temporal and error analysis)
   ran end to end on Google Colab on 2026-09-25 in two passes, with artifacts exported to `xgboost/`
   and results recorded in `XGBOOST.md`. The recorded 500-tree baseline reaches PR-AUC 0.8007 /
   ROC-AUC 0.9317 on test 35–49; the optimisation pass that lifted the budget to 1500 trees, searched
-  20 seeded parameter trials on validation PR-AUC and dropped `has_addresses` reaches 0.8013 /
-  0.9281 — so the tree budget was not the constraint and the two rows are the same baseline
-  measured twice. Both beat a 0.0650 constant-score baseline and 0.2917 / 0.8828 for Logistic
-  Regression; the 43–49 sub-window degrades to 0.0427. Sign-off is pending before Phase 3 is
-  designed.
-* **Not done yet:** phase 3 onwards — `notebooks/03_graphsage.ipynb` and the later notebooks; DVC
-  setup; the `src/` project structure; MLflow tracking.
+  20 seeded parameter trials on validation PR-AUC and dropped `has_addresses` reaches **0.8013 /
+  0.9281** — so the tree budget was not the constraint and the tabular features set the ceiling.
+  Both beat a 0.0650 constant-score baseline and 0.2917 / 0.8828 for Logistic Regression; the 43–49
+  sub-window degrades to 0.0427.
+* **Done (Phase 3):** `notebooks/03_graphsage.ipynb` — homogeneous GraphSAGE baseline and 2-layer MLP
+  twin ablation on `txs_edgelist.csv` executed end-to-end on Google Colab (CUDA GPU) on 2026-09-25 with
+  artifacts exported to `GraphSage/` and results recorded in `docs/GRAPHSAGE.md`. GraphSAGE achieves
+  **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759** (+0.1442 lift)
+  and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement (100% intra-step) proves
+  homogeneous GNNs cannot bridge temporal steps without wallet nodes.
+* **Ready to start (Phase 4):** `notebooks/04_heterogeneous_gnn.ipynb` — Heterogeneous GNN (RGCN / HGT)
+  incorporating all 4 edge types (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) to bridge time steps
+  and connect transactions across wallets.
+* **Not done yet:** Phase 3 remote execution on Colab/Kaggle; Phase 4 onwards (`notebooks/04_heterogeneous_gnn.ipynb`
+  through `07_final_evaluation.ipynb`); DVC setup; `src/` application structure; MLflow tracking.
 
-**Experimental results now exist for Phase 2** — the XGBoost baseline, its optimisation pass, and
-the Logistic Regression and prevalence baselines, under a temporal protocol with fit 1–24 /
-validation 25–34 / refit 1–34 / test 35–49 on 165 transaction features. They are not yet signed off,
-and no graph model has been trained.
+**Experimental results are frozen for Phase 2** — XGBoost baseline (0.8007) and optimized (0.8013)
+under fit 1–24 / validation 25–34 / refit 1–34 / test 35–49 on 165 transaction features. Phase 3
+GraphSAGE is authored and ready for remote execution. Phase 4 (RGCN / HGT) will begin only after
+Phase 3 artifacts are exported and reviewed.
 
 ## Important Rules
 
