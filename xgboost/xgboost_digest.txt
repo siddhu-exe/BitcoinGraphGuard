@@ -1,0 +1,15 @@
+
+BitcoinGraphGuard - Phase 2 XGBoost baseline digest (2026-09-25 10:07)
+----------------------------------------------------------------------------------
+features        : 166 (165 Local/Aggregate + has_addresses), 17 domain columns excluded
+population      : class 1 + class 2 only; class 3 (unknown) never used
+protocol        : fit 1-24 | validation 25-34 | train(refit) 1-34 | test 35-49 (frozen)
+test prevalence : 0.0650 (1,083 illicit / 16,670 labeled)
+operating point : validation F1-max, frozen -> xgb 0.515, lr 0.880
+prevalence base : PR-AUC 0.0650 (= test prevalence; a constant score is scored against the window it is evaluated on), ROC-AUC 0.500
+logistic reg    : PR-AUC 0.2917 | ROC-AUC 0.8828 | P 0.2715 | R 0.6473 | F1 0.3825 | TP 701 FP 1881 FN 382
+xgboost         : PR-AUC 0.8007 | ROC-AUC 0.9317 | P 0.8400 | R 0.7368 | F1 0.7850 | TP 798 FP 152 FN 285
+xgboost trees   : 499 (early stopping, cap 500), fit 25s + refit 22s
+temporal        : 35-49 PR-AUC 0.8007 (prev 0.0650), 35-42 PR-AUC 0.9211 (prev 0.0916), 43-49 PR-AUC 0.0423 (prev 0.0253)
+errors          : FN 285 (median score 0.002) | FP 152 (median score 0.711)
+address-less    : 324 test rows, recall nan vs 0.737 for linked

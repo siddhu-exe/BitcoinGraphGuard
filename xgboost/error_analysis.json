@@ -1,0 +1,21 @@
+{
+  "fn": 285,
+  "fp": 152,
+  "fn_median_score": 0.002423736732453108,
+  "fp_median_score": 0.7114557027816772,
+  "threshold": 0.515,
+  "example_false_negatives": [
+    "***",
+    "***",
+    "***",
+    "***",
+    "***"
+  ],
+  "example_false_positives": [
+    "***",
+    "***",
+    "***",
+    "***",
+    "***"
+  ]
+}

@@ -1,0 +1,40 @@
+check,value,expected,ok,note
+features: total columns,182,182,True,
+features: domain columns,17,17,True,
+features: model columns before has_addresses,165,165,True,
+features: domain block is disjoint from model features,True,True,True,
+labels: transaction rows,203769,203769,True,
+labels: values are a subset of 1/2/3,True,True,True,
+transactions: rows,203769,203769,True,
+transactions: labels present for every row,0,0,True,
+transactions: time step range,"(1, 49)","(1, 49)",True,
+transactions: missing values in the 165 model features,0,0,True,the domain block holds all missingness and it is excluded
+transactions: illicit count,4545,4545,True,
+transactions: licit count,42019,42019,True,
+transactions: unknown count,157205,157205,True,
+has_addresses: address-less transactions,965,965,True,matches the blank-domain rows found in Phase 1/EDA
+protocol: no train/test overlap,False,False,True,
+protocol: sub-windows partition the test period,16670,16670,True,
+protocol: fit is a subset of train,True,True,True,
+protocol: validation is historical (<= 34),True,True,True,
+protocol: train labeled rows,29894,29894,True,
+protocol: train illicit rows,3462,3462,True,
+protocol: validation labeled rows,6288,6288,True,
+protocol: validation illicit rows,1243,1243,True,
+protocol: test labeled rows,16670,16670,True,
+protocol: test illicit rows,1083,1083,True,
+protocol: test_drift illicit rows,169,169,True,
+dataset: fit has both classes,"[0, 1]","[0, 1]",True,
+dataset: unknown labels excluded,0,0,True,
+dataset: feature matrix is float32,['float32'],['float32'],True,
+dataset: every model feature is used,166,166,True,
+leakage: no domain column in the feature matrix,True,True,True,
+leakage: no identifier column in the feature matrix,True,True,True,
+leakage: no feature constructed from labels,[],[],True,
+leakage: no single feature is a near-perfect discriminator,True,True,True,"EDA's strongest |r| with the label is 0.26, so an AUC above 0.95 would be a red flag"
+leakage: preprocessing statistics will be fit on the fit window only,True,,True,enforced in sections 7 and 8 by passing only X_fit to .fit()
+baseline: constant score AP equals the evaluation prevalence,0.064967,0.064967,True,"AP of a constant score is the positive rate of the evaluated window, not of the training window"
+xgboost: early stopping kept at least one tree,True,True,True,
+xgboost: early stopping stopped before the tree cap,True,True,True,a model that used all 500 trees hit the cap and should be re-run with more
+temporal: sub-windows partition the test set,16670,16670,True,
+errors: tp+fp+fn+tn covers every test row,16670,16670,True,
