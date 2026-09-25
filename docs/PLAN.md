@@ -1,12 +1,27 @@
 # Plan
 
-Each phase is annotated with its **execution environment**. Model training runs on
-**Kaggle / Google Colab** (GPU required); the laptop handles engineering, data work, and
-MLOps. See `ARCHITECTURE.md`.
+Each phase is annotated with its **execution environment** and, where ML is involved, the
+notebook that implements it. All ML execution — EDA, feature engineering, training,
+evaluation, explainability — runs in notebooks on **Kaggle / Google Colab**; the laptop
+handles engineering, documentation, and MLOps only. See `ARCHITECTURE.md`.
+
+## Notebook Map
+
+| Notebook | Phase |
+| :--- | :--- |
+| `notebooks/01_eda.ipynb` | Phase 1 — EDA |
+| `notebooks/02_xgboost.ipynb` | Phase 2 — XGBoost baseline |
+| `notebooks/03_graphsage.ipynb` | Phase 2 — GraphSAGE baseline |
+| `notebooks/04_heterogeneous_gnn.ipynb` | Phase 3 — RGCN / HGT |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 4 — Temporal & inductive evaluation |
+| `notebooks/06_explainability.ipynb` | Phase 5 — Explainability |
+| `notebooks/07_final_evaluation.ipynb` | Phase 9 — Final evaluation |
+
+One notebook per phase; do not create a notebook per small step.
 
 ## Phase 1 — Data & Foundation
 
-*Environment: Laptop.*
+*Environment: Laptop for repo/environment setup; notebook `01_eda.ipynb` on Kaggle/Colab for EDA.*
 
 * [ ] Create project structure
 * [ ] Configure Python environment (in progress — `requirements.txt` created, user-managed install)
@@ -15,15 +30,15 @@ MLOps. See `ARCHITECTURE.md`.
 * [x] Inspect dataset structure and metadata
 * [x] Validate transaction and actor/wallet data
 * [x] Identify missing values, duplicates, invalid relationships, and label distribution
-* [ ] Analyze temporal structure
-* [ ] Analyze class imbalance
-* [ ] Perform graph-level EDA
+* [x] Analyze temporal structure (Phase 2, see `EDA.md`)
+* [x] Analyze class imbalance (Phase 2, see `EDA.md`)
+* [x] Perform graph-level EDA (Phase 2, see `EDA.md`)
 * [ ] Configure DVC
 * [ ] Establish reproducibility and configuration system
 
 ## Phase 2 — Baselines
 
-*Environment: Laptop for feature/dataset construction; Kaggle/Colab for XGBoost and GraphSAGE training.*
+*Environment: Kaggle/Colab notebooks `02_xgboost.ipynb` and `03_graphsage.ipynb`; laptop only for MLflow configuration.*
 
 * [ ] Engineer transaction-level graph features
 * [ ] Build classical ML dataset
@@ -36,7 +51,7 @@ MLOps. See `ARCHITECTURE.md`.
 
 ## Phase 3 — Heterogeneous Graph Deep Learning
 
-*Environment: Laptop for graph construction/preprocessing; Kaggle/Colab for RGCN/HGT training.*
+*Environment: Kaggle/Colab notebook `04_heterogeneous_gnn.ipynb` (graph construction and training).*
 
 * [ ] Construct heterogeneous transaction + actor/wallet graph
 * [ ] Define node and edge types
@@ -51,7 +66,7 @@ MLOps. See `ARCHITECTURE.md`.
 
 ## Phase 4 — Temporal & Inductive Evaluation
 
-*Environment: Kaggle/Colab (heavy evaluation on trained models).*
+*Environment: Kaggle/Colab notebook `05_temporal_inductive_evaluation.ipynb`.*
 
 * [ ] Train using historical time steps
 * [ ] Evaluate on later unseen time steps
@@ -63,7 +78,7 @@ MLOps. See `ARCHITECTURE.md`.
 
 ## Phase 5 — Explainability
 
-*Environment: Kaggle/Colab (GNNExplainer).*
+*Environment: Kaggle/Colab notebook `06_explainability.ipynb` (GNNExplainer).*
 
 * [ ] Select representative fraud predictions
 * [ ] Select false-positive cases
@@ -118,7 +133,7 @@ MLOps. See `ARCHITECTURE.md`.
 
 ## Phase 9 — Finalization
 
-*Environment: Kaggle/Colab for final reproducible training runs; laptop for documentation and packaging.*
+*Environment: Kaggle/Colab notebook `07_final_evaluation.ipynb` for final runs; laptop for documentation and packaging.*
 
 * [ ] Run final reproducible experiments
 * [ ] Freeze final model/version

@@ -33,23 +33,27 @@ The project must demonstrate the complete workflow of a production-oriented Data
 * Implement CI/CD using GitHub Actions.
 * Build a monitoring/dashboard layer.
 * Document the complete system, experiments, results, limitations, and production considerations.
+* Deliver all ML experimentation as one notebook per project phase under `notebooks/`,
+  runnable directly in Google Colab or Kaggle.
 
 ## Compute Strategy
 
 The objective is delivered across **two environments**; full details are in
 `ARCHITECTURE.md`.
 
-* **Laptop — engineering & lightweight work**: repository management, code development and
-  review, data inspection, lightweight validation/EDA, preprocessing scripts, graph schema
-  design, experiment configuration, testing, FastAPI backend, MLOps, Docker, CI/CD,
-  monitoring, dashboard, documentation.
-* **Kaggle / Google Colab — all model training and heavy experiments**: XGBoost,
-  GraphSAGE, RGCN/HGT, hyperparameter tuning, ablations, temporal and inductive
-  experiments, GNNExplainer, final training, and heavy evaluation.
+* **Laptop — development & documentation only**: repository management, code development
+  and review, documentation, system design, reviewing notebook code, FastAPI backend,
+  Docker, MLOps engineering code, CI/CD, dashboard, and configuration.
+* **Kaggle / Google Colab — ALL ML execution, inside notebooks**: dataset loading, ML data
+  processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN/HGT,
+  hyperparameter tuning, ablations, temporal and inductive evaluation, error analysis,
+  GNNExplainer, final evaluation, and model-artifact generation.
 
-Project models must **not** be trained on the laptop. Notebooks are the experiment/training
-interface, not the application; reusable logic belongs in the project source, and trained
-artifacts/metrics are exported back to the laptop for MLflow/DVC tracking and serving.
+ML work must **not** run on the laptop — no data processing, feature engineering, training,
+or experiments. Each phase has exactly one notebook (`notebooks/01_eda.ipynb` …
+`notebooks/07_final_evaluation.ipynb`) that runs standalone on Colab/Kaggle; application and
+serving logic belongs in `src/`, and trained artifacts/metrics are exported back to the
+laptop for MLflow/DVC tracking and serving.
 
 ## Definition of Done
 
@@ -79,4 +83,5 @@ artifacts/metrics are exported back to the laptop for MLflow/DVC tracking and se
 * [ ] Documentation completed
 * [ ] Deployment completed
 * [ ] Final results and limitations documented
-* [ ] Training environments (Kaggle/Colab) documented and reproducible from project source
+* [ ] Training environments (Kaggle/Colab) documented and reproducible from the phase notebooks
+* [ ] Phase notebooks implemented under `notebooks/` (one per phase, standalone on Colab/Kaggle)

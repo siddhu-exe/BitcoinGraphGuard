@@ -10,34 +10,41 @@ objective. For a fast summary see `PROJECT_CONTEXT.md`; for the phased plan see
 ```text
 Elliptic++
     ↓
-Data Verification
+Data Verification (laptop)
     ↓
-EDA / Feature Engineering
+[Kaggle / Colab — notebooks/]
+  01 EDA → 02 XGBoost → 03 GraphSAGE → 04 Heterogeneous GNN
+    → 05 Temporal & Inductive Evaluation
+    → 06 Explainability → 07 Final Evaluation
     ↓
-Graph Construction
+Model Artifacts + Metrics
     ↓
-Model Training on Kaggle/Colab
-    ↓
-XGBoost → GraphSAGE → RGCN/HGT
-    ↓
-Evaluation
-    ↓
-Model Artifacts
-    ↓
-MLflow / DVC
-    ↓
-FastAPI
-    ↓
-Docker
-    ↓
-CI/CD
-    ↓
-Monitoring / Dashboard
+[Laptop — engineering]
+  MLflow / DVC → FastAPI → Docker → CI/CD → Monitoring / Dashboard
 ```
 
-Everything above *Model Training* happens on the laptop. Training and heavy evaluation
-happen on Kaggle/Google Colab. Everything from *Model Artifacts* onward happens back on the
-laptop.
+Dataset verification stays on the laptop. **All ML execution — EDA, feature engineering,
+graph construction, training, evaluation, and explainability — happens in notebooks on
+Kaggle/Google Colab.** Everything from *Model Artifacts* onward happens back on the laptop:
+tracking, serving, packaging, and monitoring.
+
+## Notebook Architecture
+
+Notebooks are the executable implementation of the ML work and are run in Google Colab or
+Kaggle. There is **one notebook per major project phase** — not one per small task.
+
+| Notebook | Phase | Contains |
+| :--- | :--- | :--- |
+| `notebooks/01_eda.ipynb` | Exploratory data analysis | Dataset loading, validation for EDA, temporal analysis, class-imbalance analysis, graph statistics, feature analysis, visualizations, conclusions |
+| `notebooks/02_xgboost.ipynb` | Classical baseline | Feature engineering, split construction, XGBoost training, PR-AUC/precision/recall/F1 evaluation |
+| `notebooks/03_graphsage.ipynb` | Homogeneous GNN baseline | Graph construction, GraphSAGE training with neighbour sampling, comparison to XGBoost |
+| `notebooks/04_heterogeneous_gnn.ipynb` | Heterogeneous GNN | Heterogeneous graph build, RGCN (and HGT only if justified), tuning, ablations |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | Robust evaluation | Temporal degradation, inductive evaluation on unseen nodes, per-step error analysis |
+| `notebooks/06_explainability.ipynb` | Explainability | GNNExplainer on selected fraud, false-positive, and false-negative cases |
+| `notebooks/07_final_evaluation.ipynb` | Finalization | Frozen final runs, final metrics, artifact export |
+
+Adjust the count only for a genuine reason. A notebook may hold many related steps
+internally; splitting a phase across several notebooks is not allowed.
 
 ## Data Architecture
 
@@ -87,35 +94,39 @@ Each model exists for a specific reason and is compared under the same evaluatio
 Baselines come first: no GNN improvement is claimed before the classical baseline exists.
 Models are compared with identical data splits, metrics, and evaluation protocol.
 
-## Training Architecture
+## Experimentation Architecture
 
-### Local (laptop)
+### Laptop — development only
 
-* Lightweight EDA and dataset inspection
-* Feature engineering and preprocessing scripts
-* Graph construction and schema design
-* Code development, review, and configuration
-* Testing and validation
-* Notebook orchestration code kept in `src/` so it is reusable
+* Writing and reviewing code, including reviewing notebook code
+* Git repository management and project configuration
+* Documentation and system design
+* Backend development: FastAPI, inference modules, Docker, CI/CD
+* MLOps engineering code, dashboard/frontend, and test suites
+* Lightweight dataset inspection and verification scripts (not ML analysis)
 
-The laptop is memory-constrained (~5.6 GB RAM), so local work must stream and chunk data.
+The laptop never executes ML: no expensive data processing, feature engineering, model
+training, GNN training, or experiments. It is memory-constrained (~5.6 GB RAM), so even
+inspection work must stream and chunk data.
 
-### Kaggle / Google Colab
+### Kaggle / Google Colab — all ML execution (in notebooks)
 
-All model training and heavy experimentation happens remotely, because it needs GPU and
-more memory than the laptop has:
+Every ML step runs remotely in the phase notebooks, because it needs GPU and more memory
+than the laptop has:
 
-* **XGBoost training** (yes, this is remote too)
-* GraphSAGE training
-* RGCN / HGT training
+* Dataset loading and data processing required for ML
+* EDA and feature engineering
+* Graph construction required for training
+* XGBoost, GraphSAGE, RGCN, and HGT training
 * Hyperparameter tuning
-* Heavy experiments and ablations
+* Ablations, temporal and inductive evaluation, error analysis
 * Explainability runs (GNNExplainer)
-* Final training and evaluation
+* Final evaluation and model-artifact generation
 
-Notebooks are the **training interface**, not the application. Reusable logic — data
-loaders, feature builders, graph construction, model definitions, metrics, and training
-loops — lives in project source so the notebook only orchestrates it.
+Notebooks are self-contained: the code the user copies into Colab/Kaggle must actually run
+there. Application and serving logic (model loading, FastAPI, inference) lives in `src/`;
+ML experimentation implementation lives in the notebook. Reusable helpers may be factored
+out where genuinely useful, but the notebook must not depend on laptop-only paths.
 
 ## Evaluation Architecture
 
@@ -132,6 +143,11 @@ recall, F1, and confusion matrices. Accuracy alone is not acceptable.
 **Degradation and ablations.** Measure how performance changes across time steps, and run
 ablations to attribute gains to specific components (edge types, features, sampling,
 imbalance handling).
+
+Temporal and inductive evaluation live in
+`notebooks/05_temporal_inductive_evaluation.ipynb`; ablations run alongside the model they
+belong to (e.g. `notebooks/04_heterogeneous_gnn.ipynb`). Evaluation executes in Colab/Kaggle,
+not on the laptop.
 
 ## MLOps Architecture
 
@@ -161,11 +177,11 @@ the system is **not** considered production-ready.
 The graph contains **>1M nodes and >4M heterogeneous edges**, which does not fit
 comfortably in the laptop's ~5.6 GB of RAM. Therefore:
 
-* Local CSV and graph processing must use streaming/chunked readers (`chunksize`,
+* CSV and graph processing in notebooks must use streaming/chunked readers (`chunksize`,
   generators) and explicit memory cleanup (`del`, `gc.collect()`).
 * GNN training must use **mini-batch / neighbour sampling**
   (`NeighborLoader` / `HeteroNeighborLoader`) rather than loading the full graph.
-* Heavy training is offloaded to Kaggle/Colab; the laptop is not a training machine.
+* All ML execution is offloaded to Kaggle/Colab; the laptop is not a compute machine.
 
 ## Artifact Handoff
 

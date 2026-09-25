@@ -5,27 +5,31 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: Phase 1 (data & foundation). Dataset verified and inventoried; no model results
-> yet. See `docs/PROGRESS.md` and `docs/PLAN.md`.
+> Status: dataset verified and EDA complete; no model results yet. See `docs/PROGRESS.md`,
+> `docs/EDA.md`, and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
 BitcoinGraphGuard runs across **two environments**. Full detail: `docs/ARCHITECTURE.md`.
 
-- **Laptop — engineering**: code development/review, data inspection, lightweight
-  EDA/preprocessing, graph schema design, experiment configuration, testing, FastAPI,
-  MLOps (MLflow/DVC), Docker, CI/CD, monitoring, dashboard, documentation.
-- **Kaggle / Google Colab — all model training**: XGBoost, GraphSAGE, RGCN/HGT, tuning,
-  ablations, temporal and inductive evaluation, GNNExplainer, final training.
+- **Laptop — development & documentation only**: code writing/review, Git, documentation,
+  system design, notebook code review, FastAPI, Docker, MLOps engineering, CI/CD,
+  dashboard, configuration.
+- **Kaggle / Google Colab — ALL ML execution, in notebooks**: dataset loading, ML data
+  processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN/HGT,
+  tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final
+  evaluation.
 
-**Project models are never trained on the laptop.** Notebooks are the training interface,
-not the application; reusable logic lives in project source. Remote runs export
-checkpoints, predictions, metrics, and explanations back to the laptop for tracking,
-serving, and monitoring.
+**No ML runs on the laptop** — not training, and not "lightweight" EDA or feature
+engineering. ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
+`07_final_evaluation.ipynb`) and runs standalone on Colab/Kaggle. Application/serving logic
+lives in `src/`; remote runs export checkpoints, predictions, metrics, and explanations back
+to the laptop for tracking, serving, and monitoring.
 
 ```text
-Elliptic++ → Verification → EDA → Feature Engineering → Graph Construction
-   → [Kaggle/Colab: XGBoost → GraphSAGE → RGCN/HGT → Temporal → Inductive → Ablation → Explainability]
+Elliptic++ → [Laptop: Verification]
+   → [Kaggle/Colab notebooks: 01 EDA → 02 XGBoost → 03 GraphSAGE → 04 Heterogeneous GNN
+      → 05 Temporal & Inductive → 06 Explainability → 07 Final Evaluation]
    → Model Artifacts + Metrics → [Laptop: MLflow/DVC → FastAPI → Docker → CI/CD → Monitoring → Dashboard → Deployment]
 ```
 
@@ -48,11 +52,14 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/ARCHITECTURE.md` | Technical architecture: data, ML, training, evaluation, serving |
 | `docs/TIMELINE.md` | Nine-phase roadmap with objectives and completion criteria |
 | `docs/DATA_INVENTORY.md` | Verified dataset inventory and data-quality report |
+| `docs/EDA.md` | Phase 2 exploratory data analysis findings |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (not yet created) |
 | `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |
 | `AGENTS.md`, `CLAUDE.md` | Contributor/agent operating rules |
 | `requirements.txt` | Tiered Python dependencies |
+| `scripts/` | Memory-safe verification helper (`eda_phase2.py` superseded by notebook 01) |
 | `src/`, `tests/` | Not created yet (planned) |
 
 ## Getting Started
@@ -64,8 +71,8 @@ uv pip install -r requirements.txt
 python scripts/verify_dataset.py    # memory-safe dataset verification
 ```
 
-Heavy training dependencies (`torch`, `torch-geometric`) are deferred in
-`requirements.txt` and installed CPU-only on demand; actual training runs on Kaggle/Colab.
+Heavy dependencies (`torch`, `torch-geometric`) install in the Colab/Kaggle runtime, not on
+the laptop. All ML execution — EDA onward — happens in the phase notebooks.
 
 ## Documentation Index
 

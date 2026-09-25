@@ -12,6 +12,26 @@ Two previous claims were corrected: `txs_features.csv` has 16,405 blank cells (n
 and `wallets_features.csv` contains 347,569 exact duplicate rows (so 1,268,260 raw rows =
 920,691 distinct `(address, time step)` snapshots).
 
+**Phase 2 (Exploratory Data Analysis) — COMPLETE.** On 2026-09-22 the temporal structure,
+class imbalance, graph structure, feature distributions and temporal-split options were
+analysed with a streaming, low-priority EDA pipeline (`scripts/eda_phase2.py`): full
+pipeline **297 s**, peak RSS **879 MB**, no model trained, no split finalized. Evidence:
+`reports/eda/phase2_eda.json`; full report: `docs/EDA.md`.
+
+Under the current architecture this local pipeline is **superseded**:
+`notebooks/01_eda.ipynb` is the canonical, executable EDA entrypoint, and the script's
+logic is the reference implementation to carry into the notebook. The recorded EDA results
+themselves remain valid evidence.
+
+Headline Phase 2 findings: activity spans 49 steps with ~7× burstiness; illicit share of
+labeled transactions ranges **0.28%–35.97%** by step; the address graph is a single
+component of 822,935 nodes while the transaction graph fragments into **49 components**;
+the combined address↔transaction graph has **965 singleton components = the 965
+address-less transactions**; wallet duplicate rows re-confirmed exactly (920,691 distinct
+snapshots); and the natural test window (steps 43–49) has far lower transaction illicit
+prevalence (2.53%) than training (11.58%), so the split and metric protocol are
+deliberately left open.
+
 The project direction is fixed around **BitcoinGraphGuard**, using the real Elliptic++
 dataset for temporal heterogeneous graph-based Bitcoin fraud detection.
 
@@ -19,13 +39,17 @@ dataset for temporal heterogeneous graph-based Bitcoin fraud detection.
 
 Work is split across two environments (see `ARCHITECTURE.md`):
 
-* **Laptop** — engineering: code, data inspection, lightweight EDA/preprocessing, graph
-  schema design, experiment configuration, testing, FastAPI, MLflow/DVC, Docker, CI/CD,
-  monitoring, dashboard, documentation.
-* **Kaggle / Google Colab** — all model training and heavy experiments (XGBoost,
-  GraphSAGE, RGCN/HGT, tuning, ablations, temporal/inductive evaluation, GNNExplainer).
+* **Laptop** — development and documentation only: code writing/review, Git, docs, system
+  design, notebook review, FastAPI, Docker, MLOps engineering code, CI/CD, dashboard, and
+  project configuration.
+* **Kaggle / Google Colab** — ALL ML execution, inside notebooks: dataset loading, ML data
+  processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN/HGT,
+  tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, and final
+  evaluation.
 
-No project model is trained on the laptop. Remote environments export checkpoints,
+No ML runs on the laptop — not training, and not "lightweight" EDA or feature engineering.
+The ML work is one notebook per phase (`notebooks/01_eda.ipynb` through
+`notebooks/07_final_evaluation.ipynb`), and remote environments export checkpoints,
 predictions, metrics, and explanation outputs back for local tracking and serving.
 
 ## Verified Dataset Facts (2026-09-22)
@@ -64,29 +88,54 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] Define implementation architecture and laptop vs Kaggle/Colab compute split
       (`ARCHITECTURE.md`)
 * [x] Create `requirements.txt` (user-managed install pending)
+* [x] Build streaming, resumable Phase 2 EDA tooling (`scripts/eda_phase2.py`,
+      `scripts/plot_phase2_eda.py`)
+* [x] **Temporal structure analysis** across all 49 steps for transactions and wallet
+      snapshots
+* [x] **Class-imbalance analysis** (overall and per time step; unknown never treated as
+      licit)
+* [x] **Graph-level EDA** (degrees, components, isolated nodes, multi-edges, self-loops,
+      hubs for all four edge types)
+* [x] **Feature analysis** (missingness, constants, skew, class correlation, redundancy,
+      early/late drift)
+* [x] **Temporal-split investigation** over candidate windows (split not finalized)
+* [x] Document Phase 2 findings in `docs/EDA.md`
 
 ## Current Task
 
 * [ ] Install project Python dependencies from `requirements.txt` (user-managed)
+* [ ] Create `notebooks/01_eda.ipynb` — consolidate the Phase 2 EDA logic into the
+      canonical notebook entrypoint (Colab/Kaggle)
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
-* [ ] Prepare Kaggle/Colab training environment and notebook entrypoints
+* [ ] Prepare the Kaggle/Colab notebook environment (one notebook per phase)
+* [ ] Decide the transaction feature set (drop the 17 domain columns that duplicate
+      `Local_feature_*`; mask/flag the 965 address-less transactions)
 
 ## Next
 
-* Phase 2: temporal and class-imbalance EDA on the verified inventory
+* Confirm whether `txs_edgelist` components map one-to-one onto time steps (join
+  component labels to `Time step`)
 * Build the memory-aware project data pipeline; deduplicate wallet snapshots to
   `(address, time step)` before any split
 * Design the heterogeneous graph schema (mask/flag the 965 address-less transactions)
 * Prepare the XGBoost classical baseline before claiming GNN improvements
+* Finalize the temporal split and metric protocol once the baseline is defined (Phase 3);
+  account for the 11.58% → 2.53% transaction illicit-prevalence shift
 
 ## Known Issues
 
 * Wallet feature files must be deduplicated by `(address, time step)` before modeling;
   otherwise snapshot counts are inflated and identical rows can leak across splits.
 * The 17 blank transaction domain columns need an explicit masking/imputation decision in
-  Phase 2 (do not treat blanks as 0).
-* Final heterogeneous graph schema is pending Phase 2 design.
+  Phase 3 (do not treat blanks as 0).
+* The 17 transaction domain columns are near-perfect copies of `Local_feature_*`
+  (r ≈ 1.0); keep only one representation.
+* Temporal class prevalence is non-stationary; the candidate test window 43–49 has only
+  169 illicit transactions (2.53% of labeled). Split/metric protocol deliberately open.
+* Whether `txs_edgelist`'s 49 components correspond exactly to the 49 time steps is
+  strongly suggested but not yet confirmed.
+* Final heterogeneous graph schema is pending Phase 3 design.
 * Final deployment infrastructure will be decided after the inference pipeline is
   implemented.
 * Remote training environments (Kaggle/Colab) are not yet set up or documented as
@@ -99,6 +148,5 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * Do not introduce data leakage (including duplicate-row leakage across splits).
 * Do not report experimental metrics before running the experiment.
 * Do not replace the heterogeneous graph objective with a simpler unrelated approach.
-* Do not run heavy, unconstrained jobs on the laptop; use streaming, chunked,
-  low-priority, one-core passes or a remote machine. Project models are never trained on
-  the laptop.
+* Do not execute ML on the laptop at all; all ML work runs in notebooks on Kaggle/Colab.
+  Even local inspection must use streaming, chunked, low-priority, one-core passes.

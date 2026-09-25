@@ -10,7 +10,8 @@ built on the real **Elliptic++** dataset. It detects illicit activity at the **t
 and **wallet/address** level using classical ML, graph neural networks, and production-grade
 MLOps.
 
-**Status:** Phase 1 (Dataset & EDA), in progress. No models trained yet, no results yet.
+**Status:** Dataset verified and EDA complete (see `EDA.md`). No models trained yet and no
+experimental results yet.
 
 ## The Problem
 
@@ -82,18 +83,19 @@ false positives, and false negatives.
 
 Two environments. This is a hard rule.
 
-| Laptop — engineering & lightweight work | Kaggle / Google Colab — all training |
+| Laptop — development & documentation only | Kaggle / Google Colab — ALL ML execution (in notebooks) |
 | :--- | :--- |
-| Code development & review, Git | **XGBoost training** |
-| Data inspection, lightweight EDA | GraphSAGE training |
-| Preprocessing & feature engineering | RGCN / HGT training |
-| Graph schema design, config, tests | Hyperparameter tuning |
-| FastAPI, Docker, CI/CD | Ablations, heavy experiments |
-| MLflow, DVC, monitoring, dashboard | Explainability, final training & evaluation |
-| Documentation | — |
+| Code writing & review, Git | Dataset loading & ML data processing |
+| Documentation, system design | **EDA** & feature engineering |
+| Notebook code review, config, tests | Graph construction for training |
+| FastAPI, Docker, CI/CD | **XGBoost**, GraphSAGE, RGCN/HGT training |
+| MLOps engineering, monitoring, dashboard | Hyperparameter tuning, ablations |
+| Documentation | Temporal/inductive evaluation, error analysis, GNNExplainer, final evaluation |
 
-**Never train project models on the laptop.** Notebooks are the training interface, not the
-application; reusable logic lives in project source and remote runs export artifacts back.
+**No ML runs on the laptop** — not training, and not "lightweight" EDA or feature
+engineering. The ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
+`notebooks/07_final_evaluation.ipynb`), and notebooks must run standalone on Colab/Kaggle.
+Application/serving logic lives in `src/`, and remote runs export artifacts back.
 
 ## MLOps
 

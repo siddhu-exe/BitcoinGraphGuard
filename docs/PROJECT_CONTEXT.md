@@ -130,27 +130,31 @@ study **false positives** (innocent wallets flagged) and **false negatives** (mi
 
 Work is split across two environments. This is a hard rule, not a preference.
 
-* **Laptop = engineering + lightweight work.** Code development, data inspection,
-  lightweight EDA, preprocessing scripts, graph schema design, testing, FastAPI, Docker,
-  CI/CD, monitoring, dashboard, documentation.
-* **Kaggle / Google Colab = ALL model training and heavy experiments.** This explicitly
-  includes **XGBoost training**, plus GraphSAGE, RGCN, HGT, hyperparameter tuning,
-  ablations, temporal/inductive experiments, GNNExplainer, and final evaluation.
+* **Laptop = development and documentation only.** Writing and reviewing code, Git
+  management, documentation, system design, reviewing notebook code, backend/FastAPI,
+  Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project configuration.
+* **Kaggle / Google Colab = ALL ML execution, inside notebooks.** Dataset loading, ML data
+  processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN, HGT,
+  hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis,
+  GNNExplainer, final evaluation, and model-artifact generation.
 
-**Do not train project models on the laptop.** Notebooks are the training interface, not
-the application; reusable logic lives in the project source. See `ARCHITECTURE.md`.
+**Do not execute ML work on the laptop** — including EDA, feature engineering, and training.
+The ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
+`notebooks/07_final_evaluation.ipynb`), and notebooks must run standalone on Colab/Kaggle.
+Application and serving logic lives in `src/`. See `ARCHITECTURE.md`.
 
 ## Current Status
 
-Phase 1 (Dataset & EDA) is **partially complete**:
+Dataset verification and EDA are **complete** (see `PROGRESS.md` and `EDA.md`):
 
-* **Done:** Elliptic++ dataset downloaded and verified; full data inventory written
-  (`DATA_INVENTORY.md`); memory-safe verification script
-  (`../scripts/verify_dataset.py`); `requirements.txt` created; implementation architecture
-  defined.
-* **Not done yet:** temporal EDA, class-imbalance analysis, graph statistics, feature
-  understanding, DVC setup, `src/` project structure, MLflow tracking, and the
-  Kaggle/Colab training environment.
+* **Done:** Elliptic++ dataset downloaded and fully verified with a streaming, low-memory
+  verifier (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`;
+  temporal, class-imbalance, graph, and feature EDA in `EDA.md`; `requirements.txt`
+  created; implementation architecture and compute split defined.
+* **Not done yet:** the notebook ML entrypoints (`notebooks/`), DVC setup, `src/` project
+  structure, MLflow tracking, and the Kaggle/Colab notebook environment. The existing
+  Phase 2 EDA logic (`../scripts/eda_phase2.py`) is to be carried into
+  `notebooks/01_eda.ipynb`, which becomes the canonical EDA entrypoint.
 
 No models have been trained and **no experimental results exist yet**.
 

@@ -23,26 +23,83 @@
 BitcoinGraphGuard uses **two environments**. See `docs/ARCHITECTURE.md` for the full
 pipeline and artifact handoff.
 
-* **Laptop = engineering only.** Repository work, code development/review, data
-  inspection, lightweight EDA/validation, preprocessing scripts, graph schema design,
-  experiment configuration, testing, FastAPI, MLOps, Docker, CI/CD, monitoring,
-  dashboard, and documentation.
-* **Kaggle / Google Colab = all model training.** XGBoost, GraphSAGE, RGCN, HGT,
-  hyperparameter tuning, ablations, temporal/inductive experiments, GNNExplainer, and
-  final training all require GPU/compute and must run remotely.
-* **Never train project models on the laptop.**
-* **Notebooks are an experiment/training interface, not the application.** Put reusable
-  logic (data loading, feature engineering, graph construction, models, metrics, training
-  loops) in project source so notebooks only orchestrate it.
-* **Export artifacts back.** Downloaded checkpoints, predictions, metrics, and
-  explanation outputs are consumed locally by MLflow/DVC, the API, and the dashboard.
+* **Laptop = development and documentation only.** Writing and reviewing code, managing
+  the Git repository, editing documentation, system design, reviewing notebook code,
+  backend/FastAPI, Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project
+  configuration.
+* **Kaggle / Google Colab = ALL ML execution.** Dataset loading, ML data processing, EDA,
+  feature engineering, XGBoost, graph construction for training, GraphSAGE, RGCN, HGT,
+  hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis,
+  GNNExplainer, final evaluation, and model-artifact generation all run remotely in
+  notebooks.
+* **Do not execute ML work on the laptop.** No expensive data processing, feature
+  engineering, model training, GNN training, or experiments locally — not even XGBoost or
+  "lightweight" EDA.
+* **Export artifacts back.** Checkpoints, predictions, metrics, configurations, and
+  explanation outputs are downloaded and consumed locally by MLflow/DVC, the API, and the
+  dashboard.
+
+## Notebook Architecture (CRITICAL)
+
+Notebooks are the **executable implementation** of the ML work and run in Google Colab or
+Kaggle. One notebook = one major project phase; never create a notebook per small step.
+
+```text
+notebooks/
+├── 01_eda.ipynb
+├── 02_xgboost.ipynb
+├── 03_graphsage.ipynb
+├── 04_heterogeneous_gnn.ipynb
+├── 05_temporal_inductive_evaluation.ipynb
+├── 06_explainability.ipynb
+└── 07_final_evaluation.ipynb
+```
+
+* Adjust the count only for a genuine reason; never split one phase across several
+  notebooks.
+* A notebook holds many related steps internally — e.g. `01_eda.ipynb` covers loading,
+  validation, temporal/class/graph/feature analysis, visualizations, and conclusions.
+* Notebooks must run standalone on Colab/Kaggle. Application and serving logic belongs in
+  `src/`; ML experimentation implementation belongs in the notebook.
+
+## Notebook Quality & Reproducibility
+
+* Write notebooks the way a real data scientist would: readable, logically ordered,
+  well commented where it adds value, modular where useful, reasonably concise, and
+  reproducible. Avoid auto-generated boilerplate.
+* Do not comment obvious Python syntax. Use markdown cells to explain what is being done,
+  why, what the result means, and what decision follows from it.
+* Do not blindly run every possible analysis — each notebook tells a coherent story.
+* Define random seeds, record configuration, identify the dataset, and never hardcode
+  personal paths. Paths must work on Colab/Kaggle or be configurable in one cell at the top.
+* Save metrics and required artifacts; integrate MLflow/DVC where they add real value
+  rather than for appearance.
+* Process data with chunked readers, memory-efficient structures, GPU use, mini-batch
+  training, neighbour sampling, and explicit cleanup. Never fabricate synthetic or
+  artificial data to make an experiment easier.
+
+## Working Protocol: ML Phases (CRITICAL)
+
+When the user asks for the next ML phase:
+
+1. Provide the notebook implementation for that phase.
+2. Assume the user runs it in Google Colab/Kaggle.
+3. Never ask the user to run ML code on the laptop.
+4. Keep the implementation inside the single appropriate phase notebook.
+5. Do not create unnecessary additional notebooks.
+6. Write understandable, human-like code.
+7. Explain important decisions before or alongside the code.
+8. Wait for the actual results before designing the next phase.
+
+Proceed **one notebook/phase at a time**.
 
 ## Hardware & Low-Resource Constraints (CRITICAL)
 
 * **Low Hardware Specs**: This laptop has limited memory (5.6 GB total RAM, ~3.0 GB available) and an older dual-core/4-thread Intel Core i3 CPU.
+* **No ML on the Laptop**: The laptop never executes data processing, feature engineering, training, or experiments; those run in Colab/Kaggle notebooks.
 * **No Heavy Unconstrained Tasks**: Never run heavy full-graph in-memory jobs, massive concurrent multiprocessing pools, or unconstrained training runs that can freeze the machine or trigger OOM errors.
-* **Streaming & Chunking Mandate**: Always process raw CSVs and graph data using chunked readers (`chunksize`), streaming iterators, or generator pipelines.
-* **Mini-Batching**: For GNNs and graph operations, use mini-batch sampling (`NeighborLoader`, `HeteroNeighborLoader`) instead of loading or training on the entire ~1.03M-node / ~4.42M-edge graph in RAM at once. This applies on Kaggle/Colab as well as the laptop.
+* **Streaming & Chunking Mandate**: Always process raw CSVs and graph data using chunked readers (`chunksize`), streaming iterators, or generator pipelines — in notebooks as well.
+* **Mini-Batching**: For GNNs and graph operations, use mini-batch sampling (`NeighborLoader`, `HeteroNeighborLoader`) instead of loading the entire ~1.03M-node / ~4.42M-edge graph into RAM at once.
 * **Memory Management**: Explicitly delete large transient objects and invoke garbage collection (`gc.collect()`) after memory-intensive processing steps.
 
 ## Machine Learning Rules
@@ -54,6 +111,10 @@ pipeline and artifact handoff.
 * Use the temporal split defined by the project unless an experiment explicitly requires another split.
 * Record model configuration and experiment parameters.
 * Compare models using the same evaluation protocol.
+* Never introduce data leakage: do not randomly split the primary temporal experiment, do
+  not let future time steps construct historical training features, and do not use unknown
+  labels as licit.
+* Report actual results only after the experiment has been run.
 
 ## Graph / Deep Learning Rules
 

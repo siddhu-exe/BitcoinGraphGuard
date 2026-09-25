@@ -15,7 +15,8 @@ order, though light Phase 1/2 work may overlap.
 
 ## Phase 1 — Dataset & EDA
 
-**Environment:** Laptop · **Status:** In progress
+**Environment:** Laptop (verification) + `notebooks/01_eda.ipynb` on Kaggle/Colab (EDA) ·
+**Status:** In progress (EDA done locally; notebook consolidation pending)
 
 **Objective:** Confirm the Elliptic++ dataset is complete, correct, and understood before
 any modelling begins.
@@ -29,20 +30,21 @@ any modelling begins.
 * Graph statistics (degree distributions, connected structure, edge-type counts)
 * Feature understanding (what each feature group means)
 
-**Expected output:** `DATA_INVENTORY.md`, a reproducible verification script, and EDA
-notes describing the dataset's temporal and graph structure.
+**Expected output:** `DATA_INVENTORY.md`, a reproducible verification script, and
+`notebooks/01_eda.ipynb` describing the dataset's temporal and graph structure.
 
 **Completion criteria:** Every file verified; statistics recorded without fabrication;
 temporal and class-imbalance behaviour documented; no open questions about column meaning.
 
-**Already completed:** dataset verification, data inventory, verification script.
-**Still to do:** temporal EDA, class-imbalance analysis, graph statistics, feature
-understanding.
+**Already completed:** dataset verification, data inventory, verification script, and
+temporal/class/graph/feature EDA (recorded in `docs/EDA.md`).
+**Still to do:** consolidate the EDA into `notebooks/01_eda.ipynb` so it runs standalone
+on Kaggle/Colab.
 
 ## Phase 2 — Baseline
 
-**Environment:** Laptop for feature work; Kaggle/Colab for XGBoost training ·
-**Status:** Not started
+**Environment:** `notebooks/02_xgboost.ipynb` and `notebooks/03_graphsage.ipynb` on
+Kaggle/Colab; laptop for MLflow configuration · **Status:** Not started
 
 **Objective:** Establish a strong classical ML baseline before any GNN is introduced.
 
@@ -62,7 +64,7 @@ the temporal split rules; no GNN claim is made without a working baseline.
 
 ## Phase 3 — Graph Deep Learning
 
-**Environment:** Laptop for graph construction; Kaggle/Colab for all training ·
+**Environment:** `notebooks/04_heterogeneous_gnn.ipynb` on Kaggle/Colab ·
 **Status:** Not started
 
 **Objective:** Learn from graph structure with GNNs, starting simple and escalating only
@@ -84,7 +86,8 @@ protocol as XGBoost; any HGT use is explicitly justified.
 
 ## Phase 4 — Robust Evaluation
 
-**Environment:** Kaggle/Colab (heavy evaluation) · **Status:** Not started
+**Environment:** `notebooks/05_temporal_inductive_evaluation.ipynb` on Kaggle/Colab ·
+**Status:** Not started
 
 **Objective:** Prove the models generalize over time and to unseen actors, not just on a
 random split.
@@ -103,7 +106,8 @@ which components help; evaluation is leakage-free.
 
 ## Phase 5 — Explainability
 
-**Environment:** Kaggle/Colab · **Status:** Not started
+**Environment:** `notebooks/06_explainability.ipynb` on Kaggle/Colab ·
+**Status:** Not started
 
 **Objective:** Explain individual predictions so results are trustworthy for fraud
 investigation.
@@ -184,8 +188,8 @@ MLflow/DVC records.
 
 ## Phase 9 — Finalization
 
-**Environment:** Kaggle/Colab for final runs; laptop for docs and packaging ·
-**Status:** Not started
+**Environment:** `notebooks/07_final_evaluation.ipynb` on Kaggle/Colab for final runs;
+laptop for docs and packaging · **Status:** Not started
 
 **Objective:** Freeze the final system and document it end to end.
 

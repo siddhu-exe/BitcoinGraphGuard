@@ -58,11 +58,15 @@ docker build -t bitcoingraphguard:latest .     # Build container
 
 Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
 
-- **Laptop (engineering only)**: repository/Git, code development and review, data inspection, lightweight validation/EDA, preprocessing scripts, graph schema design, experiment configuration, testing, FastAPI backend, MLOps (MLflow/DVC), Docker, CI/CD, monitoring, dashboard, documentation.
-- **Kaggle / Google Colab (all training)**: XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive experiments, GNNExplainer, final training, and heavy evaluation.
-- **Never train project models on the laptop.**
-- **Notebooks are a training interface, not the application** — keep reusable logic in project source and let notebooks orchestrate it.
+- **Laptop (development & documentation only)**: writing/reviewing code, Git management, documentation, system design, notebook code review, FastAPI backend, Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project configuration.
+- **Kaggle / Google Colab (ALL ML execution, in notebooks)**: dataset loading, ML data processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final evaluation, and model-artifact generation.
+- **Do not execute ML on the laptop** — no data processing, feature engineering, training, or experiments locally, including "lightweight" EDA.
+- **One notebook per phase** under `notebooks/` (`01_eda.ipynb` … `07_final_evaluation.ipynb`). Notebooks are the executable ML implementation and must run standalone on Colab/Kaggle; application/serving logic lives in `src/`.
 - Remote runs export checkpoints, predictions, metrics, and explanation outputs back to the laptop for tracking, serving, and monitoring.
+
+When asked for the next ML phase: provide the phase notebook, assume it runs on Colab/Kaggle,
+keep it inside the single appropriate notebook, write human-like code, explain important
+decisions, and wait for real results before designing the next phase.
 
 ## Hardware & Execution Constraints (Low-Resource Environment)
 
