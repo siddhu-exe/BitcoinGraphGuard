@@ -12,6 +12,7 @@ transactions: missing values in the 165 model features,0,0,True,the domain block
 transactions: illicit count,4545,4545,True,
 transactions: licit count,42019,42019,True,
 transactions: unknown count,157205,157205,True,
+"features: transaction feature set (no domain, no flag)",165,165,True,
 has_addresses: address-less transactions,965,965,True,matches the blank-domain rows found in Phase 1/EDA
 protocol: no train/test overlap,False,False,True,
 protocol: sub-windows partition the test period,16670,16670,True,
@@ -34,7 +35,24 @@ leakage: no feature constructed from labels,[],[],True,
 leakage: no single feature is a near-perfect discriminator,True,True,True,"EDA's strongest |r| with the label is 0.26, so an AUC above 0.95 would be a red flag"
 leakage: preprocessing statistics will be fit on the fit window only,True,,True,enforced in sections 7 and 8 by passing only X_fit to .fit()
 baseline: constant score AP equals the evaluation prevalence,0.064967,0.064967,True,"AP of a constant score is the positive rate of the evaluated window, not of the training window"
-xgboost: early stopping kept at least one tree,True,True,True,
-xgboost: early stopping stopped before the tree cap,True,True,True,a model that used all 500 trees hit the cap and should be re-run with more
+reference xgb: the first run's tree cap was binding (early stopping never fired),True,False,False,expected False - the recorded 0.8007 came from an optimum sitting on the last tree
+search: number of random trials executed,20,20,True,
+search: selection metric is validation PR-AUC,True,True,True,ROC-AUC is recorded but never used to rank
+search: optimised model stopped before the tree cap,True,True,True,"cap 1500, patience 100; a True here would mean the cap moved the answer"
+search: every trial used the fit-window scale_pos_weight,9.638125,9.638125,True,
+ablation: no illicit transaction in the training period is address-less,0,0,True,the same holds dataset-wide per docs/EDA.md; this run verifies it on data the model may use
+ablation: has_addresses decision follows the pre-registered margin,False,False,True,
+redundancy: ablation followed the pre-registered adoption rule,False,False,True,
+redundancy: no label information used for the reduction,True,,True,pairs come from the fit-window feature correlation matrix only
+evaluation: threshold was selected on validation only (recomputed on validation matches),0.435,0.435,True,
+evaluation: confusion matrix arithmetic closes for every model,True,True,True,
 temporal: sub-windows partition the test set,16670,16670,True,
+temporal: optimised model was not tuned on 43-49,True,,True,"hyperparameters came from validation PR-AUC on 25-34; 43-49 is reported, never searched"
 errors: tp+fp+fn+tn covers every test row,16670,16670,True,
+errors: false negatives and false positives partition the mistakes,451,451,True,
+predictions: optimised label matches score >= threshold,0,0,True,
+predictions: baseline label matches score >= threshold,0,0,True,
+"reproducibility: feature list, hyperparameters and seed are all recorded",True,True,True,
+predictions: optimised label matches score >= threshold,0,0,True,
+predictions: baseline label matches score >= threshold,0,0,True,
+"reproducibility: feature list, hyperparameters and seed are all recorded",True,True,True,

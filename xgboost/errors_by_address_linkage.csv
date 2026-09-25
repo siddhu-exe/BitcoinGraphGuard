@@ -1,3 +1,0 @@
-group,n,illicit,tp,fp,fn,tn,precision,recall,flagged_rate
-has address link,16346.0,1083.0,798.0,152.0,285.0,15111.0,0.84,0.7368421052631579,0.058118194053591095
-no address link,324.0,0.0,0.0,0.0,0.0,324.0,,,0.0
