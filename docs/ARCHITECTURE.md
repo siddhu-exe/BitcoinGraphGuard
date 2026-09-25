@@ -36,7 +36,7 @@ Kaggle. There is **one notebook per major project phase** — not one per small 
 | Notebook | Phase | Contains |
 | :--- | :--- | :--- |
 | `notebooks/01_eda.ipynb` | Exploratory data analysis | Dataset loading, validation for EDA, temporal analysis, class-imbalance analysis, graph statistics, feature analysis, visualizations, conclusions |
-| `notebooks/02_xgboost.ipynb` | Classical baseline | Feature engineering, split construction, XGBoost training, PR-AUC/precision/recall/F1 evaluation |
+| `notebooks/02_xgboost.ipynb` | Classical baseline | Leakage audit, temporal split construction, prevalence baseline, Logistic Regression, XGBoost training, PR-AUC/precision/recall/F1 evaluation, temporal windows, error and feature-importance analysis |
 | `notebooks/03_graphsage.ipynb` | Homogeneous GNN baseline | Graph construction, GraphSAGE training with neighbour sampling, comparison to XGBoost |
 | `notebooks/04_heterogeneous_gnn.ipynb` | Heterogeneous GNN | Heterogeneous graph build, RGCN (and HGT only if justified), tuning, ablations |
 | `notebooks/05_temporal_inductive_evaluation.ipynb` | Robust evaluation | Temporal degradation, inductive evaluation on unseen nodes, per-step error analysis |
