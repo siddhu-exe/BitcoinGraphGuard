@@ -48,7 +48,7 @@ The phase was executed end-to-end on Google Colab (CUDA GPU) under the strict, l
   3. **Decision Tree Superiority on Tabular Neighborhood Features:** XGBoost already ingests 72 pre-aggregated tabular neighborhood features (`Aggregate_feature_*`), which tree ensembles partition non-linearly with lower inductive bias than 2-layer GNNs.
 
 ### 3. Shared Temporal Collapse in the Late Drift Window (Steps 43–49)
-Both tree-based and neural graph models collapse in the low-prevalence regime following the major darknet market takedowns:
+Model performance collapses in steps 43–49 under a severe temporal regime shift and lower illicit prevalence across both tree-based and neural graph models:
 - **Steps 35–42 (Early Test, 9.16% prevalence):** XGBoost **0.9215** | GraphSAGE **0.7346** | MLP **0.5912**
 - **Steps 43–49 (Recent Drift, 2.53% prevalence):** XGBoost **0.0427** | GraphSAGE **0.0504** | MLP **0.0395** (Prevalence: 0.0253)
 

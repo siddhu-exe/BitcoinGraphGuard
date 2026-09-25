@@ -1,9 +1,0 @@
-key,file,size_mb,columns,id_columns
-txs_features,txs_features.csv,694.79,184,"['txId', 'Time step']"
-txs_classes,txs_classes.csv,2.36,2,['txId']
-txs_edges,txs_edgelist.csv,4.47,2,"['txId1', 'txId2']"
-wallets_features,wallets_features.csv,606.46,57,"['address', 'Time step']"
-wallets_classes,wallets_classes.csv,30.42,2,['address']
-addr_tx,AddrTx_edgelist.csv,21.25,2,"['input_address', 'txId']"
-tx_addr,TxAddr_edgelist.csv,36.7,2,"['txId', 'output_address']"
-addr_addr,AddrAddr_edgelist.csv,200.63,2,"['input_address', 'output_address']"

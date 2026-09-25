@@ -1,7 +1,0 @@
-window,steps,labeled,illicit,licit,illicit_pct
-fit,1-24,23606,2219,21387,9.4
-validation,25-34,6288,1243,5045,19.77
-train,1-34,29894,3462,26432,11.58
-test,35-49,16670,1083,15587,6.5
-test_early,35-42,9983,914,9069,9.16
-test_drift,43-49,6687,169,6518,2.53

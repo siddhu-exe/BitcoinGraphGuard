@@ -51,18 +51,28 @@ The temporal sub-windows still do not hold up: PR-AUC is 0.9215 on 35–42 but 0
 prevalence). `has_addresses` moved validation PR-AUC by +0.000933, below the pre-registered +0.005
 margin, so it was dropped from the final feature set. Full record: `docs/XGBOOST.md`.
 
-**Phase 3 — GraphSAGE baseline: COMPLETE.**
+**Phase 3 — GraphSAGE baseline: COMPLETE (43/43 checks passing).**
 `notebooks/03_graphsage.ipynb` executed end to end on Google Colab (CUDA GPU) on 2026-09-25 with
-artifacts exported to `GraphSage/`. 41 of 43 checks in `GraphSage/checks.csv` pass (the 2 failed
-checks are mis-specified expected values for isolated nodes; all 203,769 transactions have
-$\text{total\_degree} \ge 1$). Under the frozen temporal protocol (fit 1–24 / validation 25–34 /
-train 1–34 / test 35–49) on 165 features + `txs_edgelist.csv`:
+artifacts exported to `GraphSage/`. 43 of 43 checks in `GraphSage/checks.csv` pass (`ok = True`).
+Under the frozen temporal protocol (fit 1–24 / validation 25–34 / train 1–34 / test 35–49) on 165
+features + `txs_edgelist.csv`:
 - **GraphSAGE Baseline:** PR-AUC **0.6209** / ROC-AUC **0.9044** / F1 **0.5945** (Precision 0.6991, Recall 0.5171, $\tau^* = 0.830$).
 - **2-Layer MLP (Neural Ablation):** PR-AUC **0.4768** / ROC-AUC **0.8912** / F1 **0.5759** (Precision 0.5964, Recall 0.5568, $\tau^* = 0.710$).
 - **Lift over Neural Baseline:** GraphSAGE outperforms MLP by **+0.1442 PR-AUC (+30.2% relative)**, proving strong neighborhood aggregation value in neural architectures.
 - **Comparison vs Frozen XGBoost (0.8013):** GraphSAGE trails XGBoost by -0.1804 PR-AUC. The structural cause is 100% intra-step edge confinement (all 234,355 edges connect transactions in the same time step), excluding the 822,942 wallet nodes and multi-hop temporal flow.
-- **Temporal Sub-Windows:** Window 35–42 PR-AUC is **0.7346** (GraphSAGE) vs **0.9215** (XGBoost); Window 43–49 (drift regime) collapses for all models (GraphSAGE 0.0504 vs XGBoost 0.0427 vs base 0.0253).
-Full record: `docs/GRAPHSAGE.md`. Ready to transition to Phase 4 (Heterogeneous GNN — RGCN / HGT).
+- **Temporal Sub-Windows:** Window 35–42 PR-AUC is **0.7346** (GraphSAGE) vs **0.9215** (XGBoost); Window 43–49 collapses under temporal regime shift (GraphSAGE 0.0504 vs XGBoost 0.0427 vs base 0.0253).
+Full record: `docs/GRAPHSAGE.md`.
+
+**Phase 4 — Heterogeneous Graph Deep Learning (RGCN): COMPLETE (46/46 checks passing).**
+`notebooks/04_heterogeneous_gnn.ipynb` executed end to end on Google Colab (CUDA GPU) on 2026-09-25 with
+artifacts exported to `results/heterogeneous_gnn/`. 46 of 46 checks in `results/heterogeneous_gnn/checks.csv`
+pass (`ok = True`). Under the frozen temporal protocol (fit 1–24 / validation 25–34 / train 1–34 / test 35–49)
+on the full 4-relation heterogeneous graph (1,026,711 nodes, 4,417,560 directed edges):
+- **HeteroRGCN Test Performance:** PR-AUC **0.4682** / ROC-AUC **0.8946** / F1 **0.5295** (Precision 0.6241, Recall 0.4598, $\tau^* = 0.795$).
+- **Benchmark Comparison:** RGCN performs on par with 2-layer MLP (0.4768) but trails homogeneous GraphSAGE (0.6209) and frozen XGBoost (0.8013).
+- **Structural Mechanism:** While 61,487 multi-step wallets connect 10,812 test transactions to historical training transactions, uniform mean aggregation across 2.87M dense `AddrAddr` edges causes message diffusion and over-smoothing, diluting local transaction signals without attention gating.
+- **Temporal Sub-Windows:** Window 35–42 PR-AUC is **0.6083** (F1 0.6221); Window 43–49 drift window reaches PR-AUC **0.0550** (slight lift over GraphSAGE 0.0504 and XGBoost 0.0427), showing persistent wallet representations provide marginal stability across temporal shifts.
+Full record: `docs/HETEROGENEOUS_GNN.md`.
 
 **Phase 2 optimisation pass executed 2026-09-25 (same day as the baseline).** Budget lifted to
 1500 trees with patience 100 (582 trees kept — early stopping, not the cap, ended training), a
@@ -164,15 +174,18 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] Author `docs/GRAPHSAGE.md` — comprehensive design, structural property verification (100% intra-step),
       ablation methodology, and artifact specifications
 * [x] Execute `notebooks/03_graphsage.ipynb` on Colab/Kaggle (2026-09-25) and populate results from run artifacts (`GraphSage/`)
+* [x] Author `notebooks/04_heterogeneous_gnn.ipynb` — Heterogeneous GNN (RGCN) incorporating all 4 edge types (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) to bridge time steps and connect transactions across wallets
+* [x] Author `docs/HETEROGENEOUS_GNN.md` — methodology, architectural specification, leakage controls, and benchmark progression
+* [x] Execute `notebooks/04_heterogeneous_gnn.ipynb` on Google Colab (CUDA GPU) and export artifacts to `results/heterogeneous_gnn/` (46/46 checks passing)
+* [x] Benchmark heterogeneous GNN against frozen XGBoost (0.8013) and GraphSAGE (0.6209)
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
 
 ## Next
 
-* Author `notebooks/04_heterogeneous_gnn.ipynb` — Heterogeneous GNN (RGCN / HGT) incorporating all 4 edge types (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) to bridge time steps and connect transactions across wallets
-* Author `docs/HETEROGENEOUS_GNN.md` — design, heterogeneous graph construction, and evaluation protocol
-* Execute `notebooks/04_heterogeneous_gnn.ipynb` on Google Colab or Kaggle (GPU runtime recommended)
-* Benchmark heterogeneous GNN against frozen XGBoost (0.8013) and GraphSAGE (0.6209)
+* Author `notebooks/05_temporal_inductive_evaluation.ipynb` — Phase 5: Temporal & Inductive Evaluation (temporal drift diagnostics, rolling-window retraining vs static models, and inductive generalization on unseen nodes)
+* Author `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` — methodology, evaluation protocols, and adaptation strategies
+* Execute `notebooks/05_temporal_inductive_evaluation.ipynb` on Google Colab or Kaggle (GPU runtime)
 
 ## Known Issues
 

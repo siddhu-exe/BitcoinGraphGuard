@@ -1,3 +1,0 @@
-unit,total_min,total_max,labeled_min,labeled_max,labeled_pct_min,labeled_pct_max,illicit_min,illicit_max,illicit_pct_labeled_min,illicit_pct_labeled_median,illicit_pct_labeled_max
-transactions,1089,7880,206,2154,11.21,42.86,2,342,0.28,10.25,35.97
-wallet snapshots,4940,34853,798,19540,10.35,59.66,11,1106,0.35,4.59,27.65
