@@ -156,19 +156,21 @@ Dataset verification and the exploratory data analysis are **complete** (see `PR
   logic); `requirements.txt` created; implementation architecture and compute split defined.
 * **Executed, awaiting review:** `notebooks/02_xgboost.ipynb` — the Phase 2 XGBoost baseline
   (leakage audit, prevalence baseline, Logistic Regression, XGBoost, temporal and error analysis)
-  ran end to end on Google Colab on 2026-09-25, with artifacts exported to `xgboost/` and results
-  recorded in `XGBOOST.md`. XGBoost reaches PR-AUC 0.8007 / ROC-AUC 0.9317 on test 35–49, against
-  0.0650 for a constant-score baseline and 0.2917 for Logistic Regression; the 43–49 sub-window
-  degrades to 0.0423. Sign-off is pending before Phase 3 is designed. The notebook has since
-  been revised to lift its binding 500-tree cap (1500 trees, patience 100) and add a seeded
-  20-trial randomised search plus `has_addresses` and redundancy ablations; that revision is
-  authored but **not yet re-executed**, so the numbers above are still the original run's.
+  ran end to end on Google Colab on 2026-09-25 in two passes, with artifacts exported to `xgboost/`
+  and results recorded in `XGBOOST.md`. The recorded 500-tree baseline reaches PR-AUC 0.8007 /
+  ROC-AUC 0.9317 on test 35–49; the optimisation pass that lifted the budget to 1500 trees, searched
+  20 seeded parameter trials on validation PR-AUC and dropped `has_addresses` reaches 0.8013 /
+  0.9281 — so the tree budget was not the constraint and the two rows are the same baseline
+  measured twice. Both beat a 0.0650 constant-score baseline and 0.2917 / 0.8828 for Logistic
+  Regression; the 43–49 sub-window degrades to 0.0427. Sign-off is pending before Phase 3 is
+  designed.
 * **Not done yet:** phase 3 onwards — `notebooks/03_graphsage.ipynb` and the later notebooks; DVC
   setup; the `src/` project structure; MLflow tracking.
 
-**Experimental results now exist for Phase 2** — the XGBoost baseline and its Logistic Regression
-and prevalence baselines, under a temporal protocol with fit 1–24 / validation 25–34 / refit 1–34 /
-test 35–49. They are not yet signed off, and no graph model has been trained.
+**Experimental results now exist for Phase 2** — the XGBoost baseline, its optimisation pass, and
+the Logistic Regression and prevalence baselines, under a temporal protocol with fit 1–24 /
+validation 25–34 / refit 1–34 / test 35–49 on 165 transaction features. They are not yet signed off,
+and no graph model has been trained.
 
 ## Important Rules
 

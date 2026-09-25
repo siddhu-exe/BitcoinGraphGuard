@@ -76,9 +76,10 @@ Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
 Phase 1 is complete: dataset verification (`reports/phase1_verification.json`) and exploratory data
 analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.md`). Phase 2 is
 **executed and awaiting review sign-off**: `notebooks/02_xgboost.ipynb` ran on Google Colab on
-2026-09-25, artifacts in `xgboost/`, results in `docs/XGBOOST.md`. Protocol: fit 1–24 / validation
-25–34 / refit 1–34 / test 35–49, on the 166 transaction features. Read `docs/PROGRESS.md` before
-starting any phase work.
+2026-09-25 in two passes — the recorded 500-tree baseline and a controlled optimisation pass —
+with artifacts in `xgboost/` and results in `docs/XGBOOST.md`. Protocol: fit 1–24 / validation
+25–34 / refit 1–34 / test 35–49, on the 165 transaction features. Baseline PR-AUC 0.8007 / ROC-AUC
+0.9317, optimised 0.8013 / 0.9281. Read `docs/PROGRESS.md` before starting any phase work.
 
 **Do not start `notebooks/03_graphsage.ipynb` until Phase 2 has been signed off.**
 
@@ -87,8 +88,9 @@ Carry-forward constraints that must not be silently reversed:
 * Deduplicate wallet snapshots to `(address, time step)` before any split.
 * Never treat the 965 blank-domain, address-less transactions as `0`.
 * The `43–49` window is a secondary drift window, not the primary test set.
-* The XGBoost numbers are a floor: the 500-tree cap was binding, so the tree-count sweep must be
-  re-run before the baseline is called final.
+* The XGBoost numbers are a settled tabular ceiling rather than a floor: the budget was lifted
+  from 500 to 1500 trees and retuned over 20 seeded trials, moving test PR-AUC from 0.8007 to
+  0.8013 while ROC-AUC and F1 fell. Expect no further gain from tabular tuning.
 * Every GNN result must be reported on both `35–49` and `43–49`, never on the aggregate alone.
 * `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
   link.

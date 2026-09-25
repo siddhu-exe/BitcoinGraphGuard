@@ -5,16 +5,15 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified, Phase 1 EDA complete, and the Phase 2 baseline executed. Both
+> Status: dataset verified, Phase 1 EDA complete, and the Phase 2 baseline executed twice. Both
 > `notebooks/01_eda.ipynb` and `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25;
 > findings are in `docs/EDA.md` (artifacts in `eda/`) and `docs/XGBOOST.md` (artifacts in
-> `xgboost/`). The XGBoost baseline reaches **PR-AUC 0.8007 / ROC-AUC 0.9317** on test 35–49
-> against a 0.0650 constant-score baseline, but degrades to PR-AUC 0.0423 on the recent 43–49
-> window. Phase 2 awaits review sign-off; GraphSAGE has not been started. `notebooks/02_xgboost.ipynb`
-> has since been revised to lift its binding 500-tree cap (1500 trees, patience 100) and add a
-> seeded 20-trial randomised search plus `has_addresses` and redundancy ablations; that revision
-> is authored but **not yet re-executed**, so the 0.8007 figure above is still the original run's.
-> See `docs/PROGRESS.md` and `docs/PLAN.md`.
+> `xgboost/`). XGBoost reaches **PR-AUC 0.8013 / ROC-AUC 0.9281** on test 35–49 at a
+> validation-frozen threshold, against a 0.0650 constant-score baseline, but degrades to PR-AUC
+> 0.0427 on the recent 43–49 window. The earlier 500-tree run scored 0.8007 / 0.9317: lifting the
+> tree budget to 1500 and retuning over 20 seeded trials confirmed that the budget was not the
+> constraint. Phase 2 awaits review sign-off; GraphSAGE has not been started. See
+> `docs/PROGRESS.md` and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
