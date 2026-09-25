@@ -16,7 +16,7 @@ order, though light Phase 1/2 work may overlap.
 ## Phase 1 — Dataset & EDA
 
 **Environment:** Laptop (verification) + `notebooks/01_eda.ipynb` on Kaggle/Colab (EDA) ·
-**Status:** In progress (EDA done locally; notebook consolidation pending)
+**Status:** In progress (verification complete; EDA notebook authored, execution pending)
 
 **Objective:** Confirm the Elliptic++ dataset is complete, correct, and understood before
 any modelling begins.
@@ -34,12 +34,14 @@ any modelling begins.
 `notebooks/01_eda.ipynb` describing the dataset's temporal and graph structure.
 
 **Completion criteria:** Every file verified; statistics recorded without fabrication;
-temporal and class-imbalance behaviour documented; no open questions about column meaning.
+temporal and class-imbalance behaviour documented **by the executed notebook**; no open
+questions about column meaning.
 
-**Already completed:** dataset verification, data inventory, verification script, and
-temporal/class/graph/feature EDA (recorded in `docs/EDA.md`).
-**Still to do:** consolidate the EDA into `notebooks/01_eda.ipynb` so it runs standalone
-on Kaggle/Colab.
+**Already completed:** dataset verification, data inventory, verification script, and the
+first pass of temporal/class/graph/feature EDA (run locally before the notebook architecture
+was adopted; evidence in `reports/eda/`).
+**Still to do:** execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in
+`docs/EDA.md`, so the phase has a standalone, reproducible source of truth.
 
 ## Phase 2 — Baseline
 

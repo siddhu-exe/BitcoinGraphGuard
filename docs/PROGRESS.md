@@ -2,7 +2,7 @@
 
 ## Current Status
 
-**Phase 1 (data & foundation) — dataset verification COMPLETE.** On 2026-09-22 all nine
+**Phase 1 — dataset verification: COMPLETE.** On 2026-09-22 all nine
 raw Elliptic++ CSVs and every cross-entity relationship were independently re-verified
 with a streaming, low-priority verifier: 0 structural failures, peak RSS 1.07 GB,
 457 s runtime. Evidence: `reports/phase1_verification.json`; full report:
@@ -12,18 +12,18 @@ Two previous claims were corrected: `txs_features.csv` has 16,405 blank cells (n
 and `wallets_features.csv` contains 347,569 exact duplicate rows (so 1,268,260 raw rows =
 920,691 distinct `(address, time step)` snapshots).
 
-**Phase 2 (Exploratory Data Analysis) — COMPLETE.** On 2026-09-22 the temporal structure,
-class imbalance, graph structure, feature distributions and temporal-split options were
-analysed with a streaming, low-priority EDA pipeline (`scripts/eda_phase2.py`): full
-pipeline **297 s**, peak RSS **879 MB**, no model trained, no split finalized. Evidence:
-`reports/eda/phase2_eda.json`; full report: `docs/EDA.md`.
+**Phase 1 — exploratory data analysis (`notebooks/01_eda.ipynb`): authored, execution pending.** A local
+streaming EDA ran on 2026-09-22 (`scripts/eda_phase2.py`: full pipeline **297 s**, peak RSS
+**879 MB**, no model trained, no split finalized); evidence: `reports/eda/phase2_eda.json`.
+Under the current architecture that pipeline is **superseded**: `notebooks/01_eda.ipynb` is
+now the canonical, executable EDA entrypoint, and the script's logic is the reference
+implementation carried into it. The notebook is authored and validated (lint-clean, helper
+logic unit-checked on tiny synthetic arrays) but has **not been executed**, so the EDA phase
+is deliberately **not** marked complete and `docs/EDA.md` stays pending until the notebook
+has been run and reviewed on Colab/Kaggle.
 
-Under the current architecture this local pipeline is **superseded**:
-`notebooks/01_eda.ipynb` is the canonical, executable EDA entrypoint, and the script's
-logic is the reference implementation to carry into the notebook. The recorded EDA results
-themselves remain valid evidence.
-
-Headline Phase 2 findings: activity spans 49 steps with ~7× burstiness; illicit share of
+Headline findings from the superseded local run (recorded reference evidence, to be
+reconfirmed by the notebook): activity spans 49 steps with ~7× burstiness; illicit share of
 labeled transactions ranges **0.28%–35.97%** by step; the address graph is a single
 component of 822,935 nodes while the transaction graph fragments into **49 components**;
 the combined address↔transaction graph has **965 singleton components = the 965
@@ -88,8 +88,11 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] Define implementation architecture and laptop vs Kaggle/Colab compute split
       (`ARCHITECTURE.md`)
 * [x] Create `requirements.txt` (user-managed install pending)
-* [x] Build streaming, resumable Phase 2 EDA tooling (`scripts/eda_phase2.py`,
+* [x] Build streaming, resumable EDA tooling (`scripts/eda_phase2.py`,
       `scripts/plot_phase2_eda.py`)
+* [x] Author `notebooks/01_eda.ipynb` — the canonical EDA entrypoint (single notebook for
+      the phase; streams both large feature files, re-derives the Phase 1 inventory, and
+      emits tables, figures, a digest and a machine-readable summary)
 * [x] **Temporal structure analysis** across all 49 steps for transactions and wallet
       snapshots
 * [x] **Class-imbalance analysis** (overall and per time step; unknown never treated as
@@ -99,13 +102,14 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] **Feature analysis** (missingness, constants, skew, class correlation, redundancy,
       early/late drift)
 * [x] **Temporal-split investigation** over candidate windows (split not finalized)
-* [x] Document Phase 2 findings in `docs/EDA.md`
+* [x] Record the first-pass EDA findings as evidence (`reports/eda/`); `docs/EDA.md` now waits
+      for the notebook run before it is treated as final
 
 ## Current Task
 
 * [ ] Install project Python dependencies from `requirements.txt` (user-managed)
-* [ ] Create `notebooks/01_eda.ipynb` — consolidate the Phase 2 EDA logic into the
-      canonical notebook entrypoint (Colab/Kaggle)
+* [ ] **Execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in
+      `docs/EDA.md`** — the EDA phase is not complete until this run has been reviewed
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
 * [ ] Prepare the Kaggle/Colab notebook environment (one notebook per phase)
@@ -114,8 +118,8 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 
 ## Next
 
-* Confirm whether `txs_edgelist` components map one-to-one onto time steps (join
-  component labels to `Time step`)
+* Confirm whether `txs_edgelist` components map one-to-one onto time steps — answered by
+  §8 of `notebooks/01_eda.ipynb` (`txs_component_time_span.csv`) once it is executed
 * Build the memory-aware project data pipeline; deduplicate wallet snapshots to
   `(address, time step)` before any split
 * Design the heterogeneous graph schema (mask/flag the 965 address-less transactions)
@@ -134,7 +138,8 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * Temporal class prevalence is non-stationary; the candidate test window 43–49 has only
   169 illicit transactions (2.53% of labeled). Split/metric protocol deliberately open.
 * Whether `txs_edgelist`'s 49 components correspond exactly to the 49 time steps is
-  strongly suggested but not yet confirmed.
+  strongly suggested but not yet confirmed; the notebook reports it as a component×time-step
+  purity table rather than leaving it implicit.
 * Final heterogeneous graph schema is pending Phase 3 design.
 * Final deployment infrastructure will be decided after the inference pipeline is
   implemented.

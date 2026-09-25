@@ -145,16 +145,19 @@ Application and serving logic lives in `src/`. See `ARCHITECTURE.md`.
 
 ## Current Status
 
-Dataset verification and EDA are **complete** (see `PROGRESS.md` and `EDA.md`):
+Dataset verification is **complete**; exploratory data analysis is **authored but not yet
+executed** (see `PROGRESS.md` and `EDA.md`):
 
-* **Done:** Elliptic++ dataset downloaded and fully verified with a streaming, low-memory
-  verifier (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`;
-  temporal, class-imbalance, graph, and feature EDA in `EDA.md`; `requirements.txt`
-  created; implementation architecture and compute split defined.
-* **Not done yet:** the notebook ML entrypoints (`notebooks/`), DVC setup, `src/` project
-  structure, MLflow tracking, and the Kaggle/Colab notebook environment. The existing
-  Phase 2 EDA logic (`../scripts/eda_phase2.py`) is to be carried into
-  `notebooks/01_eda.ipynb`, which becomes the canonical EDA entrypoint.
+* **Done:** Elliptic++ downloaded and fully verified with a streaming, low-memory verifier
+  (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`; a first pass of
+  temporal, class-imbalance, graph and feature EDA run locally (`reports/eda/`);
+  `notebooks/01_eda.ipynb` authored as the canonical EDA entrypoint (`../scripts/eda_phase2.py`
+  is the superseded reference implementation of the same logic); `requirements.txt` created;
+  implementation architecture and compute split defined.
+* **Not done yet:** executing `notebooks/01_eda.ipynb` on Colab/Kaggle and recording the
+  results in `EDA.md`; the remaining phase notebooks; DVC setup; the `src/` project structure;
+  MLflow tracking; and the Kaggle/Colab environment. `EDA.md` stays pending until that first
+  notebook run has been reviewed.
 
 No models have been trained and **no experimental results exist yet**.
 

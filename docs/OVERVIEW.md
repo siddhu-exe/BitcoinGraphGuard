@@ -10,8 +10,9 @@ built on the real **Elliptic++** dataset. It detects illicit activity at the **t
 and **wallet/address** level using classical ML, graph neural networks, and production-grade
 MLOps.
 
-**Status:** Dataset verified and EDA complete (see `EDA.md`). No models trained yet and no
-experimental results yet.
+**Status:** Dataset verified; the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`) is authored
+but not yet executed, so `EDA.md` is still pending. No models trained and no experimental
+results yet.
 
 ## The Problem
 

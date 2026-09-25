@@ -30,9 +30,11 @@ One notebook per phase; do not create a notebook per small step.
 * [x] Inspect dataset structure and metadata
 * [x] Validate transaction and actor/wallet data
 * [x] Identify missing values, duplicates, invalid relationships, and label distribution
-* [x] Analyze temporal structure (Phase 2, see `EDA.md`)
-* [x] Analyze class imbalance (Phase 2, see `EDA.md`)
-* [x] Perform graph-level EDA (Phase 2, see `EDA.md`)
+* [x] Analyze temporal structure (first pass run locally; see `docs/EDA.md`)
+* [x] Analyze class imbalance (first pass run locally; see `docs/EDA.md`)
+* [x] Perform graph-level EDA (first pass run locally; see `docs/EDA.md`)
+* [x] Author the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`)
+* [ ] Execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in `docs/EDA.md`
 * [ ] Configure DVC
 * [ ] Establish reproducibility and configuration system
 

@@ -19,6 +19,17 @@ The raw dataset in `Og data/` comprises temporal graph and tabular data across 4
 
 *Note: Raw data in `Og data/` is gitignored; do not commit large CSVs or raw data files.*
 
+## Repository Layout
+
+| Path | Purpose |
+| :--- | :--- |
+| `Og data/` | Raw Elliptic++ CSVs — gitignored, **read-only**; never modified, moved or committed |
+| `notebooks/` | One notebook per ML phase, run on Colab/Kaggle: `01_eda.ipynb` … `07_final_evaluation.ipynb` |
+| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (including `EDA.md`) |
+| `scripts/` | Repository tooling: `verify_dataset.py`; `eda_phase2.py` is superseded by notebook 01 |
+| `reports/` | Verification and EDA evidence (JSON / CSV / PNG) |
+| `src/`, `tests/` | Application/serving code and tests — planned, not created yet |
+
 ## Development & Environment Commands
 
 Python 3.10+ / `uv` is recommended for dependency and environment management.
@@ -76,9 +87,23 @@ decisions, and wait for real results before designing the next phase.
 - **Mini-Batch Graph Learning**: Use sub-graph sampling and mini-batch loaders (`NeighborLoader` / `HeteroNeighborLoader`) for GNN models.
 - **Resource Discipline**: Limit parallel worker threads (max 2 workers), explicitly release large variables, and call `gc.collect()` to prevent system freezing and OOM kills.
 
-## Code Quality Requirements
+## Coding Style & Naming Conventions
 
+* Python 3.10–3.12, 4-space indentation; `ruff` is the linter and formatter.
+* `snake_case` for functions and variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants, lowercase module names; type hints where practical, one-line docstrings on public callables.
+* Notebooks: readable, logically ordered code; markdown cells explain what is being done, why, what the result means and what decision follows; no comments on obvious syntax; no hardcoded personal paths; no leftover exploratory cells.
 * **Production-quality code**: all committed code must be production quality — clear, readable, typed where practical, error-handled, tested, and free of dead code, debug leftovers, and hardcoded values. Notebook/prototype code does not belong in project source.
+
+## Testing Guidelines
+
+* `pytest`, tests under `tests/`, files named `test_*.py`, functions named `test_<behaviour>`, mirroring the `src/` layout. Use small synthetic fixtures — never the raw Elliptic++ files.
+* No test suite exists yet; tests arrive with `src/`. Until then, correctness is evidenced by the notebook's own checks (`checks.csv`) and by unit-checking notebook helper logic on tiny synthetic arrays outside the repository. Coverage thresholds are not enforced yet.
+
+## Commit & Pull Request Guidelines
+
+* Commit history uses short, scoped, imperative subjects — for example `dataset reverification`, `docs: add dataset verification details`, `fix(frontend): gate the UI on a backend readiness probe`. Prefer `type(scope): summary` (`feat`, `fix`, `docs`, `chore`, `test`) and add a body covering what and why when the change is not self-evident.
+* Pull requests should describe the change and its motivation, point at the relevant phase document (`docs/PLAN.md`, `docs/PROGRESS.md`, `docs/EDA.md`), list the commands run and their results, note any documentation updated, and include figures or metrics for EDA/ML changes.
+* Never include raw data, model artifacts, credentials or other large generated files in a commit or PR. Keep each PR focused on a single phase or concern.
 
 ## Critical Modeling & Evaluation Rules
 

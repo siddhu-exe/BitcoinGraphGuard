@@ -149,7 +149,8 @@ Uniqueness is defined on the exact parsed `(source, destination)` pair.
 
 2. **Handle the 965 address-less transactions explicitly.** Their 17 domain features are
    blank and they have no address links. Do not treat blanks as 0; decide on masking or a
-   dedicated "no-address" indicator in Phase 2.
+   dedicated "no-address" indicator when the feature set is fixed
+   (`notebooks/02_xgboost.ipynb`).
 
 3. **Heterogeneous graph (PyG / DGL):** `transaction` = 203,769 nodes (182 features);
    `wallet` = 822,942 nodes (55 features); edge types
