@@ -159,7 +159,10 @@ Dataset verification and the exploratory data analysis are **complete** (see `PR
   ran end to end on Google Colab on 2026-09-25, with artifacts exported to `xgboost/` and results
   recorded in `XGBOOST.md`. XGBoost reaches PR-AUC 0.8007 / ROC-AUC 0.9317 on test 35–49, against
   0.0650 for a constant-score baseline and 0.2917 for Logistic Regression; the 43–49 sub-window
-  degrades to 0.0423. Sign-off is pending before Phase 3 is designed.
+  degrades to 0.0423. Sign-off is pending before Phase 3 is designed. The notebook has since
+  been revised to lift its binding 500-tree cap (1500 trees, patience 100) and add a seeded
+  20-trial randomised search plus `has_addresses` and redundancy ablations; that revision is
+  authored but **not yet re-executed**, so the numbers above are still the original run's.
 * **Not done yet:** phase 3 onwards — `notebooks/03_graphsage.ipynb` and the later notebooks; DVC
   setup; the `src/` project structure; MLflow tracking.
 

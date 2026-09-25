@@ -4,7 +4,8 @@
 **Implementation:** `notebooks/02_xgboost.ipynb` (Google Colab / Kaggle — never the laptop)
 **Status:** notebook authored, executed end to end on Google Colab on **2026-09-25**, and its
 results recorded below straight from the exported artifacts in `xgboost/`. Phase 2 awaits review
-sign-off; GraphSAGE has not been started.
+sign-off; GraphSAGE has not been started. A **revision that lifts the binding tree cap and adds a
+controlled hyperparameter search is authored but not yet re-executed** (see the note below).
 **Last updated:** 2026-09-25
 
 > **Provenance of the numbers.** Every figure in this document is read from
@@ -13,6 +14,17 @@ sign-off; GraphSAGE has not been started.
 > (xgboost 3.4.1). The test-period metrics were independently recomputed from
 > `xgboost/predictions.csv` and reproduce exactly. The copy of the notebook committed to this
 > repository carries no stored outputs, so the exported artifacts are the record of the run.
+
+> **Revision pending re-execution (2026-09-25).** The 500-tree budget in the first run was
+> binding: 499 trees were kept and the best validation PR-AUC sat on the last available tree, so
+> early stopping never fired and 0.8007 is a floor rather than a converged estimate.
+> `notebooks/02_xgboost.ipynb` has therefore been revised to (a) lift the budget to 1500 trees
+> with 100 rounds of patience, (b) run a seeded 20-trial randomised hyperparameter search scored
+> **on validation PR-AUC only**, (c) ablate `has_addresses` against a pre-registered margin, and
+> (d) test one label-free, fit-window-only feature-redundancy reduction. The revision is written
+> and statically checked but **has not been re-run**, so every number in this document is still
+> the original run's. They are kept unchanged as the historical reference and will be superseded
+> (not overwritten) once the re-run's artifacts exist. Nothing here is estimated.
 
 ## Objective
 

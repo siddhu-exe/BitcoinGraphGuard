@@ -55,7 +55,8 @@ reproducible source of truth.
 
 **Environment:** `notebooks/02_xgboost.ipynb` and `notebooks/03_graphsage.ipynb` on
 Kaggle/Colab; laptop for MLflow configuration · **Status:** XGBoost executed 2026-09-25 on Colab and
-awaiting review sign-off; GraphSAGE not started
+awaiting review sign-off; revision lifting the binding tree cap authored but not yet re-executed;
+GraphSAGE not started
 
 **Done:** `notebooks/02_xgboost.ipynb` executed end to end on Google Colab on 2026-09-25, artifacts
 in `xgboost/`, all 39 checks passing. Prevalence baseline PR-AUC 0.0650, Logistic Regression 0.2917,
@@ -77,6 +78,12 @@ feature set, recorded in `docs/XGBOOST.md` from the run artifacts.
 
 **Open item before the baseline is treated as final:** the 500-tree cap was binding — 499 trees
 kept, best validation PR-AUC at the last tree — so the reported metrics are a floor.
+
+**Revision authored 2026-09-25 (not yet re-executed):** the notebook now lifts the budget to 1500
+trees with patience 100, runs a seeded 20-trial randomised search scored on validation PR-AUC
+only, ablates `has_addresses` against a pre-registered margin, and tests one label-free
+fit-window redundancy reduction. Re-running it on Colab/Kaggle is the next action; the numbers
+above remain the recorded ones until it does.
 
 **Completion criteria:** Baseline results recorded in MLflow; evaluation protocol matches
 the temporal split rules; no GNN claim is made without a working baseline.

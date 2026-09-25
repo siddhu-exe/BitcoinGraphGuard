@@ -47,6 +47,15 @@ sub-windows do not hold up: PR-AUC is 0.9211 on 35–42 but 0.0423 on 43–49 (2
 Logistic Regression is marginally better on the threshold-free metrics. Full record:
 `docs/XGBOOST.md`. **GraphSAGE has not been started.**
 
+**Phase 2 revision authored, not yet re-executed (2026-09-25).** Because the 500-tree budget in
+that run was binding, `notebooks/02_xgboost.ipynb` has been revised to lift the cap to 1500
+trees with patience 100, run a seeded 20-trial randomised hyperparameter search scored on
+validation PR-AUC only, ablate `has_addresses` against a pre-registered margin, and test one
+label-free fit-window feature-redundancy reduction. The revision is written and statically
+checked (syntax + lint over every cell); it has **not** been run, so every number above is still
+the original run's. GraphSAGE stays blocked until the revision is re-run on Colab, reviewed, and
+its artifacts replace these.
+
 The project direction is fixed around **BitcoinGraphGuard**, using the real Elliptic++
 dataset for temporal heterogeneous graph-based Bitcoin fraud detection.
 
@@ -130,8 +139,12 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] Execute `notebooks/02_xgboost.ipynb` on Colab/Kaggle (2026-09-25) and populate the results
       sections of `docs/XGBOOST.md` from the run artifacts (`xgboost/`)
 * [ ] Review the Phase 2 results and sign the phase off before Phase 3 (GraphSAGE) is designed
-* [ ] Re-run the XGBoost selection with a larger tree cap: the 500-tree budget was binding
-      (499 trees kept, best validation PR-AUC at the last tree), so 0.8007 is a floor
+* [x] Revise `notebooks/02_xgboost.ipynb` for the binding tree cap: 1500-tree budget with
+      patience 100, a seeded 20-trial randomised search scored on validation PR-AUC only, a
+      pre-registered `has_addresses` ablation, and one fit-window feature-redundancy ablation
+* [ ] Re-execute the revised notebook on Colab/Kaggle and supersede the 0.8007 baseline on record
+      (the 500-tree run kept 499 trees with the best validation PR-AUC on the last tree, so
+      0.8007 is a floor, not a converged estimate)
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
 * [ ] Prepare the Kaggle/Colab notebook environment (one notebook per phase)

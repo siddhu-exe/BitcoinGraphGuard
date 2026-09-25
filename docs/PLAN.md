@@ -44,7 +44,9 @@ One notebook per phase; do not create a notebook per small step.
 *Environment: Kaggle/Colab notebooks `02_xgboost.ipynb` and `03_graphsage.ipynb`; laptop only for MLflow configuration.*
 
 *Status: XGBoost executed 2026-09-25 on Colab, awaiting review sign-off before GraphSAGE is
-designed. `notebooks/02_xgboost.ipynb` covers the leakage audit, the prevalence baseline, Logistic
+designed. A revision of the notebook that lifts the binding 500-tree cap and adds a controlled
+20-trial randomised search, a `has_addresses` ablation and one redundancy ablation is authored
+but **not yet re-executed**, so the measured numbers below are still the original run's. `notebooks/02_xgboost.ipynb` covers the leakage audit, the prevalence baseline, Logistic
 Regression and XGBoost on the 165 non-domain transaction features plus `has_addresses`, evaluated
 fit 1–24 / validation 25–34 / refit 1–34 / test 35–49. It deliberately uses no graph statistics
 (degrees, components, hub ranks), because the EDA computed those over the full transductive graph
@@ -60,7 +62,9 @@ Measured on the test period 35–49 (16,670 labeled, 1,083 illicit): prevalence 
 * [x] Train the prevalence baseline, Logistic Regression and XGBoost baseline (remote)
 * [x] Establish fraud-detection evaluation metrics (PR-AUC primary; ROC-AUC, P, R, F1, confusion)
 * [x] Implement the temporal evaluation protocol and sub-window reporting
-* [ ] Re-run the XGBoost selection with a larger tree cap (the 500-tree budget was binding)
+* [x] Revise the notebook for the binding tree cap (1500 trees, patience 100), randomised
+      search, `has_addresses` ablation and redundancy ablation
+* [ ] Re-execute the revised notebook on Colab/Kaggle and supersede the 0.8007 result
 * [ ] Compare XGBoost and GraphSAGE
 * [ ] Configure MLflow experiment tracking
 * [ ] Engineer step-bounded transaction-level graph features (Phase 3, not here)

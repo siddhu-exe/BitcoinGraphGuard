@@ -10,8 +10,11 @@ monitoring, and a containerized inference service.
 > findings are in `docs/EDA.md` (artifacts in `eda/`) and `docs/XGBOOST.md` (artifacts in
 > `xgboost/`). The XGBoost baseline reaches **PR-AUC 0.8007 / ROC-AUC 0.9317** on test 35–49
 > against a 0.0650 constant-score baseline, but degrades to PR-AUC 0.0423 on the recent 43–49
-> window. Phase 2 awaits review sign-off; GraphSAGE has not been started. See `docs/PROGRESS.md`
-> and `docs/PLAN.md`.
+> window. Phase 2 awaits review sign-off; GraphSAGE has not been started. `notebooks/02_xgboost.ipynb`
+> has since been revised to lift its binding 500-tree cap (1500 trees, patience 100) and add a
+> seeded 20-trial randomised search plus `has_addresses` and redundancy ablations; that revision
+> is authored but **not yet re-executed**, so the 0.8007 figure above is still the original run's.
+> See `docs/PROGRESS.md` and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
