@@ -5,9 +5,13 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified; the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`) is authored and
-> validated but not yet executed, so the EDA phase is still open and no model results exist yet.
-> See `docs/PROGRESS.md`, `docs/EDA.md`, and `docs/PLAN.md`.
+> Status: dataset verified, Phase 1 EDA complete, and the Phase 2 baseline executed. Both
+> `notebooks/01_eda.ipynb` and `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25;
+> findings are in `docs/EDA.md` (artifacts in `eda/`) and `docs/XGBOOST.md` (artifacts in
+> `xgboost/`). The XGBoost baseline reaches **PR-AUC 0.8007 / ROC-AUC 0.9317** on test 35–49
+> against a 0.0650 constant-score baseline, but degrades to PR-AUC 0.0423 on the recent 43–49
+> window. Phase 2 awaits review sign-off; GraphSAGE has not been started. See `docs/PROGRESS.md`
+> and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
@@ -53,8 +57,9 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/ARCHITECTURE.md` | Technical architecture: data, ML, training, evaluation, serving |
 | `docs/TIMELINE.md` | Nine-phase roadmap with objectives and completion criteria |
 | `docs/DATA_INVENTORY.md` | Verified dataset inventory and data-quality report |
-| `docs/EDA.md` | Phase 1 exploratory data analysis (filled in after `notebooks/01_eda.ipynb` runs) |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda.ipynb` created) |
+| `docs/EDA.md` | Phase 1 exploratory data analysis — completed run (2026-09-25) |
+| `docs/XGBOOST.md` | Phase 2 XGBoost baseline — design and executed results (leakage controls, metrics, temporal windows, error and feature analysis) |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda.ipynb` and `02_xgboost.ipynb` executed 2026-09-25) |
 | `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |

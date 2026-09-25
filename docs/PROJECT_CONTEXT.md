@@ -145,21 +145,27 @@ Application and serving logic lives in `src/`. See `ARCHITECTURE.md`.
 
 ## Current Status
 
-Dataset verification is **complete**; exploratory data analysis is **authored but not yet
-executed** (see `PROGRESS.md` and `EDA.md`):
+Dataset verification and the exploratory data analysis are **complete** (see `PROGRESS.md` and
+`EDA.md`):
 
 * **Done:** Elliptic++ downloaded and fully verified with a streaming, low-memory verifier
-  (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`; a first pass of
-  temporal, class-imbalance, graph and feature EDA run locally (`reports/eda/`);
-  `notebooks/01_eda.ipynb` authored as the canonical EDA entrypoint (`../scripts/eda_phase2.py`
-  is the superseded reference implementation of the same logic); `requirements.txt` created;
-  implementation architecture and compute split defined.
-* **Not done yet:** executing `notebooks/01_eda.ipynb` on Colab/Kaggle and recording the
-  results in `EDA.md`; the remaining phase notebooks; DVC setup; the `src/` project structure;
-  MLflow tracking; and the Kaggle/Colab environment. `EDA.md` stays pending until that first
-  notebook run has been reviewed.
+  (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`;
+  `notebooks/01_eda.ipynb` authored as the canonical EDA entrypoint and **executed end to end on
+  Google Colab on 2026-09-25**, with results recorded in `EDA.md` and artifacts exported to
+  `eda/` (`../scripts/eda_phase2.py` is the superseded reference implementation of the same
+  logic); `requirements.txt` created; implementation architecture and compute split defined.
+* **Executed, awaiting review:** `notebooks/02_xgboost.ipynb` — the Phase 2 XGBoost baseline
+  (leakage audit, prevalence baseline, Logistic Regression, XGBoost, temporal and error analysis)
+  ran end to end on Google Colab on 2026-09-25, with artifacts exported to `xgboost/` and results
+  recorded in `XGBOOST.md`. XGBoost reaches PR-AUC 0.8007 / ROC-AUC 0.9317 on test 35–49, against
+  0.0650 for a constant-score baseline and 0.2917 for Logistic Regression; the 43–49 sub-window
+  degrades to 0.0423. Sign-off is pending before Phase 3 is designed.
+* **Not done yet:** phase 3 onwards — `notebooks/03_graphsage.ipynb` and the later notebooks; DVC
+  setup; the `src/` project structure; MLflow tracking.
 
-No models have been trained and **no experimental results exist yet**.
+**Experimental results now exist for Phase 2** — the XGBoost baseline and its Logistic Regression
+and prevalence baselines, under a temporal protocol with fit 1–24 / validation 25–34 / refit 1–34 /
+test 35–49. They are not yet signed off, and no graph model has been trained.
 
 ## Important Rules
 

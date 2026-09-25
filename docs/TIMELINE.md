@@ -16,7 +16,8 @@ order, though light Phase 1/2 work may overlap.
 ## Phase 1 — Dataset & EDA
 
 **Environment:** Laptop (verification) + `notebooks/01_eda.ipynb` on Kaggle/Colab (EDA) ·
-**Status:** In progress (verification complete; EDA notebook authored, execution pending)
+**Status:** Complete (dataset verified; `notebooks/01_eda.ipynb` executed on Colab 2026-09-25,
+results recorded in `EDA.md`)
 
 **Objective:** Confirm the Elliptic++ dataset is complete, correct, and understood before
 any modelling begins.
@@ -30,8 +31,14 @@ any modelling begins.
 * Graph statistics (degree distributions, connected structure, edge-type counts)
 * Feature understanding (what each feature group means)
 
-**Expected output:** `DATA_INVENTORY.md`, a reproducible verification script, and
-`notebooks/01_eda.ipynb` describing the dataset's temporal and graph structure.
+**Output:** `DATA_INVENTORY.md`, a reproducible verification script, and
+`notebooks/01_eda.ipynb` (run 2026-09-25) describing the dataset's temporal and graph structure;
+findings in `EDA.md`, artifacts in `eda/`.
+
+**Outcome:** two mandatory corrections (347,569 duplicate wallet rows; 965 address-less
+transactions with blank domain columns), 9.25:1 / 17.60:1 label imbalance, non-stationary
+prevalence across the 49 steps, a transaction graph split into 49 single-time-step components, and
+an adopted temporal protocol of train 1–34 / validation 25–34 / test 35–49.
 
 **Completion criteria:** Every file verified; statistics recorded without fabrication;
 temporal and class-imbalance behaviour documented **by the executed notebook**; no open
@@ -40,29 +47,44 @@ questions about column meaning.
 **Already completed:** dataset verification, data inventory, verification script, and the
 first pass of temporal/class/graph/feature EDA (run locally before the notebook architecture
 was adopted; evidence in `reports/eda/`).
-**Still to do:** execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in
-`docs/EDA.md`, so the phase has a standalone, reproducible source of truth.
+**Done:** `notebooks/01_eda.ipynb` executed end to end on Google Colab on 2026-09-25 and its
+results recorded in `docs/EDA.md` (artifacts in `eda/`), giving the phase a standalone,
+reproducible source of truth.
 
 ## Phase 2 — Baseline
 
 **Environment:** `notebooks/02_xgboost.ipynb` and `notebooks/03_graphsage.ipynb` on
-Kaggle/Colab; laptop for MLflow configuration · **Status:** Not started
+Kaggle/Colab; laptop for MLflow configuration · **Status:** XGBoost executed 2026-09-25 on Colab and
+awaiting review sign-off; GraphSAGE not started
+
+**Done:** `notebooks/02_xgboost.ipynb` executed end to end on Google Colab on 2026-09-25, artifacts
+in `xgboost/`, all 39 checks passing. Prevalence baseline PR-AUC 0.0650, Logistic Regression 0.2917,
+XGBoost **0.8007** (ROC-AUC 0.9317) on test 35–49. Sub-window PR-AUC 0.9211 on 35–42 but 0.0423 on
+43–49 (2.53% prevalence). Recorded in `docs/XGBOOST.md`.
 
 **Objective:** Establish a strong classical ML baseline before any GNN is introduced.
 
 **Tasks**
 
-* Graph feature engineering (degrees, transaction statistics, neighbourhood aggregates)
-* Build the classical ML dataset with temporal splits
-* Train the XGBoost baseline on Kaggle/Colab
-* Baseline evaluation with PR-AUC, precision, recall, F1, confusion matrix
+* Build the classical ML dataset with temporal splits (train 1–34 / validation 25–34 / test 35–49)
+* Run an explicit feature leakage audit before training
+* Train the prevalence baseline, Logistic Regression and the XGBoost baseline on Kaggle/Colab
+* Baseline evaluation with PR-AUC, precision, recall, F1, confusion matrix and temporal sub-windows
 * MLflow experiment tracking
 
 **Expected output:** A reproducible XGBoost baseline with tracked metrics and a documented
-feature set.
+feature set, recorded in `docs/XGBOOST.md` from the run artifacts.
+
+**Open item before the baseline is treated as final:** the 500-tree cap was binding — 499 trees
+kept, best validation PR-AUC at the last tree — so the reported metrics are a floor.
 
 **Completion criteria:** Baseline results recorded in MLflow; evaluation protocol matches
 the temporal split rules; no GNN claim is made without a working baseline.
+
+**Scope note.** Graph features (degrees, component statistics, neighbourhood aggregates) are
+deliberately *not* part of the Phase 2 feature set: the EDA computed them over the full transductive
+graph including future steps, so using them here would leak. Graph feature engineering belongs to
+`03_graphsage.ipynb`, where every feature must be step-bounded and audited the same way.
 
 ## Phase 3 — Graph Deep Learning
 

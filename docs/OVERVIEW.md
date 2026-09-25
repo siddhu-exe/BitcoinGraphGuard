@@ -10,9 +10,11 @@ built on the real **Elliptic++** dataset. It detects illicit activity at the **t
 and **wallet/address** level using classical ML, graph neural networks, and production-grade
 MLOps.
 
-**Status:** Dataset verified; the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`) is authored
-but not yet executed, so `EDA.md` is still pending. No models trained and no experimental
-results yet.
+**Status:** Dataset verified, **Phase 1 EDA complete**, and the **Phase 2 baseline executed** —
+both `notebooks/01_eda.ipynb` and `notebooks/02_xgboost.ipynb` were run end to end on Google Colab
+on 2026-09-25, with results in `EDA.md` (artifacts in `eda/`) and `XGBOOST.md` (artifacts in
+`xgboost/`). XGBoost reaches PR-AUC 0.8007 / ROC-AUC 0.9317 on test 35–49, degrading to PR-AUC
+0.0423 on the recent 43–49 window. Phase 2 awaits review sign-off; no graph model has been trained.
 
 ## The Problem
 

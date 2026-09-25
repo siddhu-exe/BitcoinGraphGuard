@@ -12,25 +12,40 @@ Two previous claims were corrected: `txs_features.csv` has 16,405 blank cells (n
 and `wallets_features.csv` contains 347,569 exact duplicate rows (so 1,268,260 raw rows =
 920,691 distinct `(address, time step)` snapshots).
 
-**Phase 1 — exploratory data analysis (`notebooks/01_eda.ipynb`): authored, execution pending.** A local
-streaming EDA ran on 2026-09-22 (`scripts/eda_phase2.py`: full pipeline **297 s**, peak RSS
-**879 MB**, no model trained, no split finalized); evidence: `reports/eda/phase2_eda.json`.
-Under the current architecture that pipeline is **superseded**: `notebooks/01_eda.ipynb` is
-now the canonical, executable EDA entrypoint, and the script's logic is the reference
-implementation carried into it. The notebook is authored and validated (lint-clean, helper
-logic unit-checked on tiny synthetic arrays) but has **not been executed**, so the EDA phase
-is deliberately **not** marked complete and `docs/EDA.md` stays pending until the notebook
-has been run and reviewed on Colab/Kaggle.
+**Phase 1 — exploratory data analysis (`notebooks/01_eda.ipynb`): COMPLETE.** The notebook was
+executed end to end on Google Colab on 2026-09-25 and the artifacts were exported to `eda/`
+(`eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures); `docs/EDA.md` now
+records the run. 31 distinct checks, none failing. Nothing was trained and no raw file was
+modified.
 
-Headline findings from the superseded local run (recorded reference evidence, to be
-reconfirmed by the notebook): activity spans 49 steps with ~7× burstiness; illicit share of
-labeled transactions ranges **0.28%–35.97%** by step; the address graph is a single
-component of 822,935 nodes while the transaction graph fragments into **49 components**;
-the combined address↔transaction graph has **965 singleton components = the 965
-address-less transactions**; wallet duplicate rows re-confirmed exactly (920,691 distinct
-snapshots); and the natural test window (steps 43–49) has far lower transaction illicit
-prevalence (2.53%) than training (11.58%), so the split and metric protocol are
-deliberately left open.
+An earlier local streaming EDA (`scripts/eda_phase2.py`, 2026-09-22, 297 s, peak RSS 879 MB,
+evidence in `reports/eda/phase2_eda.json`) is **superseded**: `notebooks/01_eda.ipynb` is the
+canonical EDA entrypoint and its logic was carried into the notebook.
+
+Headline findings from the notebook run: activity spans 49 steps with bursty volume (1,089–7,880
+transactions per step); the illicit share of labeled transactions ranges **0.28%–35.97%** by step
+(median 10.25%) and is non-stationary; labels are 9.25:1 licit:illicit for transactions and
+**17.60:1** for wallet addresses, with 77%/68% of records unlabeled; the address graph is one giant
+component of 822,935 nodes (2 components total) while the transaction graph fragments into **49
+components, all confined to a single time step**; the combined address↔transaction graph has **965
+singleton components = exactly the 965 address-less transactions**; wallet duplicate rows were
+re-confirmed exactly (920,691 distinct snapshots); the 17 transaction domain columns duplicate
+`Local_feature_*` at `|r| ≈ 0.98–1.00`; and the natural test window (steps 43–49) has far lower
+transaction illicit prevalence (2.53%, 169 illicit) than training (11.58%), so **train 1–34 / test
+35–49 with validation carved from history (25–34)** was adopted and 43–49 retained only as a
+secondary drift window.
+
+**Phase 2 — XGBoost baseline: EXECUTED, AWAITING REVIEW SIGN-OFF.** `notebooks/02_xgboost.ipynb`
+ran end to end on Google Colab on 2026-09-25 and its artifacts were exported to `xgboost/`. All
+39 checks in `xgboost/checks.csv` pass, including the leakage assertions. Under the frozen
+temporal protocol (fit 1–24 / validation 25–34 / refit 1–34 / test 35–49) on the 166 transaction
+features, XGBoost reaches **PR-AUC 0.8007 / ROC-AUC 0.9317** on the test period (16,670 labeled,
+1,083 illicit, 6.50% prevalence) against a 0.0650 constant-score baseline, and Logistic Regression
+reaches 0.2917 / 0.8828 — so the features carry substantial nonlinear structure. The operating
+point (0.515) is F1-maximising on validation only and was never tuned on test. The temporal
+sub-windows do not hold up: PR-AUC is 0.9211 on 35–42 but 0.0423 on 43–49 (2.53% prevalence), where
+Logistic Regression is marginally better on the threshold-free metrics. Full record:
+`docs/XGBOOST.md`. **GraphSAGE has not been started.**
 
 The project direction is fixed around **BitcoinGraphGuard**, using the real Elliptic++
 dataset for temporal heterogeneous graph-based Bitcoin fraud detection.
@@ -102,24 +117,32 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [x] **Feature analysis** (missingness, constants, skew, class correlation, redundancy,
       early/late drift)
 * [x] **Temporal-split investigation** over candidate windows (split not finalized)
-* [x] Record the first-pass EDA findings as evidence (`reports/eda/`); `docs/EDA.md` now waits
-      for the notebook run before it is treated as final
+* [x] Record the first-pass EDA findings as evidence (`reports/eda/`)
+* [x] Execute `notebooks/01_eda.ipynb` on Colab and record the results in `docs/EDA.md`
+      (run 2026-09-25; artifacts in `eda/`)
 
 ## Current Task
 
 * [ ] Install project Python dependencies from `requirements.txt` (user-managed)
-* [ ] **Execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in
-      `docs/EDA.md`** — the EDA phase is not complete until this run has been reviewed
+* [x] Author `notebooks/02_xgboost.ipynb` — classical baseline on transaction features under the
+      adopted temporal protocol (train 1–34, validation 25–34, test 35–49), including the leakage
+      audit, prevalence baseline, Logistic Regression and XGBoost
+* [x] Execute `notebooks/02_xgboost.ipynb` on Colab/Kaggle (2026-09-25) and populate the results
+      sections of `docs/XGBOOST.md` from the run artifacts (`xgboost/`)
+* [ ] Review the Phase 2 results and sign the phase off before Phase 3 (GraphSAGE) is designed
+* [ ] Re-run the XGBoost selection with a larger tree cap: the 500-tree budget was binding
+      (499 trees kept, best validation PR-AUC at the last tree), so 0.8007 is a floor
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
 * [ ] Prepare the Kaggle/Colab notebook environment (one notebook per phase)
 * [ ] Decide the transaction feature set (drop the 17 domain columns that duplicate
-      `Local_feature_*`; mask/flag the 965 address-less transactions)
+      `Local_feature_*`; add an explicit indicator for the 965 address-less transactions)
 
 ## Next
 
-* Confirm whether `txs_edgelist` components map one-to-one onto time steps — answered by
-  §8 of `notebooks/01_eda.ipynb` (`txs_component_time_span.csv`) once it is executed
+* Confirmed by §8 of `notebooks/01_eda.ipynb` (`txs_component_time_span.csv`): all 49
+  `txs_edgelist` components sit inside a single time step, so transaction-only message passing
+  cannot cross a step boundary — cross-step signal has to travel through address nodes
 * Build the memory-aware project data pipeline; deduplicate wallet snapshots to
   `(address, time step)` before any split
 * Design the heterogeneous graph schema (mask/flag the 965 address-less transactions)
@@ -145,6 +168,14 @@ predictions, metrics, and explanation outputs back for local tracking and servin
   implemented.
 * Remote training environments (Kaggle/Colab) are not yet set up or documented as
   runnable.
+* The XGBoost 500-tree cap was binding — the selection run kept 499 trees and best validation
+  PR-AUC was at the final tree, so early stopping never fired. Reported metrics are a floor
+  until the sweep is re-run with more trees.
+* `has_addresses` cannot contribute positive evidence: all 4,545 illicit transactions have an
+  address link, so the 965 address-less transactions are never positive in the labeled data.
+* The Phase 2 operating point (0.515) was derived on a 19.77%-prevalence validation window and
+  applied to a 6.50%-prevalence test period; it must be re-derived on deployment-regime data
+  before serving.
 
 ## Important Rules
 

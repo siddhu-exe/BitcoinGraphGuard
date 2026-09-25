@@ -30,11 +30,12 @@ One notebook per phase; do not create a notebook per small step.
 * [x] Inspect dataset structure and metadata
 * [x] Validate transaction and actor/wallet data
 * [x] Identify missing values, duplicates, invalid relationships, and label distribution
-* [x] Analyze temporal structure (first pass run locally; see `docs/EDA.md`)
-* [x] Analyze class imbalance (first pass run locally; see `docs/EDA.md`)
-* [x] Perform graph-level EDA (first pass run locally; see `docs/EDA.md`)
+* [x] Analyze temporal structure (notebook, 2026-09-25; see `docs/EDA.md`)
+* [x] Analyze class imbalance (notebook, 2026-09-25; see `docs/EDA.md`)
+* [x] Perform graph-level EDA (notebook, 2026-09-25; see `docs/EDA.md`)
 * [x] Author the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`)
-* [ ] Execute `notebooks/01_eda.ipynb` on Colab/Kaggle and record the results in `docs/EDA.md`
+* [x] Execute `notebooks/01_eda.ipynb` on Colab and record the results in `docs/EDA.md`
+      (run 2026-09-25, artifacts in `eda/`)
 * [ ] Configure DVC
 * [ ] Establish reproducibility and configuration system
 
@@ -42,14 +43,27 @@ One notebook per phase; do not create a notebook per small step.
 
 *Environment: Kaggle/Colab notebooks `02_xgboost.ipynb` and `03_graphsage.ipynb`; laptop only for MLflow configuration.*
 
-* [ ] Engineer transaction-level graph features
-* [ ] Build classical ML dataset
-* [ ] Train XGBoost baseline (remote)
-* [ ] Establish fraud-detection evaluation metrics
-* [ ] Implement temporal evaluation protocol
-* [ ] Implement GraphSAGE baseline (remote)
+*Status: XGBoost executed 2026-09-25 on Colab, awaiting review sign-off before GraphSAGE is
+designed. `notebooks/02_xgboost.ipynb` covers the leakage audit, the prevalence baseline, Logistic
+Regression and XGBoost on the 165 non-domain transaction features plus `has_addresses`, evaluated
+fit 1–24 / validation 25–34 / refit 1–34 / test 35–49. It deliberately uses no graph statistics
+(degrees, components, hub ranks), because the EDA computed those over the full transductive graph
+including future steps; graph features belong to the GNN phases and must be step-bounded there.
+GraphSAGE stays in `03_graphsage.ipynb`.*
+
+Measured on the test period 35–49 (16,670 labeled, 1,083 illicit): prevalence baseline PR-AUC
+0.0650, Logistic Regression 0.2917, XGBoost 0.8007 (ROC-AUC 0.9317). Sub-window PR-AUC is 0.9211 on
+35–42 but 0.0423 on 43–49, where prevalence drops to 2.53%. Record: `docs/XGBOOST.md`.
+
+* [x] Build the Phase 2 dataset: 165 non-domain transaction features + `has_addresses`
+* [x] Run the feature leakage audit (`xgboost/leakage_audit.csv`, `xgboost/checks.csv`)
+* [x] Train the prevalence baseline, Logistic Regression and XGBoost baseline (remote)
+* [x] Establish fraud-detection evaluation metrics (PR-AUC primary; ROC-AUC, P, R, F1, confusion)
+* [x] Implement the temporal evaluation protocol and sub-window reporting
+* [ ] Re-run the XGBoost selection with a larger tree cap (the 500-tree budget was binding)
 * [ ] Compare XGBoost and GraphSAGE
 * [ ] Configure MLflow experiment tracking
+* [ ] Engineer step-bounded transaction-level graph features (Phase 3, not here)
 
 ## Phase 3 — Heterogeneous Graph Deep Learning
 
