@@ -1,0 +1,5 @@
+edge_type,file,source,target,rows
+tx->tx,txs_edgelist.csv,txId1,txId2,234355
+addr->tx,AddrTx_edgelist.csv,input_address,txId,477117
+tx->addr,TxAddr_edgelist.csv,txId,output_address,837124
+addr->addr,AddrAddr_edgelist.csv,input_address,output_address,2868964

@@ -1,0 +1,5 @@
+architecture,relations_used,pr_auc,roc_auc,f1,lift_over_mlp
+MLP Baseline (Neural),None (Features Only),0.4768,0.8912,0.5759,0.0
+GraphSAGE (Homogeneous GNN),tx -> tx only (100% intra-step),0.6209,0.9044,0.5945,0.1441
+HeteroRGCN (Heterogeneous GNN),"tx -> tx, addr -> tx, tx -> addr, addr -> addr",0.4681892861804309,0.8945671514860059,0.529505582137161,-0.008610713819569127
+XGBoost Optimized (Frozen),Pre-aggregated Tabular Neighborhood,0.8013,0.9281,0.7818,0.3245

@@ -1,0 +1,20 @@
+
+BitcoinGraphGuard - Phase 4 Heterogeneous GNN (RGCN) Digest (2026-09-25 18:21)
+------------------------------------------------------------------------------------------------
+Graph Structure : 203,769 transactions + 822,942 wallets (~1.03M nodes), 4,417,560 directed edges
+Relations       : tx->tx (234k), addr->tx (477k), tx->addr (837k), addr->addr (2.87M)
+Features        : 165 tx features + 55 historical wallet features (StandardScaler fit on train only)
+Protocol        : fit 1-24 | validation 25-34 | train 1-34 | test 35-49
+
+Test 35-49 Results:
+- Prevalence Baseline : PR-AUC 0.0650 | ROC-AUC 0.5000
+- Logistic Regression : PR-AUC 0.2917 | ROC-AUC 0.8828 | F1 0.4385
+- 2-Layer MLP         : PR-AUC 0.4768 | ROC-AUC 0.8912 | F1 0.5759
+- GraphSAGE Baseline  : PR-AUC 0.6209 | ROC-AUC 0.9044 | F1 0.5945
+- XGBoost Baseline    : PR-AUC 0.8007 | ROC-AUC 0.9317 | F1 0.7870
+- XGBoost Optimized   : PR-AUC 0.8013 | ROC-AUC 0.9281 | F1 0.7818
+- HeteroRGCN          : PR-AUC 0.4682 | ROC-AUC 0.8946 | F1 0.5295
+
+Temporal PR-AUC (HeteroRGCN vs Baselines):
+- Window 35-42 (Early): RGCN 0.6083 vs GraphSAGE 0.7346 vs XGBoost 0.9215
+- Window 43-49 (Drift): RGCN 0.0550 vs GraphSAGE 0.0504 vs XGBoost 0.0427

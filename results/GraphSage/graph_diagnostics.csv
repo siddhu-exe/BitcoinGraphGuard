@@ -1,0 +1,10 @@
+metric,value
+total_nodes,203769.0
+total_edges,234355.0
+intra_step_edges,234355.0
+cross_step_edges,0.0
+isolated_nodes,0.0
+connected_nodes,203769.0
+max_in_degree,284.0
+max_out_degree,472.0
+mean_degree_connected,2.3002026804862368

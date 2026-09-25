@@ -1,0 +1,8 @@
+feature_group,available_at_prediction_time,uses_future_steps,uses_labels,uses_test_data,uses_full_graph,verdict,reason
+Local_feature_* (93),yes,no,no,no,no,ASSUMED-SAFE,Official Elliptic++ local transaction features computed per time step.
+Aggregate_feature_* (72),yes,no,no,no,no,ASSUMED-SAFE,Official Elliptic++ aggregate features computed within the transaction step.
+txs_edgelist (graph edges),yes,no,no,no,no,SAFE,Intra-step transaction edges; zero cross-step temporal leakage verified.
+domain block (17),yes,no,no,no,no,EXCLUDED-REDUNDANT,"Collinear with Local features (|r| > 0.98); 16,405 missing values."
+"txId, Time step",yes,no,no,no,no,EXCLUDED-ID,Identifiers and temporal partition variables; excluded from model input.
+Transductive graph stats (EDA),no,yes,no,yes,yes,EXCLUDED-LEAK,EDA component/degree stats computed across all 49 steps are excluded.
+StandardScaler parameters,yes,no,no,no,no,SAFE,Fitted strictly on historical training nodes only (1-24 / 1-34).

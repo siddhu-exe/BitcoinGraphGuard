@@ -1,0 +1,7 @@
+feature_group,available_at_prediction_time,uses_future_steps,uses_labels,uses_test_data,uses_full_graph,verdict,reason
+Local_feature_* (93),yes,no,no,no,no,SAFE,Official Elliptic++ local transaction features computed per time step.
+Aggregate_feature_* (72),yes,no,no,no,no,SAFE,Official Elliptic++ aggregate features computed within the transaction step.
+wallets_features (55),yes,no,no,no,no,SAFE,Aggregated historically without future snapshot lookahead.
+wallets_classes (labels),no,no,yes,no,no,EXCLUDED-LEAK,Wallet labels are strictly excluded from input features to prevent label leakage.
+4-Relation Heterogeneous Edges,yes,no,no,no,no,SAFE,Observed on-chain transaction and wallet graph structure.
+StandardScaler parameters,yes,no,no,no,no,SAFE,Fitted strictly on historical training nodes only (1-24 / 1-34).

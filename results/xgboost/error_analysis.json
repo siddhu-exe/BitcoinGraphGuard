@@ -1,0 +1,33 @@
+{
+  "model": "xgboost_optimized",
+  "threshold": 0.435,
+  "fn": 284,
+  "fp": 167,
+  "fn_median_score": 0.0019721188582479954,
+  "fp_median_score": 0.6248002648353577,
+  "baseline_fn": 285,
+  "baseline_fp": 152,
+  "fn_by_window": {
+    "35-42": 120,
+    "43-49": 164
+  },
+  "fp_by_window": {
+    "35-42": 81,
+    "43-49": 86
+  },
+  "example_false_negatives": [
+    "***",
+    "***",
+    "***",
+    "***",
+    "***"
+  ],
+  "example_false_positives": [
+    "***",
+    "***",
+    "***",
+    "***",
+    "***"
+  ],
+  "address_linkage": "skipped: has_addresses not in the final feature set"
+}

@@ -1,0 +1,11 @@
+metric,value
+transaction_nodes,203769
+address_nodes,822942
+total_hetero_nodes,1026711
+tx_to_tx_edges,234355
+addr_to_tx_edges,477117
+tx_to_addr_edges,837124
+addr_to_addr_edges,2868964
+total_hetero_edges,4417560
+multi_step_wallets,61487
+test_tx_with_historical_bridge,10812

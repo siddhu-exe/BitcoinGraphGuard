@@ -1,0 +1,21 @@
+{
+  "rgcn": {
+    "architecture": "2-layer RelationalConvLayer (Heterogeneous)",
+    "tx_in_channels": 165,
+    "addr_in_channels": 55,
+    "hidden_channels": 128,
+    "out_channels": 1,
+    "dropout": 0.3,
+    "optimizer": "Adam",
+    "lr": 0.003,
+    "weight_decay": 0.0001,
+    "loss": "BCEWithLogitsLoss",
+    "pos_weight_fit": 9.6381,
+    "pos_weight_train": 7.6349,
+    "best_epoch": 25,
+    "validation_pr_auc": 0.8348796441634164,
+    "threshold": 0.795
+  },
+  "seed": 42,
+  "device": "cuda"
+}
