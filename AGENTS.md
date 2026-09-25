@@ -8,18 +8,21 @@ context and `docs/ARCHITECTURE.md` for the full design.
 
 | Path | Purpose |
 | :--- | :--- |
-| `Og data/` | Raw Elliptic++ CSVs — gitignored, **read-only**; never modified, moved or committed |
+| `Og data/` | Raw Elliptic++ CSVs (path contains a space — always quote it) — gitignored, **read-only**; never modified, moved or committed |
 | `notebooks/` | One notebook per ML phase, run on Colab/Kaggle: `01_eda.ipynb` … `07_final_evaluation.ipynb` |
-| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (including `EDA.md`) |
-| `scripts/` | Repository tooling: `verify_dataset.py`; `eda_phase2.py` is superseded by notebook 01 |
-| `reports/` | Verification and EDA evidence (JSON / CSV / PNG) |
+| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (`EDA.md` records the Phase 1 run) |
+| `eda/` | Canonical Phase 1 EDA run artifacts exported from `notebooks/01_eda.ipynb`: `eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures. **Source of truth for EDA numbers.** |
+| `reports/` | Verification evidence (`phase1_verification.json`) and `reports/eda/` from the superseded pre-notebook streaming pass |
+| `scripts/` | Repository tooling: `verify_dataset.py` (Phase 1 verifier); `eda_phase2.py` + `plot_phase2_eda.py` are superseded by notebook 01 and kept only as reference |
 | `src/`, `tests/` | Application and serving code plus tests — planned, not created yet |
+| `CLAUDE.md` | Claude Code mirror of this file — keep the two in sync when either changes |
 
 ## Build, Test, and Development Commands
 
 ```bash
 uv venv .venv && source .venv/bin/activate && uv pip install -r requirements.txt
-python scripts/verify_dataset.py     # streaming, memory-safe dataset verification
+python scripts/verify_dataset.py     # streaming, memory-safe dataset verification (laptop-safe)
+MPLCONFIGDIR=/tmp/mplconfig ./bit/bin/python scripts/plot_phase2_eda.py  # reference-only plot render
 ruff check . && ruff format .        # lint and format (notebooks included)
 pytest -q                            # test suite (once src/ and tests/ exist)
 pytest --cov=src tests/              # coverage run
@@ -27,6 +30,10 @@ mlflow ui --port 5000                # experiment tracking UI (Phase 2/6)
 dvc repro                            # versioned data/training pipeline (Phase 6)
 uvicorn src.api.main:app --reload    # FastAPI inference service (Phase 7)
 ```
+
+`.venv/` and `bit/` are gitignored local virtualenvs — never referenced from committed code, never
+committed. `bit/` is an existing environment for the streaming scripts; `requirements.txt` in tiers is
+the declared dependency contract.
 
 ## Compute & Notebook Architecture (critical)
 
@@ -72,7 +79,39 @@ uvicorn src.api.main:app --reload    # FastAPI inference service (Phase 7)
   one identical evaluation protocol when models are compared.
 * Never fabricate metrics, results or dataset statistics; never substitute synthetic data for
   Elliptic++ in the primary evaluation; report results only after the experiment has run.
+* Every quoted dataset number must be traceable to a saved artifact — `eda/` or
+  `reports/phase1_verification.json` — not to memory or expectation. If a number is not in an
+  artifact, re-derive it or omit it.
 * Never commit raw data, model artifacts, credentials or large generated files.
+
+## Current Phase State
+
+Phase 1 is complete: dataset verification (`reports/phase1_verification.json`) and exploratory data
+analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.md`). Phase 2 is
+**executed and awaiting review sign-off**: `notebooks/02_xgboost.ipynb` ran on Google Colab on
+2026-09-25, artifacts in `xgboost/`, results in `docs/XGBOOST.md`. Protocol: fit 1–24 / validation
+25–34 / refit 1–34 / test 35–49, on the 166 transaction features. Read `docs/PROGRESS.md` before
+starting any phase work; it carries the open decisions and known issues that later phases depend on.
+
+**Do not start `notebooks/03_graphsage.ipynb` until Phase 2 has been signed off.**
+
+Carry-forward constraints from Phase 1 that must not be silently reversed:
+
+* Deduplicate wallet snapshots to `(address, time step)` before any split.
+* Decide explicitly how to handle the 965 blank-domain, address-less transactions; never treat
+  blanks as `0`.
+* Keep one of the two near-duplicate representations of the 17 transaction domain columns.
+* The `43–49` window is a secondary drift window, not the primary test set.
+
+Carry-forward constraints from Phase 2:
+
+* The XGBoost numbers are a floor, not a ceiling: the 500-tree cap was binding (499 trees kept, best
+  validation PR-AUC at the last tree), so the tree-count sweep must be re-run before the baseline is
+  called final.
+* Every GNN result must be reported on both `35–49` and `43–49`. An aggregate-only improvement would
+  hide the regime where the baseline collapses.
+* `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
+  link — so it is a one-sided licit indicator, not evidence of fraud.
 
 ## Working Protocol: ML Phases
 

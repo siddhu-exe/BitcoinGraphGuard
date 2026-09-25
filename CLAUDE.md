@@ -23,12 +23,14 @@ The raw dataset in `Og data/` comprises temporal graph and tabular data across 4
 
 | Path | Purpose |
 | :--- | :--- |
-| `Og data/` | Raw Elliptic++ CSVs — gitignored, **read-only**; never modified, moved or committed |
+| `Og data/` | Raw Elliptic++ CSVs (path contains a space — always quote it) — gitignored, **read-only**; never modified, moved or committed |
 | `notebooks/` | One notebook per ML phase, run on Colab/Kaggle: `01_eda.ipynb` … `07_final_evaluation.ipynb` |
-| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (including `EDA.md`) |
-| `scripts/` | Repository tooling: `verify_dataset.py`; `eda_phase2.py` is superseded by notebook 01 |
-| `reports/` | Verification and EDA evidence (JSON / CSV / PNG) |
+| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (`EDA.md` records the Phase 1 run) |
+| `eda/` | Canonical Phase 1 EDA run artifacts exported from `notebooks/01_eda.ipynb`: `eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures. **Source of truth for EDA numbers.** |
+| `reports/` | Verification evidence (`phase1_verification.json`) and `reports/eda/` from the superseded pre-notebook streaming pass |
+| `scripts/` | Repository tooling: `verify_dataset.py` (Phase 1 verifier); `eda_phase2.py` + `plot_phase2_eda.py` are superseded by notebook 01 and kept only as reference |
 | `src/`, `tests/` | Application/serving code and tests — planned, not created yet |
+| `CLAUDE.md` | This file; `AGENTS.md` is the canonical contributor guide — keep the two in sync |
 
 ## Development & Environment Commands
 
@@ -68,6 +70,28 @@ docker build -t bitcoingraphguard:latest .     # Build container
 ## Compute Strategy: Laptop vs Kaggle/Colab
 
 Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
+
+## Current Phase State
+
+Phase 1 is complete: dataset verification (`reports/phase1_verification.json`) and exploratory data
+analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.md`). Phase 2 is
+**executed and awaiting review sign-off**: `notebooks/02_xgboost.ipynb` ran on Google Colab on
+2026-09-25, artifacts in `xgboost/`, results in `docs/XGBOOST.md`. Protocol: fit 1–24 / validation
+25–34 / refit 1–34 / test 35–49, on the 166 transaction features. Read `docs/PROGRESS.md` before
+starting any phase work.
+
+**Do not start `notebooks/03_graphsage.ipynb` until Phase 2 has been signed off.**
+
+Carry-forward constraints that must not be silently reversed:
+
+* Deduplicate wallet snapshots to `(address, time step)` before any split.
+* Never treat the 965 blank-domain, address-less transactions as `0`.
+* The `43–49` window is a secondary drift window, not the primary test set.
+* The XGBoost numbers are a floor: the 500-tree cap was binding, so the tree-count sweep must be
+  re-run before the baseline is called final.
+* Every GNN result must be reported on both `35–49` and `43–49`, never on the aggregate alone.
+* `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
+  link.
 
 - **Laptop (development & documentation only)**: writing/reviewing code, Git management, documentation, system design, notebook code review, FastAPI backend, Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project configuration.
 - **Kaggle / Google Colab (ALL ML execution, in notebooks)**: dataset loading, ML data processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final evaluation, and model-artifact generation.
