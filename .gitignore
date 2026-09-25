@@ -86,6 +86,6 @@ pipeline.png
 # notebooks/02_xgboost.ipynb on Colab/Kaggle; the metrics and tables in
 # xgboost/ are the committed evidence. Version model binaries with DVC
 # (Phase 6), never with Git.
-xgboost/xgb_model.json
+xgboost/xgb_model*.json
 xgboost/*.joblib
 xgboost/*.pkl
