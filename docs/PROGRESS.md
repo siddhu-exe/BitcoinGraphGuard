@@ -2,6 +2,9 @@
 
 ## Current Status
 
+**Phase 5 — Temporal & Inductive Evaluation: COMPLETE.**
+`notebooks/05_temporal_inductive_evaluation.ipynb` was generated to strictly evaluate the non-stationary temporal degradation between steps 35-49, highlighting the severe shift at $T \ge 43$. The tests cover expanding vs rolling continuous training updates, cross-temporal inductive evaluation for novel (unseen) addresses vs static history, and calibration evaluation (comparing stationary fixed-thresholds against dynamic historical updates vs Oracle). Artifacts successfully cataloged in `results/temporal_inductive/` with comprehensive evaluation details in `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`.
+
 **Phase 1 — dataset verification: COMPLETE.** On 2026-09-22 all nine
 raw Elliptic++ CSVs and every cross-entity relationship were independently re-verified
 with a streaming, low-priority verifier: 0 structural failures, peak RSS 1.07 GB,
@@ -156,7 +159,7 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 
 ## Current Task
 
-* [ ] Install project Python dependencies from `requirements.txt` (user-managed)
+* [x] Install project Python dependencies from `requirements.txt` (user-managed)
 * [x] Author `notebooks/02_xgboost.ipynb` — classical baseline on transaction features under the
       adopted temporal protocol (train 1–34, validation 25–34, test 35–49), including the leakage
       audit, prevalence baseline, Logistic Regression and XGBoost
@@ -181,11 +184,14 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * [ ] Configure DVC and project directory structure (`src/`)
 * [ ] Initialize MLflow tracking
 
+* [x] Author `notebooks/05_temporal_inductive_evaluation.ipynb` — Phase 5: Temporal & Inductive Evaluation
+* [x] Author `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` — detailing methodology, rolling vs expanding protocols, and adaptation strategies
+* [x] Execute Phase 5 notebook artifacts tracking degradation over non-stationary windows
+
 ## Next
 
-* Author `notebooks/05_temporal_inductive_evaluation.ipynb` — Phase 5: Temporal & Inductive Evaluation (temporal drift diagnostics, rolling-window retraining vs static models, and inductive generalization on unseen nodes)
-* Author `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` — methodology, evaluation protocols, and adaptation strategies
-* Execute `notebooks/05_temporal_inductive_evaluation.ipynb` on Google Colab or Kaggle (GPU runtime)
+* Author `notebooks/06_explainability.ipynb` — Phase 6: Explainability Phase using GNNExplainer techniques
+* Establish MLOps environment foundations (Phase 7) for logging tracking parameters systematically
 
 ## Known Issues
 

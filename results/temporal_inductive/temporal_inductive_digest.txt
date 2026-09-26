@@ -1,0 +1,6 @@
+BitcoinGraphGuard - Phase 5 Digest
+Evaluating continuous temporal retuning across expanding and rolling windows vs frozen benchmarks.
+Q1: Per-step degradation verified post step 43.
+Q2: Expanding windows marginally improve recall but do not fully recover PR-AUC collapse.
+Q3: Inductive vs Tranductive split confirms models rely heavily on recurrent structural addresses for high confidence positive class.
+Q4: Oracle thresholds mitigate some F1 collapse but underlying discriminative ability (ROC/PR-AUC) degrades structurally.
