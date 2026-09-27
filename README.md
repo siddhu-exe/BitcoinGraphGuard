@@ -5,7 +5,7 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified; Phases 1–4 complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
+> Status: dataset verified; Phases 1–5 complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
 > `notebooks/03_graphsage.ipynb` and `notebooks/04_heterogeneous_gnn.ipynb` ran on Google Colab in 2026-09-25;
 > findings are in `docs/EDA.md` (artifacts in `eda/`), `docs/XGBOOST.md` (`xgboost/`),
 > `docs/GRAPHSAGE.md` (`GraphSage/`) and `docs/HETEROGENEOUS_GNN.md` (`results/heterogeneous_gnn/`).
@@ -13,8 +13,11 @@ monitoring, and a containerized inference service.
 > **0.4682**; homogeneous GNNs cannot bridge steps (100% intra-step edges), while the heterogeneous graph
 > does connect 10,812 test transactions to history via wallets. Phase 5 — `notebooks/05_temporal_inductive_evaluation.ipynb`
 > (temporal degradation, static vs expanding/rolling retraining, inductive seen/unseen address context,
-> threshold adaptation) — is **authored and awaiting its Colab/Kaggle run**; its results are PENDING.
-> See `docs/PROGRESS.md`, `docs/PLAN.md` and `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`.
+> threshold adaptation) — **ran on Google Colab on 2026-09-27 (artifacts in `temporal_inductive/`, 91/91
+> checks passing)**. It locates an abrupt step-43 regime shift (illicit prevalence 9–11% → 2.53%), shows
+> retraining regimes are required, and records a prevalence-confounded seen/unseen gap that motivates —
+> but does not prove — an attention-based next architecture. See `docs/PROGRESS.md`, `docs/PLAN.md` and
+> `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`.
 
 ## Architecture at a Glance
 
@@ -64,10 +67,10 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/XGBOOST.md` | Phase 2 XGBoost baseline — design and executed results (leakage controls, metrics, temporal windows, error and feature analysis) |
 | `docs/GRAPHSAGE.md` | Phase 3 GraphSAGE baseline — methodology, executed results, and intra-step analysis (executed 2026-09-25) |
 | `docs/HETEROGENEOUS_GNN.md` | Phase 4 HeteroRGCN — design, leakage controls, and executed results (executed 2026-09-25) |
-| `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` | Phase 5 temporal & inductive evaluation — design and (pending) results |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda`–`04_heterogeneous_gnn` executed 2026-09-25; `05_temporal_inductive_evaluation` authored, awaiting run) |
+| `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` | Phase 5 temporal & inductive evaluation — design and executed results (executed 2026-09-27) |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda`–`04_heterogeneous_gnn` executed 2026-09-25; `05_temporal_inductive_evaluation` executed 2026-09-27) |
 | `scripts/generate_notebook_05.py` | Authoring script for the Phase 5 notebook (reviewable and reproducible in Git) |
-| `temporal_inductive/` | Phase 5 artifacts, populated when the notebook runs on Colab/Kaggle |
+| `temporal_inductive/` | Phase 5 artifacts exported from the 2026-09-27 Colab run (91/91 checks passing) |
 | `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |

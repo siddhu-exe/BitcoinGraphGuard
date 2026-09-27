@@ -83,7 +83,7 @@ association, never causation.
 The static model reproduces the deployment-style setup: one RGCN refit on labels 1–34 (graph cut at 34)
 with the selection epoch budget, evaluated at every step without retraining. At step `t` the graph and
 address features are cut at `t` (edges/features available by `t` per the temporal rule). Its frozen
-threshold is the validation F1-max `tau*`. The checkpoint is hashed before and after evaluation to prove
+threshold is the validation F1-max `tau*`. The checkpoint is hashed before and after evaluation to verify
 the model is not mutated.
 
 ## 6. Expanding-window retraining
@@ -157,9 +157,9 @@ The models were evaluated remotely on Google Colab/Kaggle. The exact outputs wer
 
 * **Temporal Degradation (Q1):** The frozen XGBoost and HeteroRGCN models successfully classify illicit transactions mostly intact through step 42 (XGBoost PR-AUC 0.89-0.99, RGCN PR-AUC 0.50-0.78). At **step 43**, the illicit prevalence abruptly plunges from 9-11% to **2.53%**. Simultaneously, performance immediately collapses (XGBoost step 43 PR-AUC is 0.039; RGCN is 0.035).
 * **Static vs Continuous Retraining (Q2):** Expanding-window retraining dynamically lifts the sub-drift performance (e.g. from 0.588 static to 0.817 expanding on step 41). However, the extreme drift at step 43-49 still damages expanding models heavily (step 43 expanding PR-AUC is 0.066). The Rolling window (`W=20`) isolates completely from ancient distributions and performs marginally better amid severe drift (0.184 PR-AUC in 43-49 compared to 0.129 for expanding and 0.072 for static).
-* **Inductive Generalization (Q3):** When transacting on entirely **unseen** addresses, expanding RGCN scores **0.763** PR-AUC. When transacting with **seen** addresses (historical overlap), RGCN scores only **0.194**. This is highly non-intuitive but robustly confirms that *novel* entities conform tightly to broad structural feature patterns, whereas recurring/heavily-seen addresses generate noisier message-passing overlaps.
-* **Historical Paths:** 10,812 test transactions have `T_train -> A -> T_test` connectivity. Similar to unseen vs seen above, predicting on nodes *without* a historical path yields vastly higher PR-AUC (0.761) than predicting on nodes *with* a historical path (0.194) under the expanding regime. 
-* **Threshold Adaptation (Q4):** PR-AUC is threshold-free and collapses structurally. However, updating thresholds dynamically ($	au_t$) or optimally ($	au^*_oracle$) proves that F1 collapse can be *somewhat* recovered. The frozen threshold derived on the validation set ($	au^* = 0.83$) is severely miscalibrated to the 2.5% prevalence of step 43+. 
+* **Inductive Generalization (Q3):** When transacting on entirely **unseen** addresses, expanding RGCN scores **0.763** PR-AUC. When transacting with **seen** addresses (historical overlap), RGCN scores only **0.194**. This is a striking observed association, but the two subgroups differ sharply in class composition — the unseen group carries 1,037 illicit of 9,102 labelled (≈11.4% prevalence) while the seen group carries only 46 illicit of 7,244 (≈0.6%), and several per-step seen subgroups have zero or near-zero positives (`inductive_diagnostics_per_step.csv`). The contrast is therefore heavily confounded by prevalence and sample composition and is reported as a hypothesis-generating observation, not evidence that novel entities are intrinsically easier to classify.
+* **Historical Paths:** 10,812 test transactions have `T_train -> A -> T_test` connectivity. Mirroring the seen/unseen split above, predicting on nodes *without* a historical path yields a much higher PR-AUC (0.761) than predicting on nodes *with* a historical path (0.194) under the expanding regime. As with the seen/unseen contrast, the two groups differ in illicit prevalence, so this is a confounded observation consistent with — not proof of — the address-reuse hypothesis.
+* **Threshold Adaptation (Q4):** PR-AUC is threshold-free and collapses structurally, so no threshold rule can recover it. What threshold adaptation does address is the operating point: updating the threshold dynamically ($\tau_t$) or optimally ($\tau^*_{oracle}$) shows that the *F1* collapse is partly an operating-point artefact and can be somewhat recovered, whereas the underlying ranking (PR-AUC) is not. The frozen threshold derived on the validation set ($\tau^* = 0.83$) is severely miscalibrated to the 2.5% prevalence of step 43+. 
 
 ## 13. Conclusions
 
@@ -167,7 +167,7 @@ Based on the empirical evidence, the conclusions governing phase progression are
 1. **The Step 43 Degradation is an Abrupt Regime Shift:** Degradation is not a slow curve; it breaks violently exactly at step 43, completely correlated with illicit prevalence dropping and graph fragmentation increasing.
 2. **Retraining Regimes are Required:** Static models are strictly dead upon drift. Expanding and Rolling updating must be the standard for production.
 3. **Address Reuse Hypothesis:** HeteroRGCN suffers extensively on nodes with rich/recurring connectivity to the historical graph (`seen` wallets and historical paths). The results support the hypothesis that uniform relational aggregation may fail to distinguish useful historical address context from noisy recurring connectivity.
-4. **Next Architecture Need:** The evidence dictates strongly against purely uniform relational aggregations. The subsequent architecture (likely HGT or Attention-based) must **learn to down-weight noisy recurring structural addresses** and gate attention across time to explicitly mitigate temporal confusion.
+4. **Next Architecture Direction:** The evidence motivates moving away from purely uniform relational aggregation. A natural next architecture (e.g. HGT or attention-based) would aim to **learn to down-weight noisy recurring structural addresses** and gate information across time to mitigate temporal confusion — a hypothesis to be tested, not a conclusion established here.
 
 ## 14. Reproducibility
 

@@ -13,7 +13,7 @@ path breakdowns; and a clearly-labelled frozen-vs-adaptive threshold experiment.
 Headline findings from the notebook run:
 * **Abrupt Regression (Q1):** Degradation is not a slow curve; performance breaks violently exactly at step 43 (XGBoost step 43 PR-AUC is 0.039; RGCN is 0.035), completely correlating with illicit prevalence plunging from 9-11% to 2.53%.
 * **Adaptation Limits (Q2):** Expanding-window retraining dynamically lifts sub-drift performance (0.817 at step 41 vs 0.588 static), but the extreme step 43-49 drift still heavily limits adaptation (expanding step 43 PR-AUC is 0.066). Rolling window isolated from ancient distributions performs marginally better amid severe drift (0.184 PR-AUC in 43-49 vs 0.129 expanding).
-* **Inductive Disparity (Q3):** Expanding RGCN scores **0.763** PR-AUC when transacting on entirely **unseen** addresses, but only **0.194** PR-AUC when transacting with **seen** addresses. The evidence dictates that uniform relational aggregation noisily confounds useful historical context with uninformative, recurring address interactions.
+* **Inductive Disparity (Q3):** Expanding RGCN scores **0.763** PR-AUC when transacting on entirely **unseen** addresses, but only **0.194** PR-AUC when transacting with **seen** addresses. These subgroups differ sharply in illicit prevalence (unseen 1,037/9,102 ≈ 11.4%; seen 46/7,244 ≈ 0.6%), so the gap is an observed association strongly confounded by class composition, not a controlled comparison. It supports — but does not prove — the hypothesis that uniform relational aggregation may fail to distinguish useful historical address context from noisy recurring connectivity.
 
 This completes the baseline, homogeneous, and initial heterogeneous evaluations; Phase 5 answers the "why" of RGCN underperformance.
 
@@ -85,7 +85,7 @@ pass (`ok = True`). Under the frozen temporal protocol (fit 1–24 / validation 
 on the full 4-relation heterogeneous graph (1,026,711 nodes, 4,417,560 directed edges):
 - **HeteroRGCN Test Performance:** PR-AUC **0.4682** / ROC-AUC **0.8946** / F1 **0.5295** (Precision 0.6241, Recall 0.4598, $\tau^* = 0.795$).
 - **Benchmark Comparison:** RGCN performs on par with 2-layer MLP (0.4768) but trails homogeneous GraphSAGE (0.6209) and frozen XGBoost (0.8013).
-- **Structural Mechanism:** While 61,487 multi-step wallets connect 10,812 test transactions to historical training transactions, uniform mean aggregation across 2.87M dense `AddrAddr` edges causes message diffusion and over-smoothing, diluting local transaction signals without attention gating.
+- **Structural Mechanism:** While 61,487 multi-step wallets connect 10,812 test transactions to historical training transactions, the results support the hypothesis that uniform relational aggregation may fail to distinguish useful historical address context from noisy recurring connectivity across 2.87M dense `AddrAddr` edges.
 - **Temporal Sub-Windows:** Window 35–42 PR-AUC is **0.6083** (F1 0.6221); Window 43–49 drift window reaches PR-AUC **0.0550** (slight lift over GraphSAGE 0.0504 and XGBoost 0.0427), showing persistent wallet representations provide marginal stability across temporal shifts.
 Full record: `docs/HETEROGENEOUS_GNN.md`.
 
