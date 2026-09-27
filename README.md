@@ -5,13 +5,16 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified, Phase 1 EDA complete, Phase 2 XGBoost baseline complete (baseline +
-> optimisation pass), and Phase 3 GraphSAGE complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
-> and `notebooks/03_graphsage.ipynb` ran on Google Colab on 2026-09-25; findings are in `docs/EDA.md` (artifacts in `eda/`),
-> `docs/XGBOOST.md` (artifacts in `xgboost/`), and `docs/GRAPHSAGE.md` (artifacts in `GraphSage/`).
-> GraphSAGE reaches **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759** (+0.1442 lift over neural baseline)
-> and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement (100% intra-step) proves homogeneous GNNs cannot bridge
-> temporal steps. Ready for Phase 4 (Heterogeneous GNN — RGCN / HGT). See `docs/PROGRESS.md` and `docs/PLAN.md`.
+> Status: dataset verified; Phases 1–4 complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
+> `notebooks/03_graphsage.ipynb` and `notebooks/04_heterogeneous_gnn.ipynb` ran on Google Colab in 2026-09-25;
+> findings are in `docs/EDA.md` (artifacts in `eda/`), `docs/XGBOOST.md` (`xgboost/`),
+> `docs/GRAPHSAGE.md` (`GraphSage/`) and `docs/HETEROGENEOUS_GNN.md` (`results/heterogeneous_gnn/`).
+> On test 35–49 the frozen benchmark is XGBoost **PR-AUC 0.8013**, GraphSAGE **0.6209**, HeteroRGCN
+> **0.4682**; homogeneous GNNs cannot bridge steps (100% intra-step edges), while the heterogeneous graph
+> does connect 10,812 test transactions to history via wallets. Phase 5 — `notebooks/05_temporal_inductive_evaluation.ipynb`
+> (temporal degradation, static vs expanding/rolling retraining, inductive seen/unseen address context,
+> threshold adaptation) — is **authored and awaiting its Colab/Kaggle run**; its results are PENDING.
+> See `docs/PROGRESS.md`, `docs/PLAN.md` and `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`.
 
 ## Architecture at a Glance
 
@@ -60,7 +63,11 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/EDA.md` | Phase 1 exploratory data analysis — completed run (2026-09-25) |
 | `docs/XGBOOST.md` | Phase 2 XGBoost baseline — design and executed results (leakage controls, metrics, temporal windows, error and feature analysis) |
 | `docs/GRAPHSAGE.md` | Phase 3 GraphSAGE baseline — methodology, executed results, and intra-step analysis (executed 2026-09-25) |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda.ipynb`, `02_xgboost.ipynb`, `03_graphsage.ipynb` executed 2026-09-25; `04_heterogeneous_gnn.ipynb` next) |
+| `docs/HETEROGENEOUS_GNN.md` | Phase 4 HeteroRGCN — design, leakage controls, and executed results (executed 2026-09-25) |
+| `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` | Phase 5 temporal & inductive evaluation — design and (pending) results |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda`–`04_heterogeneous_gnn` executed 2026-09-25; `05_temporal_inductive_evaluation` authored, awaiting run) |
+| `scripts/generate_notebook_05.py` | Authoring script for the Phase 5 notebook (reviewable and reproducible in Git) |
+| `temporal_inductive/` | Phase 5 artifacts, populated when the notebook runs on Colab/Kaggle |
 | `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |
@@ -91,6 +98,8 @@ the laptop. All ML execution — EDA onward — happens in the phase notebooks.
 - `docs/EDA.md` — Phase 1 exploratory data analysis report
 - `docs/XGBOOST.md` — Phase 2 XGBoost baseline report and optimization results
 - `docs/GRAPHSAGE.md` — Phase 3 GraphSAGE baseline methodology and design
+- `docs/HETEROGENEOUS_GNN.md` — Phase 4 HeteroRGCN methodology and executed results
+- `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` — Phase 5 temporal & inductive evaluation design
 - `docs/OBJECTIVES.md` — goal, requirements, definition of done
 - `docs/PLAN.md` — phased roadmap with execution environments
 - `docs/PROGRESS.md` — current status and next actions

@@ -123,7 +123,8 @@ artifacts exported to `GraphSage/`.
 ## Phase 4 — Heterogeneous Graph Deep Learning (RGCN / HGT)
 
 **Environment:** `notebooks/04_heterogeneous_gnn.ipynb` on Kaggle/Colab ·
-**Status:** Ready to start (Phase 3 executed, reviewed, and recorded)
+**Status:** Complete — executed on Google Colab (CUDA GPU) 2026-09-25, artifacts in
+`results/heterogeneous_gnn/`, 46/46 checks passing; record in `docs/HETEROGENEOUS_GNN.md`
 
 **Objective:** Learn from heterogeneous graph structure (transactions + wallets/addresses across
 all 4 edge types: `AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) to bridge isolated transactions
@@ -146,22 +147,26 @@ protocol; any HGT use is explicitly justified.
 ## Phase 5 — Robust Evaluation
 
 **Environment:** `notebooks/05_temporal_inductive_evaluation.ipynb` on Kaggle/Colab ·
-**Status:** Not started
+**Status:** Notebook authored, awaiting remote run (no ML executed on the laptop)
 
-**Objective:** Prove the models generalize over time and to unseen actors, not just on a
-random split.
+**Objective:** Determine whether the models generalise over time and to unseen actors — and whether the
+heterogeneous graph's temporal bridge actually helps — instead of reporting a single aggregate score.
 
 **Tasks**
 
-* Temporal split evaluation (train on past, test on future)
-* Inductive evaluation on unseen transactions/wallets
-* Ablation studies (edge types, features, sampling, imbalance handling)
-* Error analysis across time steps and node types
+* Per-step evaluation of the frozen XGBoost/GraphSAGE/RGCN models for steps 35–49
+* Label-free graph, address-activity and feature drift diagnostics per step
+* Static (1–34) vs expanding (1..t-1) RGCN retraining, plus one pre-registered rolling window (W=20)
+* Seen vs unseen address context and historical `T→A→T` path breakdowns
+* Frozen vs adaptive (vs labelled oracle) threshold analysis, with PR-AUC kept primary
+* Programmatic verification of the temporal rule: features/edges `<= t`, labels `< t`
 
-**Expected output:** A temporal and inductive evaluation report plus ablation results.
+**Expected output:** A temporal and inductive evaluation report (`docs/TEMPORAL_INDUCTIVE_EVALUATION.md`)
+plus the tables and figures in `temporal_inductive/`.
 
-**Completion criteria:** Temporal degradation is measured and documented; ablations show
-which components help; evaluation is leakage-free.
+**Completion criteria:** Temporal degradation is measured per step and located; static vs adaptive
+regimes are compared; inductive and historical-path breakdowns are reported with sample sizes; the
+evaluation is leakage-free and every check passes.
 
 ## Phase 5 — Explainability
 

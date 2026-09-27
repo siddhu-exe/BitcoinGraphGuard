@@ -169,16 +169,21 @@ Dataset verification and the exploratory data analysis are **complete** (see `PR
   **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759** (+0.1442 lift)
   and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement (100% intra-step) proves
   homogeneous GNNs cannot bridge temporal steps without wallet nodes.
-* **Ready to start (Phase 4):** `notebooks/04_heterogeneous_gnn.ipynb` — Heterogeneous GNN (RGCN / HGT)
-  incorporating all 4 edge types (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) to bridge time steps
-  and connect transactions across wallets.
-* **Not done yet:** Phase 3 remote execution on Colab/Kaggle; Phase 4 onwards (`notebooks/04_heterogeneous_gnn.ipynb`
-  through `07_final_evaluation.ipynb`); DVC setup; `src/` application structure; MLflow tracking.
+* **Done (Phase 4):** `notebooks/04_heterogeneous_gnn.ipynb` — heterogeneous RGCN over all 4 edge types
+  (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) executed on Google Colab (CUDA GPU) on 2026-09-25 with
+  artifacts in `results/heterogeneous_gnn/`. HeteroRGCN reaches **PR-AUC 0.4682 / ROC-AUC 0.8946**
+  (46/46 checks). Record: `docs/HETEROGENEOUS_GNN.md`.
+* **Authored, awaiting remote run (Phase 5):** `notebooks/05_temporal_inductive_evaluation.ipynb` —
+  per-step evaluation over 35-49, drift diagnostics, static vs expanding/rolling RGCN retraining,
+  seen/unseen address-context and historical `T->A->T` breakdowns, and frozen-vs-adaptive thresholds.
+  Methodology in `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`; results PENDING until it runs on Colab/Kaggle.
+* **Not done yet:** Phase 5 remote execution; Phase 6 onwards (`06_explainability.ipynb` through
+  `07_final_evaluation.ipynb`); DVC setup; `src/` application structure; MLflow tracking.
 
-**Experimental results are frozen for Phase 2** — XGBoost baseline (0.8007) and optimized (0.8013)
-under fit 1–24 / validation 25–34 / refit 1–34 / test 35–49 on 165 transaction features. Phase 3
-GraphSAGE is authored and ready for remote execution. Phase 4 (RGCN / HGT) will begin only after
-Phase 3 artifacts are exported and reviewed.
+**Experimental results are frozen through Phase 4** under fit 1–24 / validation 25–34 / refit 1–34 /
+test 35–49: XGBoost 0.8013, GraphSAGE 0.6209, HeteroRGCN 0.4682 (35–49 PR-AUC). Phase 5 is authored and
+awaiting its remote run; it must not change the RGCN architecture or start HGT. The next architecture
+is chosen only from the Phase 5 temporal and inductive evidence.
 
 ## Important Rules
 

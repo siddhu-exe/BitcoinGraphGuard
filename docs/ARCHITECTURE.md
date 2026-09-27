@@ -39,7 +39,7 @@ Kaggle. There is **one notebook per major project phase** — not one per small 
 | `notebooks/02_xgboost.ipynb` | Phase 2 — Classical baseline (XGBoost) | Leakage audit, temporal split construction, prevalence baseline, Logistic Regression, XGBoost training with a 1500-tree budget, early stopping and a seeded 20-trial validation-PR-AUC search, PR-AUC/precision/recall/F1 evaluation, temporal windows, error and feature-importance analysis |
 | `notebooks/03_graphsage.ipynb` | Phase 3 — Homogeneous GNN baseline | Homogeneous graph build (`txs_edgelist.csv`), empirical intra-step confinement verification, 2-layer GraphSAGE (mean aggregation) with architectural twin MLP ablation, leakage-free scaling, `pos_weight` loss, validation early stopping, sub-windows (35–42 vs 43–49), connected vs isolated breakdown, automated assertions |
 | `notebooks/04_heterogeneous_gnn.ipynb` | Phase 4 — Heterogeneous GNN | Heterogeneous graph build (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`), RGCN (and HGT only if justified), tuning, ablations |
-| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 5 — Robust evaluation | Temporal degradation, inductive evaluation on unseen nodes, per-step error analysis |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 5 — Robust evaluation | Per-step metrics for the frozen XGBoost/GraphSAGE/RGCN models on 35–49, label-free graph/address/feature drift diagnostics, static vs expanding-window (and optional rolling-window) RGCN retraining, seen/unseen address-context and historical `T→A→T` path breakdowns, and a frozen-vs-adaptive threshold experiment. Every prediction uses graph/features at step `<= t` and labels from `< t`; the RGCN architecture is unchanged from Phase 4 |
 | `notebooks/06_explainability.ipynb` | Phase 6 — Explainability | GNNExplainer on selected fraud, false-positive, and false-negative cases |
 | `notebooks/07_final_evaluation.ipynb` | Phase 9 — Finalization | Frozen final runs, final metrics, artifact export |
 
@@ -147,7 +147,9 @@ imbalance handling).
 Temporal and inductive evaluation live in
 `notebooks/05_temporal_inductive_evaluation.ipynb`; ablations run alongside the model they
 belong to (e.g. `notebooks/04_heterogeneous_gnn.ipynb`). Evaluation executes in Colab/Kaggle,
-not on the laptop.
+not on the laptop. Phase 5 is intentionally an evaluation phase — it does not alter the RGCN
+architecture or start HGT, and its artifacts (`temporal_inductive/`) feed the evidence-based
+choice of the next architecture.
 
 ## MLOps Architecture
 
