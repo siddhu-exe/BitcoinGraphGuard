@@ -268,3 +268,10 @@ predictions, metrics, and explanation outputs back for local tracking and servin
 * Do not replace the heterogeneous graph objective with a simpler unrelated approach.
 * Do not execute ML on the laptop at all; all ML work runs in notebooks on Kaggle/Colab.
   Even local inspection must use streaming, chunked, low-priority, one-core passes.
+
+## 2026-09-27: Phase 6 Explainability Implementation
+
+- **Notebook Generated:** Built `scripts/generate_notebook_06.py` and executed it to produce `notebooks/06_explainability.ipynb`. The notebook utilizes SHAP for XGBoost, Integrated Gradients via Captum for GraphSAGE homogeneous structure attribution, and programmatic Test-Time Relation Ablation for HeteroRGCN. 
+- **Methodology Strictly Fastened:** Adhered fully to Phase 6 requirements—no architectural enhancements (no HGT), strictly frozen pipelines (XGBoost from Phase 2, GraphSAGE from Phase 3, HeteroRGCN from Phase 5 static). 
+- **Temporal Non-Leakage Guaranties:** All extracted ego-networks restricted rigidly to $t \le 42$ prior to gradient tracking.
+- **Documentation:** Authored `docs/EXPLAINABILITY.md` scaffold mapping exact analytical artifacts (`results/explainability/`) that will populate after execution.

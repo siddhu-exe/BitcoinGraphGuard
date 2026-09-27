@@ -135,13 +135,13 @@ dilution and over-smoothing, while persistent wallet connectivity provides modes
 
 *Environment: Kaggle/Colab notebook `06_explainability.ipynb` (GNNExplainer).*
 
-* [ ] Select representative fraud predictions
-* [ ] Select false-positive cases
-* [ ] Select false-negative cases
-* [ ] Apply GNNExplainer or equivalent method
-* [ ] Identify influential nodes and edges
-* [ ] Visualize important graph structures
-* [ ] Document explainability limitations
+* [x] Write Phase 6 explainability notebook generator
+* [x] Execute Phase 6 explainability notebook generator
+* [x] Create explainability artifacts directory scaffold
+* [x] Author docs/EXPLAINABILITY.md scaffold with strict methodology
+* [ ] Execute `notebooks/06_explainability.ipynb` on Colab/Kaggle
+* [ ] Transfer exported artifacts to `results/explainability/`
+* [ ] Populate `docs/EXPLAINABILITY.md` with results
 
 ## Phase 7 — MLOps & Monitoring
 
