@@ -1,0 +1,67 @@
+{
+  "seed": 42,
+  "split_windows": {
+    "fit": "1-24",
+    "validation": "25-34",
+    "train": "1-34",
+    "test": "35-49",
+    "test_early": "35-42",
+    "test_drift": "43-49"
+  },
+  "phase5_controls": {
+    "rolling_window": 20,
+    "prediction_includes_current_step_edges": true,
+    "run_expanding": true,
+    "run_rolling": true,
+    "threshold_grid": [
+      0.005,
+      0.995,
+      199
+    ]
+  },
+  "graph_construction": "Phase 4 4-relation heterogeneous graph; every edge stamped with its earliest step",
+  "address_history_definition": "first_seen = min(wallet snapshot step, timestamped incident-edge endpoint step)",
+  "seen_unseen_definition": "seen at t iff first_seen < t; labels are never used to define context",
+  "historical_path_definition": "exists an address linking this transaction to another transaction observed strictly before t",
+  "addr_addr_availability_rule": "max(first_seen[src], first_seen[dst]) - documented proxy, no native timestamp",
+  "normalisation_policy": "StandardScaler fit on the labelled training window only, per address cutoff",
+  "threshold_methodology": {
+    "frozen": "F1-max on validation 25-34 (selection model), tau* = 0.83",
+    "adaptive": "F1-max on a growing out-of-sample pool ending at t-1",
+    "oracle": "post-hoc F1-max on step t (non-deployable reference only)"
+  },
+  "retraining_schedule": {
+    "static": "train 1-34, no retraining",
+    "expanding": "train 1..t-1, refit each of steps 35-49, epochs=76",
+    "rolling": "train t-20..t-1, refit each step, epochs=76"
+  },
+  "rgcn_hyperparameters": {
+    "architecture": "2-layer RelationalConvLayer",
+    "tx_in": 165,
+    "addr_in": 55,
+    "hidden": 128,
+    "dropout": 0.3,
+    "lr": 0.003,
+    "weight_decay": 0.0001,
+    "optimiser": "Adam",
+    "loss": "BCEWithLogitsLoss",
+    "refit_epochs": 76
+  },
+  "static_checkpoint_sha256": "abbd9213b6e809997b85354864ba12dfa47ce60432bf3af1d50d85bb7f6ad42d",
+  "best_selection_epoch": 76,
+  "software": {
+    "python": "3.13.15",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "torch": "2.11.0+cu128",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39"
+  },
+  "hardware": {
+    "device": "cuda",
+    "gpu": "Tesla T4"
+  },
+  "frozen_artifact_sources": {
+    "xgboost": "/content/drive/MyDrive/Projects/Bitcoin Graph/xgboost/predictions.csv",
+    "rgcn_phase4": "/content/drive/MyDrive/Projects/Bitcoin Graph/heterogeneous_gnn/predictions.csv"
+  }
+}

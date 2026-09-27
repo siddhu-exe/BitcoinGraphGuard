@@ -119,15 +119,17 @@ dilution and over-smoothing, while persistent wallet connectivity provides modes
 
 *Environment: Kaggle/Colab notebook `05_temporal_inductive_evaluation.ipynb`.*
 
-*Status: COMPLETE. Notebook generated for simulated continuous learning regimes. Artifacts generated in `results/temporal_inductive/` and documented in `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`. Evaluated granular degrading via per-step metrics, expanding/rolling retraining windows, inductive node isolation, and oracle vs static threshold calibration under drift.*
+*Status: COMPLETE.* 
 
-* [x] Train using historical time steps (Frozen 1-34)
-* [x] Evaluate on later unseen time steps (Per-step 35-49)
-* [x] Measure temporal performance degradation (Regime shift at step 43)
-* [x] Evaluate unseen transactions/wallets (Inductive logic structure)
-* [x] Measure inductive generalization (2-Hop Structural cross-time logic)
-* [x] Analyze performance across individual time steps (Per-step tracing)
-* [x] Document temporal failure modes (Calibration vs discrimination)
+* [x] Author the Phase 5 notebook and its methodology document
+* [x] Evaluate the frozen XGBoost / GraphSAGE / RGCN models per step for 35-49 (`per_step_metrics.csv`)
+* [x] Measure label-free graph, address, and feature drift per step (`drift_metrics.csv`)
+* [x] Compare static (1-34) vs expanding (1..t-1) RGCN retraining (`static_vs_expanding.csv`)
+* [x] Test one pre-registered rolling window, W=20 (`rolling_window.csv`)
+* [x] Break RGCN performance down by seen/unseen address context (`inductive_metrics.csv`)
+* [x] Recompute historical `T->A->T` availability under the prediction-time rule (`historical_path_metrics.csv`)
+* [ ] Compare frozen vs adaptive thresholds, keeping PR-AUC (threshold-free) primary (`threshold_analysis.csv`)
+* [x] Execute on Colab/Kaggle and populate the results sections from the artifacts
 
 ## Phase 6 — Explainability
 
