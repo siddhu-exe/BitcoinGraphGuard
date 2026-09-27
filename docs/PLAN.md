@@ -128,7 +128,7 @@ dilution and over-smoothing, while persistent wallet connectivity provides modes
 * [x] Test one pre-registered rolling window, W=20 (`rolling_window.csv`)
 * [x] Break RGCN performance down by seen/unseen address context (`inductive_metrics.csv`)
 * [x] Recompute historical `T->A->T` availability under the prediction-time rule (`historical_path_metrics.csv`)
-* [ ] Compare frozen vs adaptive thresholds, keeping PR-AUC (threshold-free) primary (`threshold_analysis.csv`)
+* [x] Compare frozen vs adaptive thresholds, keeping PR-AUC (threshold-free) primary (`threshold_analysis.csv`)
 * [x] Execute on Colab/Kaggle and populate the results sections from the artifacts
 
 ## Phase 6 — Explainability

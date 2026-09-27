@@ -47,7 +47,7 @@
     "loss": "BCEWithLogitsLoss",
     "refit_epochs": 76
   },
-  "static_checkpoint_sha256": "abbd9213b6e809997b85354864ba12dfa47ce60432bf3af1d50d85bb7f6ad42d",
+  "static_checkpoint_sha256": "f073187bca3f493a12dbf5b1ef58faf95319c93d970d9e6649f2b7b74cfee4b2",
   "best_selection_epoch": 76,
   "software": {
     "python": "3.13.15",
@@ -62,6 +62,7 @@
   },
   "frozen_artifact_sources": {
     "xgboost": "/content/drive/MyDrive/Projects/Bitcoin Graph/xgboost/predictions.csv",
+    "graphsage": "/content/drive/MyDrive/Projects/Bitcoin Graph/graphsage/predictions.csv",
     "rgcn_phase4": "/content/drive/MyDrive/Projects/Bitcoin Graph/heterogeneous_gnn/predictions.csv"
   }
 }

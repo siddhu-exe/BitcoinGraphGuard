@@ -13,6 +13,7 @@ Random seed 42; frozen 35-49 benchmark retained at XGBoost 0.8013 / GraphSAGE 0.
 | `expanding_windows.csv` | Exact training window and positive count for every expanding refit |
 | `rolling_window.csv` | Rolling-window (W=20) variant, if executed |
 | `inductive_metrics.csv` | RGCN performance by seen/unseen/no-address context |
+| `inductive_diagnostics_per_step.csv` | Expanding-regime per-step breakdown by seen/unseen context |
 | `inductive_context_by_step.csv` | Per-step address-context composition |
 | `historical_path_metrics.csv` | Performance split by historical T->A->T path availability |
 | `historical_path_availability.csv` | Per-step historical-path counts |

@@ -1,5 +1,5 @@
 
-BitcoinGraphGuard - Phase 5 Temporal & Inductive Evaluation (2026-09-27 08:46)
+BitcoinGraphGuard - Phase 5 Temporal & Inductive Evaluation (2026-09-27 10:50)
 ----------------------------------------------------------------------------------------------
 Protocol   : fit 1-24 | validation 25-34 | train 1-34 | test 35-49 (unchanged from Phases 1-4)
 Temporal   : edges/features/address snapshots restricted to <= t; training labels strictly < t
@@ -7,7 +7,7 @@ Frozen refs: XGBoost 0.8013 | GraphSAGE 0.6209 | HeteroRGCN 0.4682 (35-49 PR-AUC
 Selection  : best epoch 76 | validation PR-AUC 0.8910 | tau* 0.830
 Regimes    : static, expanding (W=1..t-1), rolling (W=20)
 Historical T->A->T bridge (Phase 4 definition): 10,812 test transactions
-Checks     : 83 recorded, 6 failing
+Checks     : 91 recorded, 0 failing
 
 Per-step and regime tables are in this folder; conclusions are written to
 docs/TEMPORAL_INDUCTIVE_EVALUATION.md only after this notebook has run.
