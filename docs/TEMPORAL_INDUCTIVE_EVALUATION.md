@@ -167,8 +167,8 @@ The models were evaluated remotely on Google Colab/Kaggle. The exact outputs wer
 Based on the empirical evidence, the conclusions governing phase progression are:
 1. **The Step 43 Degradation is an Abrupt Regime Shift:** Degradation is not a slow curve; it breaks violently exactly at step 43, completely correlated with illicit prevalence dropping and graph fragmentation increasing.
 2. **Retraining Regimes are Required:** Static models are strictly dead upon drift. Expanding and Rolling updating must be the standard for production.
-3. **Address Reuse is Computationally Confounding (Dilution):** HeteroRGCN suffers extensively on nodes with rich/recurring connectivity to the historical graph (`seen` wallets and historical paths). This confirms our Phase 4 hypothesis that uniform, unweighted mean-aggregation across the dense `AddrAddr` graph causes extreme message diffusion and over-smoothing.
-4. **Next Architecture Need:** The evidence dictates strongly against purely uniform relational aggregations. The subsequent architecture (likely HGT or Attention-based) must **learn to down-weight noisy recurring structural addresses** and gate attention across time to explicitly mitigate dilution.
+3. **Address Reuse Hypothesis:** HeteroRGCN suffers extensively on nodes with rich/recurring connectivity to the historical graph (`seen` wallets and historical paths). The results support the hypothesis that uniform relational aggregation may fail to distinguish useful historical address context from noisy recurring connectivity.
+4. **Next Architecture Need:** The evidence dictates strongly against purely uniform relational aggregations. The subsequent architecture (likely HGT or Attention-based) must **learn to down-weight noisy recurring structural addresses** and gate attention across time to explicitly mitigate temporal confusion.
 
 ## 14. Reproducibility
 

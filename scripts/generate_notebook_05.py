@@ -175,15 +175,27 @@ for _directory in (OUT_DIR, FIG_DIR):
     _directory.mkdir(parents=True, exist_ok=True)
 
 # Frozen Phase 2-4 artifacts live next to the raw data on Drive, or under results/ in the repo.
-ARTIFACT_ROOTS = [DRIVE_ROOT, Path("results"), Path.cwd(), Path(".")]
+ARTIFACT_ROOTS = [
+    DRIVE_ROOT,
+    Path("results"),
+    Path.cwd() / "results",
+    Path.cwd(),
+    Path("."),
+    Path("/content/BitcoinGraphGuard/results"),
+    Path("/kaggle/working/BitcoinGraphGuard/results")
+]
 
+# If notebook runs inside a cloned repo where DATA_DIR is resolved to the repo's 'Og data' directory
+if "Og data" in str(DATA_DIR):
+    ARTIFACT_ROOTS.append(DATA_DIR.parent / "results")
 
 def resolve_artifact(folder: str, name: str = "predictions.csv"):
     """Locate a frozen artifact across the Drive and repository layouts."""
     for root in ARTIFACT_ROOTS:
-        candidate = root / folder / name
-        if candidate.exists():
-            return candidate
+        for f_name in [folder, folder.lower(), folder.replace("Sage", "SAGE")]:
+            candidate = root / f_name / name
+            if candidate.exists():
+                return candidate
     return None
 
 
@@ -1228,6 +1240,38 @@ ax.set(ylabel="PR-AUC", title="Static RGCN PR-AUC by inductive address context (
 save_fig("inductive_seen_vs_unseen.png")
 ''')
 
+C("markdown", r"""## 9b. Inductive Subgroup Diagnostic (Per-Step)
+
+To sanity-check the surprising finding that unseen address context radically outperforms seen address context, this section decomposes the expanding regime's performance step-by-step. We verify sample counts, illicit counts, and prevalence, and assert that the unseen definition structurally forbids temporal leakage.
+""")
+
+C("code", r'''diagnostic_rows = []
+probs = REGIME_PROBS.get("expanding", REGIME_PROBS["static_temporal_graph"])
+for t in range(TEST_MIN, TEST_MAX + 1):
+    masks = group_masks_for_step(t)
+    for group in ["seen_address_context", "unseen_address_context"]:
+        idx = masks[group]
+        if idx.size == 0:
+            continue
+        y_g = (tx_class[idx] == 1).astype(int)
+        scores_g = probs[t][idx]
+        metrics = evaluate(y_g, scores_g, FROZEN_THRESHOLD)
+        metrics.update({"time_step": t, "context_group": group})
+        diagnostic_rows.append(metrics)
+
+inductive_diagnostics = pd.DataFrame(diagnostic_rows)[
+    ["time_step", "context_group", "n", "illicit", "prevalence", "pr_auc"]
+]
+save_table("inductive_diagnostics_per_step.csv", inductive_diagnostics)
+display(inductive_diagnostics.round(4))
+
+# Sanity assertion on "unseen" structural rule:
+# An "unseen" transaction's connected addresses must strictly have their first observation >= t.
+unseen_idx = np.concatenate([group_masks_for_step(t)["unseen_address_context"] for t in range(TEST_MIN, TEST_MAX + 1)])
+check("seen/unseen: unseen address definition rigorously forbids leakage",
+      int((tx_min_addr_firstseen[unseen_idx] < tx_step[unseen_idx]).sum()), 0)
+''')
+
 
 # ---- patch: add state_hash helper + static-freeze audit + clean whole-period block ----
 for cell in CELLS:
@@ -1639,6 +1683,7 @@ Random seed {SEED}; frozen 35-49 benchmark retained at XGBoost 0.8013 / GraphSAG
 | `expanding_windows.csv` | Exact training window and positive count for every expanding refit |
 | `rolling_window.csv` | Rolling-window (W={ROLLING_WINDOW}) variant, if executed |
 | `inductive_metrics.csv` | RGCN performance by seen/unseen/no-address context |
+| `inductive_diagnostics_per_step.csv` | Expanding-regime per-step breakdown by seen/unseen context |
 | `inductive_context_by_step.csv` | Per-step address-context composition |
 | `historical_path_metrics.csv` | Performance split by historical T->A->T path availability |
 | `historical_path_availability.csv` | Per-step historical-path counts |
@@ -1656,6 +1701,7 @@ Frozen benchmark references are never overwritten by adaptive results; they answ
 (OUT_DIR / "README.md").write_text(readme, encoding="utf-8")
 
 required = ["per_step_metrics.csv", "drift_metrics.csv", "static_vs_expanding.csv", "inductive_metrics.csv",
+            "inductive_diagnostics_per_step.csv",
             "historical_path_metrics.csv", "threshold_analysis.csv", "model_comparison.csv", "checks.csv",
             "reproducibility.json", "README.md"]
 if rolling_probs:
