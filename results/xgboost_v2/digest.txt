@@ -1,0 +1,45 @@
+BitcoinGraphGuard - Phase 2b: XGBoost late-window drift investigation
+==============================================================================
+
+Protocol (unchanged): fit 1-24 / validation 25-34 / refit 1-34 / test 35-49
+  selection slice moved to validation_late 33-34 (low prevalence, late)
+  comparison windows: 35-42 (early), 43-49 (late drift), 35-49 (full)
+
+Features: 165 (added 0, removed 0)
+
+Window prevalences
+    1-24  fit                9.400% illicit
+   25-32  validation_early  22.187% illicit
+   33-34  validation_late    6.276% illicit
+    1-34  train             11.581% illicit
+   35-49  test               6.497% illicit
+   35-42  test_early         9.156% illicit
+   43-49  test_drift         2.527% illicit
+
+Reference configuration (frozen Phase 2 hyperparameters, late-slice selection)
+  threshold 0.685 | trees kept 319
+  35-49  PR-AUC 0.8011 | ROC-AUC 0.9353 | F1 0.8047
+  35-42  PR-AUC 0.9228 | ROC-AUC 0.9750 | F1 0.9032
+  43-49  PR-AUC 0.0419 | ROC-AUC 0.7027 | F1 0.0271
+  validation slices: 25-32 PR-AUC 0.9878 | 33-34 PR-AUC 0.9669
+
+Step 1 control (original 25-34 selection; must reproduce the recorded Phase 2 numbers)
+  35-49 PR-AUC 0.7997 (recorded 0.8013) | 43-49 PR-AUC 0.0401 (recorded 0.0427)
+
+Best configuration on 43-49
+  recency_linear  PR-AUC 0.0483 (+0.0056 vs recorded Phase 2 0.0427; +0.0082 vs the control)
+  its 35-42 PR-AUC 0.9248 | 35-49 PR-AUC 0.8070
+
+Drift audit
+  adversarial validation AUC (1-34 vs 43-49): 1.0000 (material at >= 0.80)
+  median top-15 KS                          : 0.5336 (material at >= 0.30)
+  in-window CV PR-AUC on 43-49              : 0.9199 (diagnostic only)
+  verdict                                   : covariate drift / prior shift (the inputs or the label mix moved)
+  top 5 drifted features                    : Aggregate_feature_8, Aggregate_feature_10, Aggregate_feature_43, Aggregate_feature_7, Aggregate_feature_46
+
+Conclusion (post-run, see the final markdown cell)
+  43-49 collapse improved by more than 0.005 PR-AUC: True
+  best 43-49 gain over the recorded Phase 2 value  : +0.0056
+
+Checks: 69/71 passed
+Figures: validation_slice_prevalence.png, drift_top20_ks.png, recency_weight_profiles.png, temporal_pr_auc_by_config.png, test_pr_curves_by_window.png

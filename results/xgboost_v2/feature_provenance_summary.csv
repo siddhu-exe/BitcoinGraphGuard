@@ -1,0 +1,7 @@
+feature_group,count,added_in_phase2b,step_bounded,verdict
+Local_feature_* (93),93,no,assumed,unchanged from Phase 2
+Aggregate_feature_* (72),72,no,assumed,unchanged from Phase 2
+domain block (17),17,no,n/a,excluded (redundant with Local_feature_*)
+has_addresses,1,no,yes,excluded (Phase 2 ablation below margin)
+rolling / recency aggregate,0,no,would be required,not added; see the rationale above
+step-bounded address-graph features,0,no,required if built,deferred to Phases 4/5/7 with its own audit

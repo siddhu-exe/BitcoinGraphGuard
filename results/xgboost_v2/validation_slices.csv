@@ -1,0 +1,7 @@
+window,steps,labeled,illicit,prevalence_pct,role
+validation_early,25-32,5332,1183,22.187,reported only
+validation_late,33-34,956,60,6.276,threshold + early stopping
+validation,25-34,6288,1243,19.768,reference
+test,35-49,16670,1083,6.497,reference
+test_early,35-42,9983,914,9.156,reference
+test_drift,43-49,6687,169,2.527,reference

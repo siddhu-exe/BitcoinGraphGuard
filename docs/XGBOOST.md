@@ -17,6 +17,13 @@ awaits review sign-off; GraphSAGE has not been started.
 > `xgboost/predictions.csv` and reproduce exactly. The copy of the notebook committed to this
 > repository carries no stored outputs, so the exported artifacts are the record of the run.
 
+> **Follow-up: Phase 2b (2026-09-29).** The 43–49 collapse recorded below was investigated in
+> `notebooks/02_xgboost_v2.ipynb` — late low-prevalence validation slice, class-weight and objective
+> sweep, feature-drift audit, recency weighting and a feature-provenance ledger — with artifacts in
+> `results/xgboost_v2/` and the full record in `docs/XGBOOST_V2.md`. It changed nothing here: the
+> frozen Phase 2 numbers below remain the tabular reference, and Phase 2b's best configuration moved
+> 43–49 by only **+0.0056 PR-AUC** (0.0427 → 0.0483) while confirming the cause as covariate drift.
+
 > **Optimisation pass executed (2026-09-25).** The first run's 500-tree budget ran out before its
 > optimum, so 0.8007 was a floor rather than a converged estimate. The notebook now lifts the budget
 > to 1500 trees with 100 rounds of patience, runs a seeded 20-trial randomised search scored **on
@@ -428,4 +435,3 @@ improvement would hide exactly the failure this baseline exposes.
   `early_stopping_fired` against the wrong expected value. The finding itself stands — the reference
   run consumed its whole 500-round budget — and the notebook now records it as
   `ran_out_of_budget = True`. 56 of the 57 recorded checks pass.
-

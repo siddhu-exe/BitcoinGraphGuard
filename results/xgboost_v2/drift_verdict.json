@@ -1,0 +1,28 @@
+{
+  "adversarial_auc_train_vs_drift": 1.0,
+  "median_top15_ks": 0.5336,
+  "top15_features": [
+    "Aggregate_feature_8",
+    "Aggregate_feature_10",
+    "Aggregate_feature_43",
+    "Aggregate_feature_7",
+    "Aggregate_feature_46",
+    "Aggregate_feature_44",
+    "Local_feature_2",
+    "Aggregate_feature_13",
+    "Aggregate_feature_16",
+    "Aggregate_feature_19",
+    "Aggregate_feature_22",
+    "Aggregate_feature_58",
+    "Aggregate_feature_49",
+    "Aggregate_feature_14",
+    "Local_feature_3"
+  ],
+  "in_window_cv_pr_auc_drift": 0.9199,
+  "phase2_transferred_pr_auc_drift": 0.0427,
+  "covariate_drift_material": true,
+  "concept_drift_implicated": false,
+  "verdict": "covariate drift / prior shift (the inputs or the label mix moved)",
+  "rule": "covariate material if adversarial AUC >= 0.80 or median top-15 KS >= 0.30; concept implicated if in-window CV PR-AUC >= 5x transferred and covariate drift is not material",
+  "diagnostic_only": "the in-window probe uses 43-49 labels and is not a model result"
+}

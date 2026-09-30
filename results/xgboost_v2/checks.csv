@@ -1,0 +1,72 @@
+check,value,expected,ok,note
+features: total columns,182,182,True,
+features: domain columns,17,17,True,
+features: model columns,165,165,True,
+features: domain block is disjoint from model features,True,True,True,
+features: identical to the frozen Phase 2 165-column set,165,165,True,Phase 2b adds and removes no feature; see section 8 for the provenance ledger
+labels: transaction rows,203769,203769,True,
+labels: values are a subset of 1/2/3,True,True,True,
+dataset: every transaction has a label,0,0,True,
+dataset: no transaction is dropped at load,203769,203769,True,
+protocol: no train/test overlap,False,False,True,
+protocol: sub-windows partition the test period,16670,16670,True,
+protocol: fit is a subset of train,True,True,True,
+protocol: validation is historical (<= 34),True,True,True,
+protocol: the two validation slices are disjoint and cover 25-34,6288,6288,True,
+protocol: the late validation slice is inside the training range (<= 34),True,True,True,
+protocol: train labeled rows,29894,29894,True,
+protocol: train illicit rows,3462,3462,True,
+protocol: validation labeled rows,6288,6288,True,
+protocol: validation illicit rows,1243,1243,True,
+protocol: test labeled rows,16670,16670,True,
+protocol: test illicit rows,1083,1083,True,
+protocol: test_drift labeled rows,6687,6687,True,
+protocol: test_drift illicit rows,169,169,True,
+protocol: validation_early labeled rows,5332,5332,True,
+protocol: validation_early illicit rows,1183,1183,True,
+protocol: validation_late labeled rows,956,956,True,
+protocol: validation_late illicit rows,60,60,True,
+dataset: fit has both classes,"[0, 1]","[0, 1]",True,
+dataset: unknown labels excluded,0,0,True,
+dataset: feature matrix is float32,['float32'],['float32'],True,
+dataset: every model feature is used,165,165,True,
+dataset: 43-49 prevalence is far below the training prevalence,True,True,True,the regime shift this notebook is trying to survive
+step 1: the late validation slice is low-prevalence (< 8%),True,True,True,"33-34 prevalence must resemble the test regime, not the 25-32 regime"
+step 1: the early validation slice is high-prevalence (> 15%),True,True,True,confirms the two slices genuinely represent different regimes
+step 1: selection slice holds at least 40 positives,True,True,True,a very small positive count would make early stopping and threshold selection unstable
+leakage: no domain column in the feature matrix,True,True,True,
+leakage: no identifier column in the feature matrix,True,True,True,
+leakage: no feature constructed from labels,[],[],True,
+leakage audit: every Phase 2 row is preserved,10,10,True,9 Phase 2 rows plus one explicit no-op row for step 5
+leakage: no single feature is a near-perfect discriminator,True,True,True,"EDA's strongest |r| with the label is 0.26, so an AUC above 0.95 would be a red flag"
+leakage: preprocessing statistics are fit on a training window only,True,,True,trees need no scaling; nothing is fitted on test
+drift: KS audit covers every model feature,165,165,True,
+drift: median top-15 KS reported,0.5336,,True,compared against the pre-registered 0.30 'material' level
+drift: verdict computed from the pre-registered rule,covariate drift / prior shift (the inputs or the label mix moved),,True,
+drift: adversarial validation ran on a balanced subsample per comparison,"[9983, 6687]","[9983, 6687]",True,
+"drift: the audit reports incidence, not causality",True,,True,no causal claim is made; the verdict only separates covariate from concept shift
+step 1 control: reproduces the recorded Phase 2 35-49 PR-AUC (0.8013) within 0.02,1,1.0,True,a failure here means this reimplementation differs from notebooks/02_xgboost.ipynb
+step 1 control: reproduces the recorded Phase 2 43-49 PR-AUC (0.0427) within 0.02,1,1.0,True,both parts of the recorded collapse must reappear before step 1 can be measured
+objective: focal loss ran,False,True,False,"ValueError('Found input variables with inconsistent numbers of samples: [6288, 956]')"
+step 2: sweep covered several scale_pos_weight values,True,True,True,
+step 4: sample weights align with the fit matrix,23606,23606,True,
+step 4: sample weights align with the train matrix,29894,29894,True,
+step 4: recency weighting was tested against the unweighted reference,True,True,True,
+step 4: no test row ever receives a sample weight,True,,True,weights are passed only to the fit (1-24) and refit (1-34) calls
+results: PR-AUC/ROC-AUC/F1 reported for all three windows in every configuration,[],[],True,
+results: validation PR-AUC reported for both slices in every configuration,False,False,True,
+step 1: the control and the late-selection reference select on different windows,"['validation 25-34', 'validation_late 33-34']","['validation 25-34', 'validation_late 33-34']",True,
+results: no configuration ran out of the tree budget,False,False,True,tree budget is not the constraint; a True here would need explaining
+step 5: feature count unchanged from the frozen Phase 2 set,165,165,True,
+step 5: no provenance row records an added feature,['no'],['no'],True,
+step 5: every feature has a documented source and leakage rule,0,0,True,
+artifacts: predictions row count matches the test period,16670,16670,True,
+artifacts: predictions reproduce the reported 43-49 PR-AUC,0.0419,0.0419,True,
+checks: every recorded check passed before the artifact checks,62,63,False,
+artifacts: digest.txt written,True,True,True,
+artifacts: metrics.json written,True,True,True,
+artifacts: conclusion_draft.md written,True,True,True,
+artifacts: figures written,True,True,True,
+artifacts: metrics.json names every figure it wrote,"['drift_top20_ks.png', 'recency_weight_profiles.png', 'temporal_pr_auc_by_config.png', 'test_pr_curves_by_window.png', 'validation_slice_prevalence.png']","['drift_top20_ks.png', 'recency_weight_profiles.png', 'temporal_pr_auc_by_config.png', 'test_pr_curves_by_window.png', 'validation_slice_prevalence.png']",True,
+artifacts: xgboost/ (frozen Phase 2) untouched,True,True,True,
+artifacts: no NaN in the reported 43-49 metrics,0,0,True,
