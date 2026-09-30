@@ -4,156 +4,112 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**BitcoinGraphGuard** is an end-to-end Bitcoin fraud detection system built on the **Elliptic++** dataset. It models Bitcoin transactions and actor/wallet relationships as a temporal heterogeneous graph to identify illicit activity, backed by classical ML baselines, GNNs (GraphSAGE, RGCN/HGT), explainability (GNNExplainer), drift monitoring, and a production FastAPI inference service.
+**BitcoinGraphGuard** is an end-to-end temporal heterogeneous graph-based Bitcoin fraud detection system built on the **Elliptic++** dataset. It detects illicit activity across 49 discrete time steps by combining tabular baselines (XGBoost), graph neural networks (GraphSAGE, HeteroRGCN, HGT), explainability (SHAP, GNNExplainer/Captum, relation ablation), drift monitoring, and a containerized FastAPI inference service.
 
-## Core Dataset Architecture (`Og data/`)
+## Core Architecture & Graph Topology
 
-The raw dataset in `Og data/` comprises temporal graph and tabular data across 49 discrete time steps:
-- **Transactions (`txId`)**: `txs_features.csv` is 184 columns = `txId` + `Time step` + 182 features (93 `Local_feature_*`, 72 `Aggregate_feature_*`, 17 domain features). `txs_classes.csv` (1=illicit, 2=licit, 3=unknown), `txs_edgelist.csv` (`txId1 -> txId2`).
-- **Wallets/Addresses (`address`)**: `wallets_features.csv`, `wallets_classes.csv`, `wallets_features_classes_combined.csv`.
-- **Heterogeneous Edges**:
-  - `AddrTx_edgelist.csv` (`input_address -> txId`)
-  - `TxAddr_edgelist.csv` (`txId -> output_address`)
-  - `AddrAddr_edgelist.csv` (`input_address -> output_address`)
-  - `txs_edgelist.csv` (`txId1 -> txId2`)
+### Dataset & Graph Structure (`Og data/`)
+The raw dataset comprises 49 contiguous time steps, ~1.03M unique nodes, and ~4.42M directed edges:
+- **Transactions (`txId`)**: 203,769 nodes. Features include 165 non-domain features (93 `Local_feature_*`, 72 `Aggregate_feature_*`) plus 17 domain columns. Labels: 4,545 illicit (class 1), 42,019 licit (class 2), 157,205 unknown (class 3).
+- **Wallets/Addresses (`address`)**: 822,942 nodes, 55 features per snapshot. Labels: 14,266 illicit, 251,088 licit, 557,588 unknown.
+- **Heterogeneous Relations (4 directed edge types)**:
+  1. `txs_edgelist.csv` (`tx_to_tx`): 234,355 directed edges. **100% intra-step** — zero cross-step transaction edges.
+  2. `AddrTx_edgelist.csv` (`addr_to_tx`): 477,117 directed edges.
+  3. `TxAddr_edgelist.csv` (`tx_to_addr`): 837,124 directed edges.
+  4. `AddrAddr_edgelist.csv` (`addr_to_addr`): 2,784,344 directed edges.
 
-*Note: Raw data in `Og data/` is gitignored; do not commit large CSVs or raw data files.*
+*Note: Raw data in `Og data/` is gitignored and read-only. Never modify, move, or commit raw files.*
 
-## Repository Layout
+### Crucial Structural & Drift Discoveries
+- **Cross-Temporal Message Passing**: Because transaction-to-transaction edges are 100% intra-step, homogeneous GNNs (GraphSAGE) cannot propagate temporal information across time steps. Cross-temporal message passing requires wallet/address nodes.
+- **Abrupt Regime Shift at Step 43**: Illicit transaction prevalence abruptly drops from 9–11% (steps 1–42) to **2.53%** (steps 43–49), causing severe metric degradation across all models.
+- **Covariate Drift Mechanism**: Adversarial validation yields AUC 1.0000; top drifting features are almost entirely `Aggregate_feature_*` (median KS 0.5336). In-window 5-fold CV on 43–49 achieves 0.9199 PR-AUC, confirming signal is present but distribution transfer fails.
+- **Explainability Insight**: XGBoost relies 61.5% on local features (`Local_feature_53` dominant). RGCN relies heavily on recurrent address pathways (`addr_to_tx`, `tx_to_addr`), making it brittle when transactions shift to unseen addresses in the drift window.
 
-| Path | Purpose |
-| :--- | :--- |
-| `Og data/` | Raw Elliptic++ CSVs (path contains a space — always quote it) — gitignored, **read-only**; never modified, moved or committed |
-| `notebooks/` | One notebook per ML phase, run on Colab/Kaggle: `01_eda.ipynb` … `07_final_evaluation.ipynb` |
-| `docs/` | Project, architecture, dataset, roadmap, status and phase documents (`EDA.md` records the Phase 1 run) |
-| `eda/` | Canonical Phase 1 EDA run artifacts exported from `notebooks/01_eda.ipynb`: `eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures. **Source of truth for EDA numbers.** |
-| `reports/` | Verification evidence (`phase1_verification.json`) and `reports/eda/` from the superseded pre-notebook streaming pass |
-| `scripts/` | Repository tooling: `verify_dataset.py` (Phase 1 verifier); `eda_phase2.py` + `plot_phase2_eda.py` are superseded by notebook 01 and kept only as reference |
-| `src/`, `tests/` | Application/serving code and tests — planned, not created yet |
-| `CLAUDE.md` | This file; `AGENTS.md` is the canonical contributor guide — keep the two in sync |
+## Compute Strategy: Laptop vs Colab/Kaggle
 
-## Development & Environment Commands
+- **Laptop (5.6 GB RAM / Intel Core i3 4-thread)**: Development, documentation, git, code reviews, notebook generator authoring, FastAPI serving (`src/`), testing (`tests/`), Docker, MLOps configuration.
+- **Kaggle / Google Colab (GPU / High-RAM)**: ALL ML and data processing — dataset loading, EDA, feature engineering, graph construction, training (XGBoost, GraphSAGE, RGCN, HGT), hyperparameter tuning, GNNExplainer, evaluation, artifact generation.
+- **No heavy ML on laptop**: Never run full graph loads or model training locally. Local CSV inspections must use memory-safe streaming/chunking.
 
-Python 3.10+ / `uv` is recommended for dependency and environment management.
+## Common Development Commands
 
-### Environment & Dependencies
+### Environment Setup & Linting
 ```bash
-uv venv .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
+# Create and activate local environment
+uv venv .venv && source .venv/bin/activate && uv pip install -r requirements.txt
+
+# Lint and format code & notebooks
+ruff check . && ruff format .
+
+# Memory-safe dataset verification (laptop-safe streaming)
+python scripts/verify_dataset.py
 ```
 
-### Testing
+### Notebook Generation
+Notebooks are programmatically authored via reviewable generator scripts:
 ```bash
-pytest                          # Run entire test suite
-pytest tests/unit/              # Run unit tests only
-pytest tests/test_graph.py -k "test_temporal_split"  # Run single test
-pytest --cov=src tests/         # Run tests with coverage
+python scripts/generate_notebook_02_v2.py    # Generates notebooks/02_xgboost_v2.ipynb
+python scripts/generate_notebook_03_v2.py    # Generates notebooks/03_graphsage.ipynb
+python scripts/generate_notebook_07.py       # Generates notebooks/07_hgt.ipynb
 ```
 
-### Code Quality & Formatting
+### Testing (Pytest)
 ```bash
-ruff check .                    # Lint check
-ruff check --fix .              # Lint autofix
-ruff format .                   # Code formatting
+# Run entire test suite (once src/ and tests/ are created)
+pytest -q
+
+# Run single test file or specific test function
+pytest tests/test_api.py
+pytest tests/test_api.py::test_predict_endpoint
+
+# Run with test coverage
+pytest --cov=src tests/
 ```
 
-### MLOps & Services
+### Serving & MLOps (Phases 8–9)
 ```bash
-mlflow ui --port 5000           # Launch MLflow tracking UI
-dvc repro                       # Run DVC data/training pipeline
-dvc status                      # Check DVC pipeline status
-uvicorn src.api.main:app --reload --port 8000  # Run FastAPI inference service
-docker build -t bitcoingraphguard:latest .     # Build container
+# FastAPI local development
+uvicorn src.api.main:app --reload --port 8000
+
+# Docker build
+docker build -t bitcoingraphguard:latest .
+
+# MLflow UI & DVC tracking
+mlflow ui --port 5000
+dvc repro
 ```
 
-## Compute Strategy: Laptop vs Kaggle/Colab
+## Phase & Benchmark Status
 
-Work is split across two environments; full details in `docs/ARCHITECTURE.md`.
+| Phase | Model / Analysis | Status | Test PR-AUC (35–49) | Drift PR-AUC (43–49) | Primary Documentation / Artifacts |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Phase 1** | EDA & Verification | ✅ Complete | N/A | N/A | `docs/EDA.md`, `results/eda/` |
+| **Phase 2** | XGBoost Baseline | ✅ Complete | **0.8013** | 0.0427 | `docs/XGBOOST.md`, `results/xgboost/` |
+| **Phase 2b**| XGBoost Drift Study | ✅ Complete | 0.8070 | 0.0483 | `docs/XGBOOST_V2.md`, `results/xgboost_v2/` |
+| **Phase 3** | GraphSAGE Baseline | ✅ Complete | 0.6209 | 0.0504 | `docs/GRAPHSAGE.md`, `results/GraphSage/` |
+| **Phase 3b**| GraphSAGE v2 Cross-Step | ✅ Complete | 0.6216 | 0.0505 | `docs/GRAPHSAGE_V2.md`, `results/graphsage_v2/` |
+| **Phase 4** | HeteroRGCN | ✅ Complete | 0.4682 | 0.0550 | `docs/HETEROGENEOUS_GNN.md`, `results/heterogeneous_gnn/` |
+| **Phase 5** | Temporal & Inductive Eval | ✅ Complete | Analysis | Analysis | `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`, `results/temporal_inductive/` |
+| **Phase 6** | Explainability (SHAP/Captum)| ✅ Complete | Analysis | Analysis | `docs/EXPLAINABILITY.md`, `results/explainability/` |
+| **Phase 7** | Hetero Graph Transformer | 🔲 Authored | Ready to run | Ready to run | `docs/HGT.md`, `notebooks/07_hgt.ipynb` |
+| **Phase 8–9**| Serving & MLOps | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
 
-## Current Phase State
+## Strict Carry-Forward Constraints & Evaluation Rules
 
-Phase 1 is complete: dataset verification (`reports/phase1_verification.json`) and exploratory data
-analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.md`). Phase 2 is
-complete: `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25 in two passes — the recorded
-500-tree baseline and a controlled optimisation pass — with artifacts in `xgboost/` and results in
-`docs/XGBOOST.md`. Protocol: fit 1–24 / validation 25–34 / refit 1–34 / test 35–49, on 165 transaction
-features. Baseline PR-AUC 0.8007 / ROC-AUC 0.9317, optimised 0.8013 / 0.9281. Phase 3 GraphSAGE baseline
-is **COMPLETE**: `notebooks/03_graphsage.ipynb` executed on Google Colab on 2026-09-25 (artifacts in `GraphSage/`,
-record in `docs/GRAPHSAGE.md`). Evaluates homogeneous transaction graph (`txs_edgelist.csv`) with 165 features:
-GraphSAGE achieves **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759**
-(+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement
-(100% intra-step) proves homogeneous GNNs cannot bridge temporal steps.
+1. **Temporal Splits Only**: Fit steps 1–24, Validation 25–34 (or late slice 33–34), Train/Refit 1–34, Test 35–49. Never use random splits.
+2. **Sub-Window Reporting**: Always report metrics on both aggregate test (35–49) and the late drift window (43–49).
+3. **Class 3 is Unknown**: Class 3 is unlabeled background data. Never treat class 3 as licit (class 2) and never use it as positive/negative training supervision.
+4. **Primary Metric**: Due to extreme class imbalance (6.5% illicit in test, 2.53% in drift window), **PR-AUC** is the primary evaluation metric. Complement with Precision, Recall, F1 (illicit class), and ROC-AUC. Never report accuracy alone.
+5. **No Data Leakage**: Feature scaling (`StandardScaler`) must be fit strictly on training steps ($\le 34$). Address snapshot aggregation and neighborhood sampling must strictly enforce zero future lookahead ($\le t$).
+6. **Wallet Snapshot Deduplication**: Deduplicate wallet snapshots to distinct `(address, time step)` pairs before partitioning.
+7. **965 Blank-Domain Transactions**: Exactly 965 transactions lack address linkages; handle missing domain values explicitly without naive zero-coercion.
+8. **No Metric Fabrication**: Every quoted dataset statistic or metric must be traceable to saved artifact files in `results/` or `reports/`.
 
-**Phase 4 (Heterogeneous GNN — RGCN / HGT): Ready to start (`notebooks/04_heterogeneous_gnn.ipynb`).**
+## Code Style & Development Conventions
 
-Carry-forward constraints that must not be silently reversed:
-
-* Deduplicate wallet snapshots to `(address, time step)` before any split.
-* Never treat the 965 blank-domain, address-less transactions as `0`.
-* The `43–49` window is a secondary drift window, not the primary test set.
-* The XGBoost numbers are a settled tabular ceiling rather than a floor: the budget was lifted
-  from 500 to 1500 trees and retuned over 20 seeded trials, moving test PR-AUC from 0.8007 to
-  0.8013 while ROC-AUC and F1 fell. Expect no further gain from tabular tuning.
-* Every GNN result must be reported on both `35–49` and `43–49`, never on the aggregate alone.
-* `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
-  link.
-* GraphSAGE in Phase 3 operates strictly on the homogeneous transaction graph (`txs_edgelist.csv`);
-  all 234,355 edges are 100% intra-step, meaning homogeneous GNNs cannot bridge temporal steps.
-* In `txs_edgelist.csv`, 100% of transactions (203,769) have $\text{total\_degree} \ge 1$ (0 isolated nodes),
-  with mean degree 2.30. Phase 4 must incorporate the 822,942 wallet nodes and 4.18M address edges
-  (`AddrTx`, `TxAddr`, `AddrAddr`) to enable cross-step message passing.
-
-- **Laptop (development & documentation only)**: writing/reviewing code, Git management, documentation, system design, notebook code review, FastAPI backend, Docker, MLOps engineering code, CI/CD, dashboard/frontend, and project configuration.
-- **Kaggle / Google Colab (ALL ML execution, in notebooks)**: dataset loading, ML data processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN, HGT, hyperparameter tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final evaluation, and model-artifact generation.
-- **Do not execute ML on the laptop** — no data processing, feature engineering, training, or experiments locally, including "lightweight" EDA.
-- **One notebook per phase** under `notebooks/` (`01_eda.ipynb` … `07_final_evaluation.ipynb`). Notebooks are the executable ML implementation and must run standalone on Colab/Kaggle; application/serving logic lives in `src/`.
-- Remote runs export checkpoints, predictions, metrics, and explanation outputs back to the laptop for tracking, serving, and monitoring.
-
-When asked for the next ML phase: provide the phase notebook, assume it runs on Colab/Kaggle,
-keep it inside the single appropriate notebook, write human-like code, explain important
-decisions, and wait for real results before designing the next phase.
-
-## Hardware & Execution Constraints (Low-Resource Environment)
-
-**CRITICAL**: This laptop has limited compute resources (**5.6 GB RAM**, ~3.0 GB available, Intel Core i3 4-thread CPU) and cannot execute heavy, unconstrained tasks.
-- **No Heavy / Full-Graph In-Memory Loading**: Never load the full raw 2.1 GB dataset or the complete 1M-node / 4.4M-edge graph in memory at once.
-- **Streaming & Chunked Processing**: Always use streaming iterators, generator pipelines, or chunked processing (`chunksize`, sqlite/duckdb streaming).
-- **Mini-Batch Graph Learning**: Use sub-graph sampling and mini-batch loaders (`NeighborLoader` / `HeteroNeighborLoader`) for GNN models.
-- **Resource Discipline**: Limit parallel worker threads (max 2 workers), explicitly release large variables, and call `gc.collect()` to prevent system freezing and OOM kills.
-
-## Coding Style & Naming Conventions
-
-* Python 3.10–3.12, 4-space indentation; `ruff` is the linter and formatter.
-* `snake_case` for functions and variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants, lowercase module names; type hints where practical, one-line docstrings on public callables.
-* Notebooks: readable, logically ordered code; markdown cells explain what is being done, why, what the result means and what decision follows; no comments on obvious syntax; no hardcoded personal paths; no leftover exploratory cells.
-* **Production-quality code**: all committed code must be production quality — clear, readable, typed where practical, error-handled, tested, and free of dead code, debug leftovers, and hardcoded values. Notebook/prototype code does not belong in project source.
-
-## Testing Guidelines
-
-* `pytest`, tests under `tests/`, files named `test_*.py`, functions named `test_<behaviour>`, mirroring the `src/` layout. Use small synthetic fixtures — never the raw Elliptic++ files.
-* No test suite exists yet; tests arrive with `src/`. Until then, correctness is evidenced by the notebook's own checks (`checks.csv`) and by unit-checking notebook helper logic on tiny synthetic arrays outside the repository. Coverage thresholds are not enforced yet.
-
-## Commit & Pull Request Guidelines
-
-* Commit history uses short, scoped, imperative subjects — for example `dataset reverification`, `docs: add dataset verification details`, `fix(frontend): gate the UI on a backend readiness probe`. Prefer `type(scope): summary` (`feat`, `fix`, `docs`, `chore`, `test`) and add a body covering what and why when the change is not self-evident.
-* Pull requests should describe the change and its motivation, point at the relevant phase document (`docs/PLAN.md`, `docs/PROGRESS.md`, `docs/EDA.md`), list the commands run and their results, note any documentation updated, and include figures or metrics for EDA/ML changes.
-* Never include raw data, model artifacts, credentials or other large generated files in a commit or PR. Keep each PR focused on a single phase or concern.
-
-## Critical Modeling & Evaluation Rules
-
-1. **Temporal Splits Only**: Never use random train/test splits. Always split chronologically by `Time step` (e.g., train on early time steps, evaluate on later unseen time steps) to prevent temporal data leakage and evaluate real-world inductive generalization.
-2. **Heterogeneous Graph Structure**: Preserve both node types (`transaction`, `address/wallet`) and their directional relationships (`AddrTx`, `TxAddr`, `txs_edgelist`). Do not collapse the problem into a simple homogeneous graph unless specifically running a comparative baseline.
-3. **Class Imbalance & Metrics**: Class 1 (illicit) is heavily underrepresented. Prioritize **PR-AUC**, **Precision**, **Recall**, **F1 (illicit class)**, and confusion matrices. Never evaluate using accuracy alone.
-4. **Baselines First**: Establish strong tabular (XGBoost) and homogeneous graph (GraphSAGE) baselines before benchmarking heterogeneous GNN architectures (RGCN, HGT).
-5. **No Synthetic Shortcuts**: Do not replace Elliptic++ data with synthetic or toy graph structures for primary evaluation.
-
-## Task Completion Report
-
-At the end of every non-trivial task or phase, report:
-- **What changed**: Summary of changes made
-- **Files changed**: List of created/modified files
-- **Tests/checks run**: Commands executed and their status
-- **Results**: Quantitative metrics or validation output
-- **Important assumptions**: Architectural or domain assumptions made
-- **Next recommended step**: Immediate next action in `docs/PLAN.md`
+- Python 3.10–3.12, 4-space indentation; `ruff` for linting and formatting.
+- `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants.
+- Type hints on functions; docstrings on public callables.
+- Notebooks: One notebook per phase; clear markdown cells explaining rationale, results, and architectural decisions. Avoid hardcoded personal paths.
+- Keep `CLAUDE.md` and `AGENTS.md` synchronized when architectural or workflow guidelines change.

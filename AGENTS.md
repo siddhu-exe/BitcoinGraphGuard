@@ -91,14 +91,16 @@ analysis (`notebooks/01_eda.ipynb`, artifacts in `eda/`, write-up in `docs/EDA.m
 complete: `notebooks/02_xgboost.ipynb` ran on Google Colab on 2026-09-25 in two passes — the recorded
 500-tree baseline and a controlled optimisation pass — with artifacts in `xgboost/` and results in
 `docs/XGBOOST.md`. Protocol: fit 1–24 / validation 25–34 / refit 1–34 / test 35–49, on the 165 transaction
-features. Baseline PR-AUC 0.8007 / ROC-AUC 0.9317, optimised 0.8013 / 0.9281. Phase 3 GraphSAGE baseline
-is **COMPLETE**: `notebooks/03_graphsage.ipynb` executed on Google Colab on 2026-09-25 (artifacts in `GraphSage/`,
+features. Baseline PR-AUC 0.8007 / ROC-AUC 0.9317, optimised 0.8013 / 0.9281. Phase 2b (2026-09-29)
+investigated the 43–49 collapse in `notebooks/02_xgboost_v2.ipynb` — artifacts in `results/xgboost_v2/`,
+record in `docs/XGBOOST_V2.md`: covariate drift, best 43–49 PR-AUC 0.0483 via recency weighting, 69/71 checks.
+Phase 3 GraphSAGE baseline is **COMPLETE**: `notebooks/03_graphsage.ipynb` executed on Google Colab on 2026-09-25 (artifacts in `GraphSage/`,
 record in `docs/GRAPHSAGE.md`). Evaluates homogeneous transaction graph (`txs_edgelist.csv`) with 165 features:
 GraphSAGE achieves **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759**
 (+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement
-(100% intra-step) proves homogeneous GNNs cannot bridge temporal steps.
+(100% intra-step) proves homogeneous GNNs cannot bridge temporal steps. Phase 3 v2 (`notebooks/03_graphsage.ipynb`, artifacts in `results/graphsage_v2/`, record in `docs/GRAPHSAGE_V2.md`) evaluated cross-step extensions (projected graph 0.5959, lag features 0.5238, depth-3 0.6001), confirming uniform projections degrade performance and motivating Phase 7 (HGT).
 
-**Phase 4 (Heterogeneous GNN — RGCN / HGT): Ready to start (`notebooks/04_heterogeneous_gnn.ipynb`).**
+**Phase 7 (Heterogeneous Graph Transformer - HGT): Ready to start (`notebooks/07_hgt.ipynb`). Phase 4, 5, 6 are completed.**
 
 Carry-forward constraints from Phase 1 that must not be silently reversed:
 
@@ -118,6 +120,24 @@ Carry-forward constraints from Phase 2:
   hide the regime where the baseline collapses.
 * `has_addresses` can never mark a positive example — all 4,545 illicit transactions have an address
   link — so it is a one-sided licit indicator, not evidence of fraud.
+
+Carry-forward constraints from Phase 2b (drift investigation, `docs/XGBOOST_V2.md`):
+
+* The `43–49` collapse is **covariate drift, not concept drift** — adversarial validation AUC 1.0000,
+  median top-15 KS 0.5336 (13 of 15 are `Aggregate_feature_*`), median within-class KS 0.6870 — while
+  an in-window 5-fold CV still reaches PR-AUC 0.9199 on `43–49`. The relationship survives inside the
+  window; transferring a fixed tabular representation across the shift is what fails.
+* Reweighting levers are exhausted: `scale_pos_weight` ∈ {1,5,10,20,50} is flat on `43–49` and
+  recency weighting buys only +0.0056 PR-AUC (0.0427 → 0.0483) at 2.53% prevalence. Do not re-run
+  those sweeps; further tabular tuning is not the answer.
+* Selecting on a low-prevalence late validation slice (`33–34`) is methodologically correct and is
+  now the default, but it is immaterial on its own (+0.0018) and the slice holds only 60 positives,
+  so its threshold is noisy.
+* The `Aggregate_feature_*` block (72 of 165 columns) carries the drift and must be audited for
+  stationarity before it is frozen as the feature contract; a leakage-safe Local-only ablation is
+  the cheapest next test, and any added feature must stay step-bounded (info at step ≤ t).
+* Focal loss has **no result yet** — it crashed on a notebook reporting bug, now fixed; the focal
+  rows must be re-run on Colab before the objective sweep is quoted as complete.
 
 Carry-forward constraints from Phase 3:
 
