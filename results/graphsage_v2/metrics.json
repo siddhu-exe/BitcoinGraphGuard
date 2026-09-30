@@ -1,0 +1,460 @@
+{
+  "protocol": {
+    "fit": "1-24",
+    "validation": "25-34",
+    "train": "1-34",
+    "test": "35-49",
+    "test_early": "35-42",
+    "drift": "43-49"
+  },
+  "frozen_reference": {
+    "Prevalence Baseline": {
+      "35-49": {
+        "pr_auc": 0.065,
+        "roc_auc": 0.5,
+        "f1": 0.122
+      },
+      "35-42": {
+        "pr_auc": 0.0916
+      },
+      "43-49": {
+        "pr_auc": 0.0253
+      }
+    },
+    "Logistic Regression": {
+      "35-49": {
+        "pr_auc": 0.2917,
+        "roc_auc": 0.8828,
+        "f1": 0.4385
+      }
+    },
+    "MLP Baseline (frozen)": {
+      "35-49": {
+        "pr_auc": 0.4768,
+        "roc_auc": 0.8912,
+        "f1": 0.5759
+      },
+      "35-42": {
+        "pr_auc": 0.5912,
+        "f1": 0.6529
+      },
+      "43-49": {
+        "pr_auc": 0.0395
+      }
+    },
+    "GraphSAGE Phase 3 (frozen)": {
+      "35-49": {
+        "pr_auc": 0.6209,
+        "roc_auc": 0.9044,
+        "f1": 0.5945
+      },
+      "35-42": {
+        "pr_auc": 0.7346,
+        "f1": 0.6759
+      },
+      "43-49": {
+        "pr_auc": 0.0504
+      }
+    },
+    "XGBoost Optimized (frozen)": {
+      "35-49": {
+        "pr_auc": 0.8013,
+        "roc_auc": 0.9281,
+        "f1": 0.7818
+      },
+      "35-42": {
+        "pr_auc": 0.9215
+      },
+      "43-49": {
+        "pr_auc": 0.0427
+      }
+    },
+    "HeteroRGCN Phase 4 (frozen)": {
+      "35-49": {
+        "pr_auc": 0.4682,
+        "roc_auc": 0.8946,
+        "f1": 0.5295
+      },
+      "35-42": {
+        "pr_auc": 0.6083,
+        "f1": 0.6221
+      },
+      "43-49": {
+        "pr_auc": 0.055
+      }
+    }
+  },
+  "graph_diagnostics": [
+    {
+      "graph": "original txs_edgelist",
+      "edges": 234355,
+      "intra_step": 234355,
+      "cross_step": 0,
+      "backward_in_time": 0,
+      "cross_step_fraction": 0.0
+    },
+    {
+      "graph": "projected shared-address",
+      "edges": 95215,
+      "intra_step": 0,
+      "cross_step": 95215,
+      "backward_in_time": 0,
+      "cross_step_fraction": 1.0
+    },
+    {
+      "graph": "combined (trained on)",
+      "edges": 329570,
+      "intra_step": 234355,
+      "cross_step": 95215,
+      "backward_in_time": 0,
+      "cross_step_fraction": 0.28890675728980186
+    }
+  ],
+  "lag_feature_audit": [
+    {
+      "metric": "membership_pairs",
+      "value": 1268260
+    },
+    {
+      "metric": "lag_features_added",
+      "value": 12
+    },
+    {
+      "metric": "transactions_with_history",
+      "value": 51808
+    },
+    {
+      "metric": "transactions_without_history",
+      "value": 151961
+    },
+    {
+      "metric": "raw_wallet_rows",
+      "value": 1268260
+    },
+    {
+      "metric": "deduped_wallet_snapshots",
+      "value": 920691
+    },
+    {
+      "metric": "temporal_cutoff",
+      "value": "snapshot step < transaction step"
+    }
+  ],
+  "experiments": {
+    "opt1_baseline": {
+      "label": "O1 Baseline (2-layer GraphSAGE, intra-step)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 2,
+      "n_params": 42625,
+      "threshold": 0.82,
+      "validation_f1": 0.8276689324270292,
+      "best_epoch": 106,
+      "best_val_pr_auc": 0.8538733473478374,
+      "train_seconds": 33.27362895011902,
+      "windows": {
+        "35-49": {
+          "n": 16670,
+          "illicit": 1083,
+          "prevalence": 0.06496700659868027,
+          "threshold": 0.82,
+          "pr_auc": 0.6216223315933068,
+          "roc_auc": 0.904442825635232,
+          "precision": 0.6872727272727273,
+          "recall": 0.5235457063711911,
+          "f1": 0.5943396226415094,
+          "predicted_positives": 825,
+          "tp": 567,
+          "fp": 258,
+          "tn": 15329,
+          "fn": 516
+        },
+        "35-42": {
+          "n": 9983,
+          "illicit": 914,
+          "prevalence": 0.09155564459581288,
+          "threshold": 0.82,
+          "pr_auc": 0.7351518577783919,
+          "roc_auc": 0.9303495713509822,
+          "precision": 0.7457180500658761,
+          "recall": 0.6192560175054704,
+          "f1": 0.6766288105200239,
+          "predicted_positives": 759,
+          "tp": 566,
+          "fp": 193,
+          "tn": 8876,
+          "fn": 348
+        },
+        "43-49": {
+          "n": 6687,
+          "illicit": 169,
+          "prevalence": 0.025272917601315985,
+          "threshold": 0.82,
+          "pr_auc": 0.05049859565203042,
+          "roc_auc": 0.7566293432297634,
+          "precision": 0.015151515151515152,
+          "recall": 0.005917159763313609,
+          "f1": 0.00851063829787234,
+          "predicted_positives": 66,
+          "tp": 1,
+          "fp": 65,
+          "tn": 6453,
+          "fn": 168
+        }
+      }
+    },
+    "opt2_lag_features": {
+      "label": "O2 Temporal lag features (intra-step graph)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base + 12 address-history lag features",
+      "n_features": 177,
+      "n_layers": 2,
+      "n_params": 45697,
+      "threshold": 0.785,
+      "validation_f1": 0.8317829457364341,
+      "best_epoch": 83,
+      "best_val_pr_auc": 0.8754551672215273,
+      "train_seconds": 19.87237787246704,
+      "windows": {
+        "35-49": {
+          "n": 16670,
+          "illicit": 1083,
+          "prevalence": 0.06496700659868027,
+          "threshold": 0.785,
+          "pr_auc": 0.5237657482824376,
+          "roc_auc": 0.8974344756956768,
+          "precision": 0.5708418891170431,
+          "recall": 0.5133887349953832,
+          "f1": 0.5405930967428294,
+          "predicted_positives": 974,
+          "tp": 556,
+          "fp": 418,
+          "tn": 15169,
+          "fn": 527
+        },
+        "35-42": {
+          "n": 9983,
+          "illicit": 914,
+          "prevalence": 0.09155564459581288,
+          "threshold": 0.785,
+          "pr_auc": 0.6226609985263798,
+          "roc_auc": 0.9183041249762034,
+          "precision": 0.6271186440677966,
+          "recall": 0.6072210065645515,
+          "f1": 0.6170094496942746,
+          "predicted_positives": 885,
+          "tp": 555,
+          "fp": 330,
+          "tn": 8739,
+          "fn": 359
+        },
+        "43-49": {
+          "n": 6687,
+          "illicit": 169,
+          "prevalence": 0.025272917601315985,
+          "threshold": 0.785,
+          "pr_auc": 0.051524083846019156,
+          "roc_auc": 0.7649921655279598,
+          "precision": 0.011235955056179775,
+          "recall": 0.005917159763313609,
+          "f1": 0.007751937984496124,
+          "predicted_positives": 89,
+          "tp": 1,
+          "fp": 88,
+          "tn": 6430,
+          "fn": 168
+        }
+      }
+    },
+    "opt3_projected": {
+      "label": "O3 Projected cross-step graph (2-layer GraphSAGE)",
+      "graph": "txs_edgelist + projected cross-step edges (W=5)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 2,
+      "n_params": 42625,
+      "threshold": 0.81,
+      "validation_f1": 0.8316286388670339,
+      "best_epoch": 104,
+      "best_val_pr_auc": 0.8377823480380318,
+      "train_seconds": 31.910226821899414,
+      "windows": {
+        "35-49": {
+          "n": 16670,
+          "illicit": 1083,
+          "prevalence": 0.06496700659868027,
+          "threshold": 0.81,
+          "pr_auc": 0.5959322006472328,
+          "roc_auc": 0.8950989415677211,
+          "precision": 0.6342015855039638,
+          "recall": 0.5170821791320406,
+          "f1": 0.5696846388606307,
+          "predicted_positives": 883,
+          "tp": 560,
+          "fp": 323,
+          "tn": 15264,
+          "fn": 523
+        },
+        "35-42": {
+          "n": 9983,
+          "illicit": 914,
+          "prevalence": 0.09155564459581288,
+          "threshold": 0.81,
+          "pr_auc": 0.7090716970696864,
+          "roc_auc": 0.9198505597614978,
+          "precision": 0.6940298507462687,
+          "recall": 0.6105032822757112,
+          "f1": 0.6495925494761351,
+          "predicted_positives": 804,
+          "tp": 558,
+          "fp": 246,
+          "tn": 8823,
+          "fn": 356
+        },
+        "43-49": {
+          "n": 6687,
+          "illicit": 169,
+          "prevalence": 0.025272917601315985,
+          "threshold": 0.81,
+          "pr_auc": 0.05032468828923997,
+          "roc_auc": 0.7530434608939106,
+          "precision": 0.02531645569620253,
+          "recall": 0.011834319526627219,
+          "f1": 0.016129032258064516,
+          "predicted_positives": 79,
+          "tp": 2,
+          "fp": 77,
+          "tn": 6441,
+          "fn": 167
+        }
+      }
+    },
+    "opt4_depth3": {
+      "label": "O4 Depth control (3-layer GraphSAGE, intra-step)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 3,
+      "n_params": 75521,
+      "threshold": 0.9,
+      "validation_f1": 0.8475957620211899,
+      "best_epoch": 113,
+      "best_val_pr_auc": 0.8710623741880174,
+      "train_seconds": 31.096437692642212,
+      "windows": {
+        "35-49": {
+          "n": 16670,
+          "illicit": 1083,
+          "prevalence": 0.06496700659868027,
+          "threshold": 0.9,
+          "pr_auc": 0.6000506780637717,
+          "roc_auc": 0.8923361152642709,
+          "precision": 0.7426666666666667,
+          "recall": 0.5143120960295475,
+          "f1": 0.607746863066012,
+          "predicted_positives": 750,
+          "tp": 557,
+          "fp": 193,
+          "tn": 15394,
+          "fn": 526
+        },
+        "35-42": {
+          "n": 9983,
+          "illicit": 914,
+          "prevalence": 0.09155564459581288,
+          "threshold": 0.9,
+          "pr_auc": 0.7596376082587943,
+          "roc_auc": 0.9179388847911212,
+          "precision": 0.8358433734939759,
+          "recall": 0.6072210065645515,
+          "f1": 0.7034220532319392,
+          "predicted_positives": 664,
+          "tp": 555,
+          "fp": 109,
+          "tn": 8960,
+          "fn": 359
+        },
+        "43-49": {
+          "n": 6687,
+          "illicit": 169,
+          "prevalence": 0.025272917601315985,
+          "threshold": 0.9,
+          "pr_auc": 0.051695735984290496,
+          "roc_auc": 0.7598030760515714,
+          "precision": 0.023255813953488372,
+          "recall": 0.011834319526627219,
+          "f1": 0.01568627450980392,
+          "predicted_positives": 86,
+          "tp": 2,
+          "fp": 84,
+          "tn": 6434,
+          "fn": 167
+        }
+      }
+    },
+    "opt5_combined": {
+      "label": "O5 Combined (lag features + projected graph)",
+      "graph": "txs_edgelist + projected cross-step edges (W=5)",
+      "features": "165 base + 12 address-history lag features",
+      "n_features": 177,
+      "n_layers": 2,
+      "n_params": 45697,
+      "threshold": 0.86,
+      "validation_f1": 0.8367760226812475,
+      "best_epoch": 81,
+      "best_val_pr_auc": 0.8606343900588747,
+      "train_seconds": 28.08735203742981,
+      "windows": {
+        "35-49": {
+          "n": 16670,
+          "illicit": 1083,
+          "prevalence": 0.06496700659868027,
+          "threshold": 0.86,
+          "pr_auc": 0.5084584633110488,
+          "roc_auc": 0.8889863768259663,
+          "precision": 0.585812356979405,
+          "recall": 0.4727608494921514,
+          "f1": 0.5232498722534492,
+          "predicted_positives": 874,
+          "tp": 512,
+          "fp": 362,
+          "tn": 15225,
+          "fn": 571
+        },
+        "35-42": {
+          "n": 9983,
+          "illicit": 914,
+          "prevalence": 0.09155564459581288,
+          "threshold": 0.86,
+          "pr_auc": 0.60794449978033,
+          "roc_auc": 0.9104359888074243,
+          "precision": 0.6367041198501873,
+          "recall": 0.5579868708971554,
+          "f1": 0.5947521865889213,
+          "predicted_positives": 801,
+          "tp": 510,
+          "fp": 291,
+          "tn": 8778,
+          "fn": 404
+        },
+        "43-49": {
+          "n": 6687,
+          "illicit": 169,
+          "prevalence": 0.025272917601315985,
+          "threshold": 0.86,
+          "pr_auc": 0.04937824815080092,
+          "roc_auc": 0.7531986978254122,
+          "precision": 0.0273972602739726,
+          "recall": 0.011834319526627219,
+          "f1": 0.01652892561983471,
+          "predicted_positives": 73,
+          "tp": 2,
+          "fp": 71,
+          "tn": 6447,
+          "fn": 167
+        }
+      }
+    }
+  }
+}

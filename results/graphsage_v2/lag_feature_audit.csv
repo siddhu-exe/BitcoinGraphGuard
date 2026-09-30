@@ -1,0 +1,8 @@
+metric,value
+membership_pairs,1268260
+lag_features_added,12
+transactions_with_history,51808
+transactions_without_history,151961
+raw_wallet_rows,1268260
+deduped_wallet_snapshots,920691
+temporal_cutoff,snapshot step < transaction step

@@ -1,0 +1,6 @@
+metric,value
+total_nodes,203769.0
+total_edges,234355.0
+intra_step_edges,234355.0
+cross_step_edges,0.0
+cross_step_fraction,0.0

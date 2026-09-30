@@ -1,0 +1,86 @@
+{
+  "seed": 42,
+  "hidden_channels": 128,
+  "dropout": 0.3,
+  "max_epochs": 150,
+  "patience": 20,
+  "lr": 0.005,
+  "weight_decay": 0.0001,
+  "temporal_window": 5,
+  "max_prior_neighbors": 5,
+  "protocol": {
+    "fit": "1-24",
+    "validation": "25-34",
+    "train": "1-34",
+    "test": "35-49",
+    "test_early": "35-42",
+    "drift": "43-49"
+  },
+  "options": {
+    "opt1_baseline": {
+      "label": "O1 Baseline (2-layer GraphSAGE, intra-step)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 2,
+      "n_params": 42625,
+      "threshold": 0.82,
+      "best_epoch": 106,
+      "best_val_pr_auc": 0.8538733473478374,
+      "train_seconds": 33.27362895011902,
+      "notes": "control reproduction of the Phase 3 0.6209 result"
+    },
+    "opt2_lag_features": {
+      "label": "O2 Temporal lag features (intra-step graph)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base + 12 address-history lag features",
+      "n_features": 177,
+      "n_layers": 2,
+      "n_params": 45697,
+      "threshold": 0.785,
+      "best_epoch": 83,
+      "best_val_pr_auc": 0.8754551672215273,
+      "train_seconds": 19.87237787246704,
+      "notes": "cross-step memory carried by node features; edges still intra-step"
+    },
+    "opt3_projected": {
+      "label": "O3 Projected cross-step graph (2-layer GraphSAGE)",
+      "graph": "txs_edgelist + projected cross-step edges (W=5)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 2,
+      "n_params": 42625,
+      "threshold": 0.81,
+      "best_epoch": 104,
+      "best_val_pr_auc": 0.8377823480380318,
+      "train_seconds": 31.910226821899414,
+      "notes": "cross-step reach carried by the edge set; node features unchanged"
+    },
+    "opt4_depth3": {
+      "label": "O4 Depth control (3-layer GraphSAGE, intra-step)",
+      "graph": "txs_edgelist (100% intra-step)",
+      "features": "165 base features",
+      "n_features": 165,
+      "n_layers": 3,
+      "n_params": 75521,
+      "threshold": 0.9,
+      "best_epoch": 113,
+      "best_val_pr_auc": 0.8710623741880174,
+      "train_seconds": 31.096437692642212,
+      "notes": "negative control: deeper receptive field still confined within a single time step"
+    },
+    "opt5_combined": {
+      "label": "O5 Combined (lag features + projected graph)",
+      "graph": "txs_edgelist + projected cross-step edges (W=5)",
+      "features": "165 base + 12 address-history lag features",
+      "n_features": 177,
+      "n_layers": 2,
+      "n_params": 45697,
+      "threshold": 0.86,
+      "best_epoch": 81,
+      "best_val_pr_auc": 0.8606343900588747,
+      "train_seconds": 28.08735203742981,
+      "notes": "supplementary: both cross-step signals together"
+    }
+  }
+}

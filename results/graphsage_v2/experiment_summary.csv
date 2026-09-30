@@ -1,0 +1,34 @@
+model,source,option,window,graph,features,n_layers,n_features,n,illicit,prevalence,pr_auc,roc_auc,f1,precision,recall,threshold,tp,fp,tn,fn
+"O1 Baseline (2-layer GraphSAGE, intra-step)",this notebook,opt1_baseline,35-49,txs_edgelist (100% intra-step),165 base features,2.0,165.0,16670.0,1083.0,0.06496700659868027,0.6216223315933068,0.904442825635232,0.5943396226415094,0.6872727272727273,0.5235457063711911,0.82,567.0,258.0,15329.0,516.0
+"O1 Baseline (2-layer GraphSAGE, intra-step)",this notebook,opt1_baseline,35-42,txs_edgelist (100% intra-step),165 base features,2.0,165.0,9983.0,914.0,0.09155564459581288,0.7351518577783919,0.9303495713509822,0.6766288105200239,0.7457180500658761,0.6192560175054704,0.82,566.0,193.0,8876.0,348.0
+"O1 Baseline (2-layer GraphSAGE, intra-step)",this notebook,opt1_baseline,43-49,txs_edgelist (100% intra-step),165 base features,2.0,165.0,6687.0,169.0,0.025272917601315985,0.05049859565203042,0.7566293432297634,0.00851063829787234,0.015151515151515152,0.005917159763313609,0.82,1.0,65.0,6453.0,168.0
+O2 Temporal lag features (intra-step graph),this notebook,opt2_lag_features,35-49,txs_edgelist (100% intra-step),165 base + 12 address-history lag features,2.0,177.0,16670.0,1083.0,0.06496700659868027,0.5237657482824376,0.8974344756956768,0.5405930967428294,0.5708418891170431,0.5133887349953832,0.785,556.0,418.0,15169.0,527.0
+O2 Temporal lag features (intra-step graph),this notebook,opt2_lag_features,35-42,txs_edgelist (100% intra-step),165 base + 12 address-history lag features,2.0,177.0,9983.0,914.0,0.09155564459581288,0.6226609985263798,0.9183041249762034,0.6170094496942746,0.6271186440677966,0.6072210065645515,0.785,555.0,330.0,8739.0,359.0
+O2 Temporal lag features (intra-step graph),this notebook,opt2_lag_features,43-49,txs_edgelist (100% intra-step),165 base + 12 address-history lag features,2.0,177.0,6687.0,169.0,0.025272917601315985,0.051524083846019156,0.7649921655279598,0.007751937984496124,0.011235955056179775,0.005917159763313609,0.785,1.0,88.0,6430.0,168.0
+O3 Projected cross-step graph (2-layer GraphSAGE),this notebook,opt3_projected,35-49,txs_edgelist + projected cross-step edges (W=5),165 base features,2.0,165.0,16670.0,1083.0,0.06496700659868027,0.5959322006472328,0.8950989415677211,0.5696846388606307,0.6342015855039638,0.5170821791320406,0.81,560.0,323.0,15264.0,523.0
+O3 Projected cross-step graph (2-layer GraphSAGE),this notebook,opt3_projected,35-42,txs_edgelist + projected cross-step edges (W=5),165 base features,2.0,165.0,9983.0,914.0,0.09155564459581288,0.7090716970696864,0.9198505597614978,0.6495925494761351,0.6940298507462687,0.6105032822757112,0.81,558.0,246.0,8823.0,356.0
+O3 Projected cross-step graph (2-layer GraphSAGE),this notebook,opt3_projected,43-49,txs_edgelist + projected cross-step edges (W=5),165 base features,2.0,165.0,6687.0,169.0,0.025272917601315985,0.05032468828923997,0.7530434608939106,0.016129032258064516,0.02531645569620253,0.011834319526627219,0.81,2.0,77.0,6441.0,167.0
+"O4 Depth control (3-layer GraphSAGE, intra-step)",this notebook,opt4_depth3,35-49,txs_edgelist (100% intra-step),165 base features,3.0,165.0,16670.0,1083.0,0.06496700659868027,0.6000506780637717,0.8923361152642709,0.607746863066012,0.7426666666666667,0.5143120960295475,0.9,557.0,193.0,15394.0,526.0
+"O4 Depth control (3-layer GraphSAGE, intra-step)",this notebook,opt4_depth3,35-42,txs_edgelist (100% intra-step),165 base features,3.0,165.0,9983.0,914.0,0.09155564459581288,0.7596376082587943,0.9179388847911212,0.7034220532319392,0.8358433734939759,0.6072210065645515,0.9,555.0,109.0,8960.0,359.0
+"O4 Depth control (3-layer GraphSAGE, intra-step)",this notebook,opt4_depth3,43-49,txs_edgelist (100% intra-step),165 base features,3.0,165.0,6687.0,169.0,0.025272917601315985,0.051695735984290496,0.7598030760515714,0.01568627450980392,0.023255813953488372,0.011834319526627219,0.9,2.0,84.0,6434.0,167.0
+O5 Combined (lag features + projected graph),this notebook,opt5_combined,35-49,txs_edgelist + projected cross-step edges (W=5),165 base + 12 address-history lag features,2.0,177.0,16670.0,1083.0,0.06496700659868027,0.5084584633110488,0.8889863768259663,0.5232498722534492,0.585812356979405,0.4727608494921514,0.86,512.0,362.0,15225.0,571.0
+O5 Combined (lag features + projected graph),this notebook,opt5_combined,35-42,txs_edgelist + projected cross-step edges (W=5),165 base + 12 address-history lag features,2.0,177.0,9983.0,914.0,0.09155564459581288,0.60794449978033,0.9104359888074243,0.5947521865889213,0.6367041198501873,0.5579868708971554,0.86,510.0,291.0,8778.0,404.0
+O5 Combined (lag features + projected graph),this notebook,opt5_combined,43-49,txs_edgelist + projected cross-step edges (W=5),165 base + 12 address-history lag features,2.0,177.0,6687.0,169.0,0.025272917601315985,0.04937824815080092,0.7531986978254122,0.01652892561983471,0.0273972602739726,0.011834319526627219,0.86,2.0,71.0,6447.0,167.0
+Prevalence Baseline,frozen reference,reference,35-49,n/a,n/a,,,,,,0.065,0.5,0.122,,,,,,,
+Prevalence Baseline,frozen reference,reference,35-42,n/a,n/a,,,,,,0.0916,,,,,,,,,
+Prevalence Baseline,frozen reference,reference,43-49,n/a,n/a,,,,,,0.0253,,,,,,,,,
+Logistic Regression,frozen reference,reference,35-49,n/a,n/a,,,,,,0.2917,0.8828,0.4385,,,,,,,
+Logistic Regression,frozen reference,reference,35-42,n/a,n/a,,,,,,,,,,,,,,,
+Logistic Regression,frozen reference,reference,43-49,n/a,n/a,,,,,,,,,,,,,,,
+MLP Baseline (frozen),frozen reference,reference,35-49,n/a,n/a,,,,,,0.4768,0.8912,0.5759,,,,,,,
+MLP Baseline (frozen),frozen reference,reference,35-42,n/a,n/a,,,,,,0.5912,,0.6529,,,,,,,
+MLP Baseline (frozen),frozen reference,reference,43-49,n/a,n/a,,,,,,0.0395,,,,,,,,,
+GraphSAGE Phase 3 (frozen),frozen reference,reference,35-49,n/a,n/a,,,,,,0.6209,0.9044,0.5945,,,,,,,
+GraphSAGE Phase 3 (frozen),frozen reference,reference,35-42,n/a,n/a,,,,,,0.7346,,0.6759,,,,,,,
+GraphSAGE Phase 3 (frozen),frozen reference,reference,43-49,n/a,n/a,,,,,,0.0504,,,,,,,,,
+XGBoost Optimized (frozen),frozen reference,reference,35-49,n/a,n/a,,,,,,0.8013,0.9281,0.7818,,,,,,,
+XGBoost Optimized (frozen),frozen reference,reference,35-42,n/a,n/a,,,,,,0.9215,,,,,,,,,
+XGBoost Optimized (frozen),frozen reference,reference,43-49,n/a,n/a,,,,,,0.0427,,,,,,,,,
+HeteroRGCN Phase 4 (frozen),frozen reference,reference,35-49,n/a,n/a,,,,,,0.4682,0.8946,0.5295,,,,,,,
+HeteroRGCN Phase 4 (frozen),frozen reference,reference,35-42,n/a,n/a,,,,,,0.6083,,0.6221,,,,,,,
+HeteroRGCN Phase 4 (frozen),frozen reference,reference,43-49,n/a,n/a,,,,,,0.055,,,,,,,,,

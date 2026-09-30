@@ -1,0 +1,9 @@
+{
+  "baseline_pr_auc_35_49": 0.6216223315933068,
+  "gap_to_xgboost_35_49": 0.1796776684066932,
+  "fraction_of_gap_closed_35_49_projected": -0.14297898661466038,
+  "cross_step_helped_full": false,
+  "cross_step_helped_drift_43_49": false,
+  "lag_features_helped_full": false,
+  "combined_helped_full": false
+}
