@@ -1,0 +1,5 @@
+Phase 6 Explainability Digest
+-----------------------------
+1. XGBoost (frozen, 165 features) attributions are dominated by the handcrafted Local/Aggregate block.
+2. GraphSAGE attributions are confined to intra-step neighbourhoods (the homogeneous graph has no cross-step edges).
+3. HeteroRGCN relation ablations are evaluated at each target's own time step, so no future edges or wallet snapshots leak in.
