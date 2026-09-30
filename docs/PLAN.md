@@ -181,19 +181,23 @@ dilution and over-smoothing, while persistent wallet connectivity provides modes
 
 ## Phase 6 — Explainability
 
-*Environment: Kaggle/Colab notebook `06_explainability.ipynb` (GNNExplainer).*
+*Environment: Kaggle/Colab notebook `06_explainability.ipynb` (SHAP, Captum, Relation Ablation).*
+
+*Status: COMPLETE (executed 2026-09-30 on Colab; artifacts in `results/explainability/`, record in `docs/EXPLAINABILITY.md`).*
 
 * [x] Write Phase 6 explainability notebook generator
 * [x] Execute Phase 6 explainability notebook generator
 * [x] Create explainability artifacts directory scaffold
 * [x] Author docs/EXPLAINABILITY.md scaffold with strict methodology
-* [ ] Execute `notebooks/06_explainability.ipynb` on Colab/Kaggle
-* [ ] Transfer exported artifacts to `results/explainability/`
-* [ ] Populate `docs/EXPLAINABILITY.md` with results
+* [x] Execute `notebooks/06_explainability.ipynb` on Colab/Kaggle
+* [x] Transfer exported artifacts to `results/explainability/`
+* [x] Populate `docs/EXPLAINABILITY.md` with results
 
 ## Phase 7 — Heterogeneous Graph Transformer (HGT)
 
 *Environment: Kaggle/Colab notebook `07_hgt.ipynb`.*
+
+*Status: COMPLETE (executed 2026-09-30 on Colab; artifacts in `results/hgt/`, record in `docs/HGT.md`).*
 
 * [x] Construct heterogeneous transaction + wallet graph with 4 relations (`tx_to_tx`, `addr_to_tx`, `tx_to_addr`, `addr_to_addr`)
 * [x] Implement full HGT architecture (learned relational and neighborhood attention)
@@ -204,8 +208,8 @@ dilution and over-smoothing, while persistent wallet connectivity provides modes
 * [x] Analyze and quantify attention weights per relation and regime
 * [x] Perform relation ablation comparison (HGT vs RGCN sensitivity)
 * [x] Enforce computational discipline (neighbor sampling, chunking, fixed parameters without extensive search)
-* [ ] Execute `notebooks/07_hgt.ipynb` on Google Colab (CUDA GPU)
-* [ ] Export artifacts to `results/hgt/` and document methodology and findings in `docs/HGT.md`
+* [x] Execute `notebooks/07_hgt.ipynb` on Google Colab (CUDA GPU)
+* [x] Export artifacts to `results/hgt/` and document methodology and findings in `docs/HGT.md`
 
 ## Phase 8 — MLOps & Monitoring
 

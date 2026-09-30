@@ -92,7 +92,7 @@ dvc repro
 | **Phase 4** | HeteroRGCN | ✅ Complete | 0.4682 | 0.0550 | `docs/HETEROGENEOUS_GNN.md`, `results/heterogeneous_gnn/` |
 | **Phase 5** | Temporal & Inductive Eval | ✅ Complete | Analysis | Analysis | `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`, `results/temporal_inductive/` |
 | **Phase 6** | Explainability (SHAP/Captum)| ✅ Complete | Analysis | Analysis | `docs/EXPLAINABILITY.md`, `results/explainability/` |
-| **Phase 7** | Hetero Graph Transformer | 🔲 Authored | Ready to run | Ready to run | `docs/HGT.md`, `notebooks/07_hgt.ipynb` |
+| **Phase 7** | Hetero Graph Transformer | ✅ Complete | 0.4861 | 0.0386 | `docs/HGT.md`, `results/hgt/` |
 | **Phase 8–9**| Serving & MLOps | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
 
 ## Strict Carry-Forward Constraints & Evaluation Rules
