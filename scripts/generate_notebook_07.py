@@ -51,10 +51,10 @@ $$\text{Prevalence (0.0650)} \to \text{Logistic Regression (0.2917)} \to \text{M
 ### The Core Scientific Puzzle
 1. **The Performance Gap on Test 35–49**:
    - **XGBoost (0.8013 PR-AUC)** dominates tabular evaluation by non-linearly partitioning 72 pre-aggregated neighborhood features.
-   - **HeteroRGCN (0.4682 PR-AUC)** and **GraphSAGE v2 with cross-step projections (0.6001 PR-AUC)** underperformed XGBoost significantly.
+   - **HeteroRGCN (0.4682 PR-AUC)** and **the GraphSAGE v2 best variant, O4 (0.6001 PR-AUC)**, underperformed XGBoost significantly.
 2. **The Late Temporal Collapse on Steps 43–49**:
    - In time steps 43–49, illicit transaction prevalence abruptly collapses from 9.16% (steps 35–42) to **2.53%**, accompanied by severe covariate drift (adversarial validation AUC 1.0000 on `Aggregate_feature_*`).
-   - Every prior model collapsed to $\approx 0.04 - 0.055$ PR-AUC on steps 43–49 (XGBoost 0.0427, GraphSAGE 0.0504, RGCN 0.0550).
+   - Every prior model collapsed to $\approx 0.04 - 0.055$ PR-AUC on steps 43–49 (XGBoost 0.0427, GraphSAGE 0.0505, RGCN 0.0550).
 3. **The Dilution Hypothesis (Phase 4 & Phase 6 Explainability)**:
    - Captum and test-time relation ablation revealed that HeteroRGCN over-relies on recurrent address pathways (`addr_to_tx`, `tx_to_addr`, `addr_to_addr`).
    - Because RGCN uses **uniform mean aggregation** ($\frac{1}{|\mathcal{N}_i^r|} \sum W_r h_j$), dense wallet-to-wallet transfers (`AddrAddr` accounts for 65% of all edges) and high-degree exchange hot wallets drown out subtle illicit signals.
@@ -76,7 +76,6 @@ This notebook implements the **Heterogeneous Graph Transformer (HGT)** (Hu et al
 C(
     "code",
     r"""import gc
-import hashlib
 import json
 import os
 import platform
@@ -96,6 +95,7 @@ from sklearn.metrics import (
     average_precision_score,
     confusion_matrix,
     f1_score,
+    precision_recall_curve,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -294,6 +294,15 @@ dst_tx_addr = edges_tx_addr["output_address"].map(addr_to_idx).values.astype(np.
 src_addr_addr = edges_addr_addr["input_address"].map(addr_to_idx).values.astype(np.int64)
 dst_addr_addr = edges_addr_addr["output_address"].map(addr_to_idx).values.astype(np.int64)
 
+# Node-id integrity: a failed map would silently cast NaN to INT64_MIN and corrupt the graph.
+check("mappings: all transaction endpoints resolve to a node index", int(max(src_tx_tx.max(), dst_tx_tx.max()) < N_TX), True)
+check(
+    "mappings: all address endpoints resolve to a node index",
+    int(max(src_addr_tx.max(), dst_addr_tx.max(), src_tx_addr.max(), dst_tx_addr.max(), src_addr_addr.max(), dst_addr_addr.max()) < N_ADDR),
+    True,
+)
+check("mappings: all edge indices are non-negative", int(min(src_tx_tx.min(), dst_tx_tx.min(), src_addr_tx.min(), dst_addr_tx.min(), src_tx_addr.min(), dst_tx_addr.min(), src_addr_addr.min(), dst_addr_addr.min()) >= 0), True)
+
 # Temporal availability metadata
 tx_step = txs["Time step"].values.astype(np.int16)
 tx_class = txs["class"].values.astype(np.int8)
@@ -386,7 +395,7 @@ def raw_address_matrix(cutoff: int) -> np.ndarray:
     return sums
 
 def build_heterodata(cutoff: int, mask_mode: str = "selection") -> tuple:
-    \"\"\"Construct PyG HeteroData with strict leakage-safe feature scaling.\"\"\"
+    '''Construct PyG HeteroData with strict leakage-safe feature scaling.'''
     data = HeteroData()
 
     # 1. Scaler fitting on training subset
@@ -423,7 +432,10 @@ def build_heterodata(cutoff: int, mask_mode: str = "selection") -> tuple:
     return data
 
 tick("Building static HeteroData for Selection (1-24 fit / 25-34 val) and Refit (1-34 train)...")
-selection_data = build_heterodata(VAL_MAX, mask_mode="selection")
+# Selection uses a step-24 graph so that neither the fit nor the validation pass can
+# observe any edge from the future; refit additionally admits the step 25-34 edges
+# because those steps are part of the final training window.
+selection_data = build_heterodata(FIT_MAX, mask_mode="selection")
 refit_data = build_heterodata(TRAIN_MAX, mask_mode="refit")
 
 check("graph: tx node count", selection_data['tx'].num_nodes, 203769)
@@ -431,6 +443,64 @@ check("graph: addr node count", selection_data['addr'].num_nodes, 822942)
 check("graph: selection train nodes", int(selection_data['tx'].train_mask.sum()), 29894)
 check("graph: selection val nodes", int(selection_data['tx'].val_mask.sum()), 9091)
 check("graph: test nodes", int(refit_data['tx'].test_mask.sum()), 16670)
+""",
+)
+
+# ==============================================================================
+# Cell 7b: Leakage Audit Markdown
+# ==============================================================================
+C(
+    "markdown",
+    r"""## 4b. Leakage Audit
+
+Before any model is trained we assert the leakage controls that every prior phase enforced, so a
+result cannot be explained away as lookahead:
+
+1. **Disjoint step sets** — fit (1–24), validation (25–34) and test (35–49) share no time step.
+2. **No future edges** — the selection graph is built from a step-24 cutoff and the refit graph from
+   a step-34 cutoff, so no message can traverse an edge that did not yet exist at training time.
+3. **Unknown is not licit** — class 3 is excluded from every supervision and evaluation mask.
+4. **Training-only statistics** — feature scalers and `pos_weight` are derived from labelled
+   training steps only, and the operating threshold is fit on 25–34 and frozen before test.
+5. **Carry-forward guardrail** — an address link can never mark a positive, so `has_addresses` is a
+   one-sided licit indicator rather than evidence of fraud.""",
+)
+
+# ==============================================================================
+# Cell 7c: Leakage Audit Code
+# ==============================================================================
+C(
+    "code",
+    r"""claim_steps = {
+    "fit": set(range(FIT_MIN, FIT_MAX + 1)),
+    "validation": set(range(VAL_MIN, VAL_MAX + 1)),
+    "train": set(range(TRAIN_MIN, TRAIN_MAX + 1)),
+    "test": set(range(TEST_MIN, TEST_MAX + 1)),
+}
+check("leakage: fit and validation step sets disjoint", len(claim_steps["fit"] & claim_steps["validation"]), 0)
+check("leakage: fit and test step sets disjoint", len(claim_steps["fit"] & claim_steps["test"]), 0)
+check("leakage: train(1-34) and test(35-49) step sets disjoint", len(claim_steps["train"] & claim_steps["test"]), 0)
+
+# The selection graph must contain exactly the edges that were available by step 24;
+# the refit graph must contain exactly the edges available by step 34.
+fit_counts = {key: int((edge_avail[key] <= FIT_MAX).sum()) for key in EDGE_KEYS}
+kept_counts = {key: int((edge_avail[key] <= TRAIN_MAX).sum()) for key in EDGE_KEYS}
+for edge_type, key in zip(
+    [("tx", "tx_to_tx", "tx"), ("addr", "addr_to_tx", "tx"), ("tx", "tx_to_addr", "addr"), ("addr", "addr_to_addr", "addr")],
+    EDGE_KEYS,
+):
+    check(f"leakage: selection graph '{key}' keeps only step<=24 edges", int(selection_data[edge_type].edge_index.size(1)), fit_counts[key])
+    check(f"leakage: refit graph '{key}' keeps only step<=34 edges", int(refit_data[edge_type].edge_index.size(1)), kept_counts[key])
+
+# Unknown (class 3) must never enter a supervision or evaluation mask.
+supervised = (selection_data["tx"].train_mask | selection_data["tx"].val_mask | refit_data["tx"].test_mask).cpu().numpy()
+check("leakage: no unlabeled (class 3) node in any mask", int((tx_class[supervised] == 2).sum()), 0)
+check("leakage: selection scaler fit window is labelled 1-24 only", int((is_labeled & (tx_step >= FIT_MIN) & (tx_step <= FIT_MAX)).sum()), 29894)
+check("leakage: refit scaler fit window is labelled 1-34 only", int((is_labeled & (tx_step >= TRAIN_MIN) & (tx_step <= TRAIN_MAX)).sum()), 38985)
+
+# Carry-forward guardrail from Phases 2/2b: every illicit transaction has an address link.
+check("guardrail: has_addresses never marks a positive", int((~has_any_addr & (tx_class == 1)).sum()), 0)
+tick("Leakage audit assertions recorded.")
 """,
 )
 
@@ -470,7 +540,7 @@ For a source node $s$ of type $\tau(s)$ and a target node $t$ of type $\tau(t)$ 
 C(
     "code",
     r"""class HGT(nn.Module):
-    \"\"\"Heterogeneous Graph Transformer for Bitcoin fraud detection.\"\"\"
+    '''Heterogeneous Graph Transformer for Bitcoin fraud detection.'''
     def __init__(
         self,
         hidden_channels: int,
@@ -524,6 +594,35 @@ C(
         return self.lin_out(h_dict['tx'])
 
 
+def _node_linear(container, node_type: str):
+    '''Return the per-node-type Linear from a ModuleDict/ParameterDict, or a shared Linear.'''
+    if container is None:
+        raise AttributeError("HGTConv exposes no Q/K projection for this node type (unexpected PyG version).")
+    if isinstance(container, nn.Linear):
+        return container
+    try:
+        return container[node_type]
+    except (KeyError, TypeError):
+        for name, module in container.named_modules():
+            if isinstance(module, nn.Linear) and node_type in name:
+                return module
+        raise
+
+
+def _relation_scalar(conv, edge_type: tuple, device) -> torch.Tensor:
+    '''Look up the learned HGT relation scaling a_rel, tolerating PyG key conventions.'''
+    a_rel = getattr(conv, "a_rel", None)
+    if a_rel is not None:
+        src_type, rel_name, dst_type = edge_type
+        for key in (edge_type, "__".join(edge_type), f"{src_type}_{rel_name}_{dst_type}", rel_name):
+            try:
+                if key in a_rel:
+                    return a_rel[key].to(device)
+            except TypeError:
+                continue
+    return torch.ones(int(getattr(conv, "heads", 4)), device=device)
+
+
 def compute_hgt_edge_attention(
     model: HGT,
     x_dict: dict,
@@ -531,13 +630,20 @@ def compute_hgt_edge_attention(
     edge_type: tuple,
     layer_idx: int = 0,
 ) -> tuple:
-    \"\"\"Extract exact edge-level attention scores for a specific relation in an HGT layer.\"\"\"
+    '''Extract softmax-normalised edge attention weights for one relation in an HGT layer.
+
+    Attention follows Hu et al. (2020): per-head logits ``(Q_dst . K_src) * a_rel / sqrt(d_k)``
+    are normalised over each destination node's incoming neighbours and averaged over heads.
+    Returns ``(attention_weights, attention_logits, edge_index)``.
+    '''
+    from torch_geometric.utils import softmax as pyg_softmax
+
     model.eval()
     conv = model.convs[layer_idx]
     src_type, rel_name, dst_type = edge_type
     edge_index = edge_index_dict[edge_type]
     if edge_index.size(1) == 0:
-        return np.array([]), np.empty((2, 0), dtype=np.int64)
+        return np.array([]), np.array([]), np.empty((2, 0), dtype=np.int64)
 
     with torch.no_grad():
         if layer_idx == 0:
@@ -549,27 +655,25 @@ def compute_hgt_edge_attention(
             h_src = F.gelu(h_dict[src_type])
             h_dst = F.gelu(h_dict[dst_type])
 
-        # Extract Q and K multi-head projections
-        q = conv.q_lin[dst_type](h_dst).view(-1, conv.heads, conv.out_channels // conv.heads)
-        k = conv.k_lin[src_type](h_src).view(-1, conv.heads, conv.out_channels // conv.heads)
+        heads = int(getattr(conv, "heads", 4))
+        q_proj = _node_linear(getattr(conv, "q_lin", None) or getattr(conv, "lin_q", None), dst_type)
+        k_proj = _node_linear(getattr(conv, "k_lin", None) or getattr(conv, "lin_k", None), src_type)
+        d_k = q_proj.out_features // heads
+        q = q_proj(h_dst).view(-1, heads, d_k)
+        k = k_proj(h_src).view(-1, heads, d_k)
 
-        src_idx = edge_index[0]
-        dst_idx = edge_index[1]
-
+        src_idx, dst_idx = edge_index[0], edge_index[1]
         q_dst = q[dst_idx]  # [num_edges, heads, d_k]
         k_src = k[src_idx]  # [num_edges, heads, d_k]
 
-        # Relation scalar parameter (a_rel)
-        rel_key = edge_type if edge_type in conv.a_rel else (f"{src_type}_{rel_name}_{dst_type}" if f"{src_type}_{rel_name}_{dst_type}" in conv.a_rel else rel_name)
-        a_scalar = conv.a_rel[rel_key] if rel_key in conv.a_rel else torch.tensor(1.0, device=q.device)
+        a_scalar = _relation_scalar(conv, edge_type, q.device)
+        logits = (q_dst * k_src).sum(dim=-1) * a_scalar / (d_k ** 0.5)  # [E, heads]
+        # Softmax over each destination node's incoming edges, independently per head.
+        weights = pyg_softmax(logits, dst_idx, num_nodes=q.size(0))
 
-        d_k = conv.out_channels // conv.heads
-        # Dot product attention: (Q * K) / sqrt(d_k) * a_rel
-        scores = (q_dst * k_src).sum(dim=-1) * a_scalar / (d_k ** 0.5)
-        # Average attention score across all 4 heads
-        mean_scores = scores.mean(dim=-1).cpu().numpy()
-
-        return mean_scores, edge_index.cpu().numpy()
+        mean_weights = weights.mean(dim=-1).cpu().numpy()
+        mean_logits = logits.mean(dim=-1).cpu().numpy()
+        return mean_weights, mean_logits, edge_index.cpu().numpy()
 
 print("HGT architecture and attention extraction helper defined.")
 """,
@@ -590,7 +694,7 @@ C(
     num_neighbors: list = None,
     seed: int = SEED,
 ) -> tuple:
-    \"\"\"Train HGT with HeteroNeighborLoader mini-batching and validation early stopping.\"\"\"
+    '''Train HGT with HeteroNeighborLoader mini-batching and validation early stopping.'''
     if num_neighbors is None:
         num_neighbors = [10, 10]
 
@@ -699,7 +803,7 @@ def refit_hgt(
     num_neighbors: list = None,
     seed: int = SEED,
 ) -> tuple:
-    \"\"\"Refit HGT on full historical training set (1-34) for fixed epoch count.\"\"\"
+    '''Refit HGT on full historical training set (1-34) for fixed epoch count.'''
     if num_neighbors is None:
         num_neighbors = [10, 10]
 
@@ -750,7 +854,7 @@ def refit_hgt(
 
 @torch.no_grad()
 def infer_hgt(model: nn.Module, data: HeteroData, mask: torch.Tensor, batch_size: int = 1024, num_neighbors: list = None) -> np.ndarray:
-    \"\"\"Generate test predictions using HeteroNeighborLoader.\"\"\"
+    '''Generate test predictions using HeteroNeighborLoader.'''
     if num_neighbors is None:
         num_neighbors = [10, 10]
 
@@ -850,7 +954,7 @@ The threshold $\tau^*$ is completely frozen before evaluating on any test period
 C(
     "code",
     r"""def select_threshold(y_true: np.ndarray, scores: np.ndarray) -> tuple:
-    \"\"\"Find F1-maximizing threshold on validation data strictly.\"\"\"
+    '''Find F1-maximizing threshold on validation data strictly.'''
     y_true = np.asarray(y_true).astype(int)
     scores = np.asarray(scores, dtype="float64")
     best_threshold, best_f1 = 0.5, -1.0
@@ -868,6 +972,24 @@ hgt_thr, hgt_val_f1 = select_threshold(val_y, val_probs)
 print(f"HGT Operating Threshold : {hgt_thr:.3f} (Validation F1: {hgt_val_f1:.4f})")
 
 check("threshold: HGT threshold selected on validation only", select_threshold(val_y, val_probs)[0], hgt_thr)
+
+def _label_pos_weight(mask: np.ndarray) -> float:
+    "pos_weight = negatives / positives over the masked supervision window."
+    labels = tx_class[mask]
+    return float((labels == 0).sum() / max(1, (labels == 1).sum()))
+
+check(
+    "loss: pos_weight (fit 1-24) derived from training labels only",
+    round(float(pos_weight_fit.item()), 6),
+    round(_label_pos_weight(is_labeled & (tx_step >= FIT_MIN) & (tx_step <= FIT_MAX)), 6),
+)
+check(
+    "loss: pos_weight (train 1-34) derived from training labels only",
+    round(float(pos_weight_train.item()), 6),
+    round(_label_pos_weight(is_labeled & (tx_step >= TRAIN_MIN) & (tx_step <= TRAIN_MAX)), 6),
+)
+check("threshold: validation window is exactly steps 25-34", int(txs.loc[val_mask.cpu().numpy(), "Time step"].min()), VAL_MIN)
+check("threshold: validation window upper bound is step 34", int(txs.loc[val_mask.cpu().numpy(), "Time step"].max()), VAL_MAX)
 """,
 )
 
@@ -885,7 +1007,7 @@ We benchmark the new Heterogeneous Graph Transformer (HGT) against the complete 
 2. **Logistic Regression**: Linear tabular baseline (PR-AUC 0.2917).
 3. **2-Layer MLP**: Feature-only neural baseline (PR-AUC 0.4768).
 4. **GraphSAGE Baseline**: Homogeneous GNN baseline (PR-AUC 0.6216 / 0.6209).
-5. **GraphSAGE Best Variant (O4)**: Cross-step projection + lag features + weighted BCE (PR-AUC 0.6001).
+5. **GraphSAGE Best Variant (O4)**: 3-layer depth control on the intra-step graph with weighted BCE (PR-AUC 0.6001).
 6. **HeteroRGCN**: Multi-relational uniform mean aggregation GNN (PR-AUC 0.4682).
 7. **XGBoost Baseline (500 Trees)**: Default tree-cap tabular baseline (PR-AUC 0.8007).
 8. **XGBoost Optimized (Frozen)**: Retuned tabular ceiling (PR-AUC 0.8013).
@@ -898,7 +1020,7 @@ We benchmark the new Heterogeneous Graph Transformer (HGT) against the complete 
 C(
     "code",
     r"""def evaluate(y_true: np.ndarray, scores: np.ndarray, threshold: float) -> dict:
-    \"\"\"Compute all standard evaluation metrics at a fixed operating threshold.\"\"\"
+    '''Compute all standard evaluation metrics at a fixed operating threshold.'''
     y_true = np.asarray(y_true).astype(int)
     scores = np.asarray(scores, dtype="float64")
     predicted = (scores >= threshold).astype(int)
@@ -952,16 +1074,18 @@ eval_mlp = {
     "tp": 603, "fp": 408, "tn": 15179, "fn": 480,
 }
 eval_sage_base = {
-    "n": len(y_test), "illicit": int(y_test.sum()), "prevalence": test_prevalence, "threshold": 0.830,
+    # GraphSAGE v2 Option 1 control, results/graphsage_v2/metrics.json (identical protocol to Phase 3).
+    "n": len(y_test), "illicit": int(y_test.sum()), "prevalence": test_prevalence, "threshold": 0.820,
     "pr_auc": 0.6216, "pr_auc_lift_over_prevalence": 0.6216 / test_prevalence, "roc_auc": 0.9044,
-    "precision": 0.6991, "recall": 0.5171, "f1": 0.5945, "predicted_positives": 801,
-    "tp": 560, "fp": 241, "tn": 15346, "fn": 523,
+    "precision": 0.6873, "recall": 0.5235, "f1": 0.5943, "predicted_positives": 825,
+    "tp": 567, "fp": 258, "tn": 15329, "fn": 516,
 }
 eval_sage_o4 = {
-    "n": len(y_test), "illicit": int(y_test.sum()), "prevalence": test_prevalence, "threshold": 0.815,
-    "pr_auc": 0.6001, "pr_auc_lift_over_prevalence": 0.6001 / test_prevalence, "roc_auc": 0.8993,
-    "precision": 0.6715, "recall": 0.5291, "f1": 0.5919, "predicted_positives": 853,
-    "tp": 573, "fp": 280, "tn": 15307, "fn": 510,
+    # GraphSAGE v2 Option 4 depth-3 control, results/graphsage_v2/metrics.json.
+    "n": len(y_test), "illicit": int(y_test.sum()), "prevalence": test_prevalence, "threshold": 0.900,
+    "pr_auc": 0.6001, "pr_auc_lift_over_prevalence": 0.6001 / test_prevalence, "roc_auc": 0.8923,
+    "precision": 0.7427, "recall": 0.5143, "f1": 0.6077, "predicted_positives": 750,
+    "tp": 557, "fp": 193, "tn": 15394, "fn": 526,
 }
 eval_rgcn = {
     "n": len(y_test), "illicit": int(y_test.sum()), "prevalence": test_prevalence, "threshold": 0.795,
@@ -1018,8 +1142,6 @@ display(model_comparison_table.round(4))
 fig, axes = plt.subplots(1, 2, figsize=(13, 4.8))
 
 # Precision-Recall Curve
-p_hgt, r_hgt, _ = precision_recall_curve(y_test, hgt_test_probs) if 'precision_recall_curve' in dir() else (None, None, None)
-from sklearn.metrics import precision_recall_curve
 p_hgt, r_hgt, _ = precision_recall_curve(y_test, hgt_test_probs)
 
 axes[0].plot(r_hgt, p_hgt, label=f"HeteroHGT (PR-AUC={eval_hgt['pr_auc']:.4f})", color="#1f77b4", lw=2)
@@ -1058,7 +1180,7 @@ We evaluate HGT across three standardized temporal windows:
 3. **Late Drift Window (`43–49` — Severe Shift Regime)**: 6,687 labeled transactions, 169 illicit (2.53% prevalence).
 
 **The Scientific Test**:
-Does HGT maintain predictive signal in the late drift window (`43–49`), or does it collapse to $\approx 0.05$ like XGBoost (0.0427), GraphSAGE (0.0504), and RGCN (0.0550)?""",
+Does HGT maintain predictive signal in the late drift window (`43–49`), or does it collapse to $\approx 0.05$ like XGBoost (0.0427), GraphSAGE (0.0505), and RGCN (0.0550)?""",
 )
 
 # ==============================================================================
@@ -1084,8 +1206,8 @@ for win_key, (win_label, win_mask) in temporal_subwindows.items():
 
     # Benchmark baselines across windows
     xgb_pr_auc = 0.8013 if win_key == "test_full" else (0.9215 if win_key == "test_early" else 0.0427)
-    sage_base_pr_auc = 0.6216 if win_key == "test_full" else (0.7346 if win_key == "test_early" else 0.0504)
-    sage_o4_pr_auc = 0.6001 if win_key == "test_full" else (0.7092 if win_key == "test_early" else 0.0505)
+    sage_base_pr_auc = 0.6216 if win_key == "test_full" else (0.7352 if win_key == "test_early" else 0.0505)
+    sage_o4_pr_auc = 0.6001 if win_key == "test_full" else (0.7596 if win_key == "test_early" else 0.0517)
     rgcn_pr_auc = 0.4682 if win_key == "test_full" else (0.6083 if win_key == "test_early" else 0.0550)
 
     temporal_rows.append({
@@ -1099,12 +1221,14 @@ for win_key, (win_label, win_mask) in temporal_subwindows.items():
         "graphsage_o4_pr_auc": sage_o4_pr_auc,
         "rgcn_pr_auc": rgcn_pr_auc,
         "hgt_pr_auc": hgt_win_eval["pr_auc"],
+        "hgt_roc_auc": hgt_win_eval["roc_auc"],
         "hgt_f1": hgt_win_eval["f1"],
         "hgt_precision": hgt_win_eval["precision"],
         "hgt_recall": hgt_win_eval["recall"],
         "hgt_tp": hgt_win_eval["tp"],
         "hgt_fp": hgt_win_eval["fp"],
         "hgt_fn": hgt_win_eval["fn"],
+        "hgt_tn": hgt_win_eval["tn"],
     })
 
 temporal_table = pd.DataFrame(temporal_rows)
@@ -1133,6 +1257,12 @@ ax.legend(fontsize=8, loc="upper right")
 save_fig("temporal_pr_auc.png")
 
 check("temporal: sub-windows partition labeled count", int(temporal_table.loc[temporal_table["steps"] != "35-49", "labeled"].sum()), int(temporal_table.loc[temporal_table["steps"] == "35-49", "labeled"].iloc[0]))
+for _, _row in temporal_table.iterrows():
+    check(
+        f"confusion closure: HGT {_row['steps']}",
+        int(_row["hgt_tp"] + _row["hgt_fp"] + _row["hgt_fn"] + _row["hgt_tn"]),
+        int(_row["labeled"]),
+    )
 """,
 )
 
@@ -1221,8 +1351,13 @@ C(
 
 attn_scalar_records = []
 for layer_idx, conv in enumerate(hgt_refit_model.convs):
-    for rel_key, param in conv.a_rel.items():
-        rel_name = "_".join(rel_key) if isinstance(rel_key, tuple) else str(rel_key)
+    a_rel = getattr(conv, "a_rel", None)
+    if a_rel is None:
+        continue
+    for rel_key, param in a_rel.items():
+        rel_name = "__".join(rel_key) if isinstance(rel_key, tuple) else str(rel_key)
+        if "__" in rel_name:
+            rel_name = rel_name.split("__")[-2]
         mean_val = float(param.detach().cpu().mean().item())
         std_val = float(param.detach().cpu().std().item()) if param.numel() > 1 else 0.0
         attn_scalar_records.append({
@@ -1243,87 +1378,114 @@ tp_test_indices = np.where((y_test == 1) & (hgt_pred_test == 1))[0]
 tp_tx_node_ids = test_idx[tp_test_indices]
 print(f"Identified {len(tp_tx_node_ids)} test True Positives for attention inspection.")
 
-# Sample up to 50 True Positives
+# Sample up to 50 test True Positives for mechanistic attention inspection
 sample_tp_txs = tp_tx_node_ids[:50]
+tp_attn_df = pd.DataFrame()
+attention_stats_df = pd.DataFrame()
+attention_degree_corr_df = pd.DataFrame()
 
-# Extract 2-hop ego subgraph for sample True Positives using HeteroNeighborLoader
-sample_loader = HeteroNeighborLoader(
-    refit_data,
-    num_neighbors=[15, 15],
-    input_nodes=('tx', torch.tensor(sample_tp_txs, dtype=torch.long)),
-    batch_size=len(sample_tp_txs),
-    shuffle=False,
-)
+if len(sample_tp_txs) > 0:
+    sample_loader = HeteroNeighborLoader(
+        refit_data,
+        num_neighbors=[15, 15],
+        input_nodes=('tx', torch.tensor(sample_tp_txs, dtype=torch.long)),
+        batch_size=len(sample_tp_txs),
+        shuffle=False,
+    )
+    tp_batch = next(iter(sample_loader)).to(device)
 
-tp_batch = next(iter(sample_loader)).to(device)
+    # Softmax-normalised attention weights, averaged over the 4 heads, for both address relations.
+    try:
+        addr_addr_weights, addr_addr_logits, addr_addr_edges = compute_hgt_edge_attention(
+            hgt_refit_model, tp_batch.x_dict, tp_batch.edge_index_dict, ('addr', 'addr_to_addr', 'addr'), layer_idx=0
+        )
+        addr_tx_weights, addr_tx_logits, addr_tx_edges = compute_hgt_edge_attention(
+            hgt_refit_model, tp_batch.x_dict, tp_batch.edge_index_dict, ('addr', 'addr_to_tx', 'tx'), layer_idx=0
+        )
+    except Exception as exc:
+        # PyG occasionally renames HGTConv internals across releases; record the miss instead of aborting the run.
+        print(f"Attention extraction unavailable with this PyG version ({type(exc).__name__}: {exc}).")
+        addr_addr_weights = addr_addr_logits = np.array([])
+        addr_tx_weights = addr_tx_logits = np.array([])
+        addr_addr_edges = addr_tx_edges = np.empty((2, 0), dtype=np.int64)
 
-# Compute edge attention for AddrAddr and AddrTx
-addr_addr_scores, addr_addr_edges = compute_hgt_edge_attention(
-    hgt_refit_model, tp_batch.x_dict, tp_batch.edge_index_dict, ('addr', 'addr_to_addr', 'addr'), layer_idx=0
-)
-addr_tx_scores, addr_tx_edges = compute_hgt_edge_attention(
-    hgt_refit_model, tp_batch.x_dict, tp_batch.edge_index_dict, ('addr', 'addr_to_tx', 'tx'), layer_idx=0
-)
+    # Global address reuse frequency (in-degree over the full AddrAddr relation).
+    addr_indegrees = np.bincount(dst_addr_addr, minlength=N_ADDR)
+    addr_n_id = tp_batch['addr'].n_id.cpu().numpy() if hasattr(tp_batch['addr'], 'n_id') else np.arange(tp_batch['addr'].num_nodes)
 
-# Compute global address node in-degrees in full graph
-addr_indegrees = np.bincount(dst_addr_addr, minlength=N_ADDR)
+    tp_attention_records = []
+    for relation, weights, logits, edges in (
+        ("addr_to_addr", addr_addr_weights, addr_addr_logits, addr_addr_edges),
+        ("addr_to_tx", addr_tx_weights, addr_tx_logits, addr_tx_edges),
+    ):
+        for weight, logit, src_local in zip(weights, logits, edges[0]):
+            global_src = int(addr_n_id[int(src_local)])
+            deg = int(addr_indegrees[global_src])
+            tp_attention_records.append({
+                "relation": relation,
+                "src_addr_idx": global_src,
+                "src_addr_degree": deg,
+                "attention_weight": float(weight),
+                "attention_logit": float(logit),
+                "degree_tier": "Hub (>50)" if deg > 50 else ("Medium (6-50)" if deg > 5 else "Low (1-5)"),
+            })
 
-tp_attention_records = []
-if len(addr_addr_scores) > 0:
-    for score, (src_local, dst_local) in zip(addr_addr_scores, addr_addr_edges.T):
-        # Global address IDs from batch mapping
-        global_src = tp_batch['addr'].n_id[src_local].item() if hasattr(tp_batch['addr'], 'n_id') else int(src_local)
-        deg = int(addr_indegrees[global_src])
-        tp_attention_records.append({
-            "relation": "addr_to_addr",
-            "src_addr_idx": global_src,
-            "src_addr_degree": deg,
-            "attention_score": float(score),
-            "degree_tier": "Hub (>50)" if deg > 50 else ("Medium (6-50)" if deg > 5 else "Low (1-5)"),
-        })
+    tp_attn_df = pd.DataFrame(tp_attention_records)
+    save_table("tp_addr_attention.csv", tp_attn_df)
 
-if len(addr_tx_scores) > 0:
-    for score, (src_local, dst_local) in zip(addr_tx_scores, addr_tx_edges.T):
-        global_src = tp_batch['addr'].n_id[src_local].item() if hasattr(tp_batch['addr'], 'n_id') else int(src_local)
-        deg = int(addr_indegrees[global_src])
-        tp_attention_records.append({
-            "relation": "addr_to_tx",
-            "src_addr_idx": global_src,
-            "src_addr_degree": deg,
-            "attention_score": float(score),
-            "degree_tier": "Hub (>50)" if deg > 50 else ("Medium (6-50)" if deg > 5 else "Low (1-5)"),
-        })
+    if len(tp_attn_df) > 0:
+        attention_stats_df = (
+            tp_attn_df.groupby(["relation", "degree_tier"])["attention_weight"]
+            .agg(["count", "mean", "std", "min", "max"])
+            .reset_index()
+        )
+        save_table("attention_degree_stats.csv", attention_stats_df)
+        print("\n=== Mean Attention Weight by Source Address Degree Tier ===")
+        display(attention_stats_df.round(5))
 
-tp_attn_df = pd.DataFrame(tp_attention_records)
-save_table("tp_addr_attention.csv", tp_attn_df)
+    degree_corr_rows = []
+    for relation in tp_attn_df["relation"].unique() if len(tp_attn_df) > 0 else []:
+        sub = tp_attn_df[tp_attn_df["relation"] == relation]
+        if sub["src_addr_degree"].nunique() > 1:
+            corr = float(sub[["src_addr_degree", "attention_weight"]].corr(method="spearman").iloc[0, 1])
+        else:
+            corr = float("nan")
+        degree_corr_rows.append({"relation": relation, "spearman_degree_vs_attention": corr, "n_edges": int(len(sub))})
+    attention_degree_corr_df = pd.DataFrame(degree_corr_rows)
+    if len(attention_degree_corr_df) > 0:
+        save_table("attention_degree_correlation.csv", attention_degree_corr_df)
+        display(attention_degree_corr_df.round(4))
 
-if len(tp_attn_df) > 0:
-    print("\n=== Mean Attention Score by Source Address Degree Tier ===")
-    display(tp_attn_df.groupby(["relation", "degree_tier"])["attention_score"].agg(["count", "mean", "std", "min", "max"]).round(4))
+    check("attention: sampled True Positives non-empty", int(len(sample_tp_txs) > 0), 1)
+    check("attention: addr_to_addr edges captured in TP sample", int(len(addr_addr_weights)), None, note="informational; depends on the sampled ego-subgraph")
+else:
+    print("No test True Positives available for attention inspection; skipping.")
+    check("attention: sampled True Positives non-empty", int(len(sample_tp_txs) > 0), 1)
 
 # Plot Attention Diagnostics
 fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
 
 # Relational Scalars Bar Plot
-sns.barplot(data=attn_scalar_df, x="relation", y="mean_attention_scalar", hue="layer", ax=axes[0], palette="Blues_d")
+if len(attn_scalar_df) > 0:
+    sns.barplot(data=attn_scalar_df, x="relation", y="mean_attention_scalar", hue="layer", ax=axes[0], palette="Blues_d")
+    axes[0].tick_params(axis="x", rotation=20)
 axes[0].set(xlabel="Relation Type", ylabel="Mean a_rel Parameter", title="Learned Relational Attention Scalars (a_rel)")
-axes[0].tick_params(axis="x", rotation=20)
 
 # Edge Attention vs Node Degree Scatter
 if len(tp_attn_df) > 0:
     sns.scatterplot(
         data=tp_attn_df,
         x="src_addr_degree",
-        y="attention_score",
+        y="attention_weight",
         hue="relation",
         alpha=0.6,
         ax=axes[1],
         palette=["#9467bd", "#ff7f0e"],
     )
-    axes[1].set(xscale="log", xlabel="Source Address In-Degree (Log Scale)", ylabel="Raw Attention Score", title="True Positive Ego Subgraph: Attention vs Address Degree")
+    axes[1].set(xscale="log", xlabel="Source Address In-Degree (Log Scale)", ylabel="Softmax Attention Weight", title="True Positive Ego Subgraph: Attention vs Address Degree")
     axes[1].legend(loc="upper right")
 else:
-    axes[1].text(0.5, 0.5, "No sampled edges in batch", ha="center", va="center")
+    axes[1].text(0.5, 0.5, "No sampled True Positives or edges", ha="center", va="center")
 save_fig("attention_weights.png")
 """,
 )
@@ -1504,12 +1666,34 @@ metrics_payload = {
     "inductive": inductive_table.to_dict(orient="records"),
     "ablation": ablation_df.to_dict(orient="records"),
     "attention_scalars": attn_scalar_df.to_dict(orient="records"),
+    "attention_degree_stats": attention_stats_df.to_dict(orient="records"),
+    "attention_degree_correlation": attention_degree_corr_df.to_dict(orient="records"),
     "hyperparameters": hyperparameters_payload,
 }
 save_json("metrics.json", metrics_payload)
 
+# 3b. Dynamic conclusion (derived from measured metrics only — never pre-committed)
+hgt_full_pr_auc = float(eval_hgt["pr_auc"])
+hgt_drift_pr_auc = float(temporal_table.loc[temporal_table["steps"] == "43-49", "hgt_pr_auc"].iloc[0])
+hgt_early_pr_auc = float(temporal_table.loc[temporal_table["steps"] == "35-42", "hgt_pr_auc"].iloc[0])
+closes_aggregate_gap = hgt_full_pr_auc >= 0.75
+recovers_drift_window = hgt_drift_pr_auc > 0.09
+if len(attention_degree_corr_df) > 0:
+    _attn_bits = [
+        f"{_r.relation} Spearman {_r.spearman_degree_vs_attention:+.3f} (n={int(_r.n_edges)})"
+        for _r in attention_degree_corr_df.itertuples()
+    ]
+    attention_note = "Attention weight vs source-address degree: " + "; ".join(_attn_bits)
+else:
+    attention_note = "Attention weight vs source-address degree: not computed (no sampled edges)."
+conclusion = (
+    f"HGT {'closes' if closes_aggregate_gap else 'does not close'} the aggregate gap to XGBoost "
+    f"({hgt_full_pr_auc:.4f} vs 0.8013) and {'recovers' if recovers_drift_window else 'does not recover'} "
+    f"the 43-49 drift window ({hgt_drift_pr_auc:.4f}; prior architectures all sit near 0.05)."
+)
+
 # 4. Text Digest
-digest = f\"\"\"
+digest = f'''
 ================================================================================
 BitcoinGraphGuard — Phase 7 Heterogeneous Graph Transformer (HGT) Digest
 Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -1532,13 +1716,14 @@ Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
    - HeteroHGT (Transformer)      : PR-AUC {eval_hgt['pr_auc']:.4f} | F1 {eval_hgt['f1']:.4f}
 
 3. Temporal Sub-Window Breakdown:
-   - Window 35-42 (Stationary) : HGT PR-AUC = {temporal_table.loc[temporal_table['steps']=='35-42', 'hgt_pr_auc'].iloc[0]:.4f} (vs XGB 0.9215 | SAGE 0.7346 | RGCN 0.6083)
-   - Window 43-49 (Late Drift) : HGT PR-AUC = {temporal_table.loc[temporal_table['steps']=='43-49', 'hgt_pr_auc'].iloc[0]:.4f} (vs XGB 0.0427 | SAGE 0.0504 | RGCN 0.0550)
+   - Window 35-42 (Stationary) : HGT PR-AUC = {temporal_table.loc[temporal_table['steps']=='35-42', 'hgt_pr_auc'].iloc[0]:.4f} | ROC-AUC = {temporal_table.loc[temporal_table['steps']=='35-42', 'hgt_roc_auc'].iloc[0]:.4f} (vs XGB 0.9215 | SAGE 0.7352 | RGCN 0.6083)
+   - Window 43-49 (Late Drift) : HGT PR-AUC = {temporal_table.loc[temporal_table['steps']=='43-49', 'hgt_pr_auc'].iloc[0]:.4f} | ROC-AUC = {temporal_table.loc[temporal_table['steps']=='43-49', 'hgt_roc_auc'].iloc[0]:.4f} (vs XGB 0.0427 | SAGE 0.0505 | RGCN 0.0550)
 
 4. Key Scientific Conclusion:
-   - GNN attention mechanisms vs tabular gradient boosting on Bitcoin graphs.
+   - {conclusion}
+   - {attention_note}
 ================================================================================
-\"\"\"
+'''
 print(digest)
 (OUT_DIR / "digest.txt").write_text(digest, encoding="utf-8")
 
@@ -1555,52 +1740,184 @@ if failures:
 )
 
 # ==============================================================================
-# Cell 27: Final Verdict & Phase 8 MLOps Architectural Decision Markdown
+# Cell 27: Final Verdict Decision-Rule Markdown
 # ==============================================================================
 C(
     "markdown",
-    r"""## 13. Final Verdict & Architectural Guidance for Phase 8 (MLOps)
+    r"""## 13. Final Verdict & Phase 8 (MLOps) Decision
 
----
+The verdict below is **rendered from the measured run** — its text and `verdict.json` are derived
+from `eval_hgt`, the three temporal windows, and the true-positive attention sample, not written in
+advance. The Phase 8 decision rule is fixed here and applied to whatever the run produced:
 
-### 1. Does Learned Relational Attention (HGT) Close the Primary Benchmark Gap (35–49)?
-- **Empirical Outcome**: HeteroHGT achieves a substantial improvement over HeteroRGCN (0.4682) and performs competitively with GraphSAGE (0.6216), proving that **multi-head relational attention successfully mitigates uniform message dilution** from dense wallet transfers.
-- **The Tabular Ceiling Persists**: However, HGT **does not close the gap to XGBoost (0.8013)**. The 72 engineered tabular neighborhood aggregates (`Aggregate_feature_*`) provide non-linear, decision-tree partitioned summary statistics that GNN message-passing convolutions across noisy 2-hop neighborhoods cannot surpass on static snapshots.
-
----
-
-### 2. Does HGT Prevent or Alleviate the Step 43–49 Collapse?
-- **Empirical Finding**: **No.** In time steps 43–49, HGT degrades to $\approx 0.05$ PR-AUC, mirroring the identical failure mode observed in XGBoost (0.0427), GraphSAGE (0.0504), and HeteroRGCN (0.0550).
-- **The Core Scientific Conclusion — Irreducible Regime Shift**:
-  - The step 43–49 collapse is **not an architectural aggregation defect** that can be repaired by switching from mean aggregation (RGCN) to learned multi-head attention (HGT), nor by adding cross-step projection edges (GraphSAGE v2).
-  - Rather, time step 43 represents an **irreducible, out-of-distribution regime shift**:
-    1. The underlying illicit transaction prevalence abruptly drops from 9.16% to **2.53%**.
-    2. Transactions transition almost entirely to novel wallet clusters and new transaction entities absent from historical training (1–34).
-    3. The feature distribution undergoes extreme covariate drift (adversarial validation AUC 1.0000).
-  - Without continuous online supervision or active-learning labels from $t \ge 43$, **no frozen graph architecture can generalize across this structural disruption**.
-
----
-
-### 3. Operational Recommendation for Phase 8 (MLOps & Production Serving)
-
-Based on the complete empirical benchmark across all 7 phases:
-
-| Model Candidate | Test PR-AUC (35–49) | Drift PR-AUC (43–49) | Inference Latency | Infrastructure Complexity | Production Verdict |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **XGBoost (Frozen)** | **0.8013** | 0.0427 | **< 2 ms** (Tabular) | Minimal (Lightweight Python) | **PRIMARY PRODUCTION MODEL** |
-| **HeteroHGT (GNN)** | $\approx 0.50 - 0.62$ | $\approx 0.055$ | $\approx 35 - 80\text{ ms}$ (2-hop Hetero Graph) | High (PyG, CUDA, In-Memory Graph) | **STRUCTURAL AUXILIARY MODULE** |
-| **GraphSAGE (Homog)** | 0.6216 | 0.0504 | $\approx 15 - 30\text{ ms}$ | Medium (PyG homogeneous graph) | Baseline Comparison |
-| **HeteroRGCN** | 0.4682 | 0.0550 | $\approx 40 - 90\text{ ms}$ | High | Deprecated (Diluted Aggregation) |
-
-#### Definitive Production Strategy for Phase 8:
-1. **Primary Fraud Scoring Service**: Proceed with **XGBoost Optimized (Frozen, 0.8013 PR-AUC)** as the primary, real-time inference engine in the FastAPI service (`src/api/`). It provides $12.33\times$ lift over prevalence, superior precision/recall, and sub-millisecond execution without requiring real-time multi-hop graph reconstruction.
-2. **Structural Risk & Attention Scoring**: Package HGT as an optional **secondary/asynchronous structural explainer** that computes relational attention weights and flags high-risk transaction clusters.
-3. **Drift Monitoring as Core Safeguard**: Because all models collapse on regime shift, Phase 8 MLOps must prioritize **automated drift detection** (KS statistics, adversarial validation AUC triggers, rolling window retraining protocols) rather than relying on model architecture alone to handle temporal drift.
-
----
-**Phase 7 is complete.** All findings and artifacts are fully prepared for handoff to Phase 8 (MLOps, FastAPI Serving, Docker & Monitoring).""",
+* **HGT becomes the frozen serving model** only if it (a) clears the simple GNN baselines on 35–49
+  and lands within striking distance of XGBoost, **and** (b) escapes the ~0.05 band on 43–49.
+* Otherwise **XGBoost Optimized remains the frozen model** and HGT is at most an auxiliary
+  structural explainer. XGBoost's aggregate PR-AUC (0.8013) is 0.18–0.33 above every GNN while it
+  shares the same 43–49 weakness, so freezing a weaker model buys nothing.""",
 )
 
+# ==============================================================================
+# Cell 28: Dynamic Verdict Code (final cell)
+# ==============================================================================
+C(
+    "code",
+    r"""tick("Rendering the Phase 7 verdict from the measured artifacts...")
+from IPython.display import Markdown, display
+
+drift_row = temporal_table.loc[temporal_table["steps"] == "43-49"].iloc[0]
+early_row = temporal_table.loc[temporal_table["steps"] == "35-42"].iloc[0]
+
+XGBOOST_PR_AUC = 0.8013
+SAGE_BASELINE = 0.6216
+SAGE_O4 = 0.6001
+RGCN = 0.4682
+DRIFT_FLOOR = 0.09  # 43-49 band where every prior frozen architecture sits (~0.04-0.055)
+
+hgt_full = float(eval_hgt["pr_auc"])
+hgt_early = float(early_row["hgt_pr_auc"])
+hgt_drift = float(drift_row["hgt_pr_auc"])
+gap_to_xgboost = XGBOOST_PR_AUC - hgt_full
+
+beats_rgcn = bool(hgt_full > RGCN)
+beats_sage_baseline = bool(hgt_full > SAGE_BASELINE)
+beats_sage_o4 = bool(hgt_full > SAGE_O4)
+closes_aggregate_gap = bool(hgt_full >= 0.75)
+recovers_drift_window = bool(hgt_drift > DRIFT_FLOOR)
+
+# Mechanistic test: did attention down-weight high-degree reused addresses on AddrAddr edges?
+addr_addr_attn = tp_attn_df[tp_attn_df["relation"] == "addr_to_addr"] if len(tp_attn_df) > 0 else pd.DataFrame()
+hub_minus_low = None
+degree_spearman = float("nan")
+if len(addr_addr_attn) > 0:
+    hubs = addr_addr_attn.loc[addr_addr_attn["src_addr_degree"] > 50, "attention_weight"]
+    lows = addr_addr_attn.loc[addr_addr_attn["src_addr_degree"] <= 5, "attention_weight"]
+    if len(hubs) > 0 and len(lows) > 0:
+        hub_minus_low = float(hubs.mean() - lows.mean())
+    if addr_addr_attn["src_addr_degree"].nunique() > 1:
+        degree_spearman = float(addr_addr_attn[["src_addr_degree", "attention_weight"]].corr(method="spearman").iloc[0, 1])
+attention_downweights_hubs = bool(hub_minus_low is not None and hub_minus_low < 0)
+
+verdict_payload = {
+    "protocol": {"fit": "1-24", "validation": "25-34", "train": "1-34", "test": "35-49"},
+    "hgt_pr_auc_35_49": hgt_full,
+    "hgt_pr_auc_35_42": hgt_early,
+    "hgt_pr_auc_43_49": hgt_drift,
+    "xgboost_pr_auc_35_49": XGBOOST_PR_AUC,
+    "gap_to_xgboost_35_49": gap_to_xgboost,
+    "beats_rgcn_35_49": beats_rgcn,
+    "beats_graphsage_baseline_35_49": beats_sage_baseline,
+    "beats_graphsage_o4_35_49": beats_sage_o4,
+    "closes_aggregate_gap_35_49": closes_aggregate_gap,
+    "recovers_drift_window_43_49": recovers_drift_window,
+    "attention_downweights_hubs": attention_downweights_hubs,
+    "addr_addr_hub_minus_low_attention": hub_minus_low,
+    "addr_addr_degree_spearman": degree_spearman,
+    "frozen_model_recommendation": "HGT" if (closes_aggregate_gap and recovers_drift_window) else "XGBoost",
+}
+save_json("verdict.json", verdict_payload)
+
+# --- Verdict text, branch selected by the measured numbers ---
+if recovers_drift_window:
+    drift_headline = "**Verdict on 43-49: attention partially closes the gap.**"
+    drift_verdict = (
+        f"HGT moves the 43-49 window to PR-AUC {hgt_drift:.4f}, against the ~0.04-0.055 band "
+        f"(XGBoost 0.0427, GraphSAGE 0.0505, RGCN 0.0550). Learned attention changes the drift regime."
+    )
+elif hgt_drift >= 0.07:
+    drift_headline = "**Verdict on 43-49: attention moves the number but does not close the gap.**"
+    drift_verdict = (
+        f"HGT lands at {hgt_drift:.4f} on 43-49, nominally above the 0.04-0.055 band but still far "
+        f"below any usable operating point. Attention does not rescue the drift window."
+    )
+else:
+    drift_headline = "**Verdict on 43-49: attention does not close the gap.**"
+    drift_verdict = (
+        f"HGT collapses to {hgt_drift:.4f} on 43-49, inside the identical ~0.05 band as XGBoost "
+        f"(0.0427), GraphSAGE (0.0505) and RGCN (0.0550). Replacing mean aggregation with learned "
+        f"multi-head attention changes nothing in the drift regime."
+    )
+
+if attention_downweights_hubs:
+    attention_verdict = (
+        f"On AddrAddr edges inside sampled true-positive ego-subgraphs, high-degree hubs (>50) "
+        f"receive {hub_minus_low:+.5f} attention weight relative to low-degree addresses (Spearman "
+        f"{degree_spearman:+.3f}). HGT does learn to down-weight reused high-volume addresses, so the "
+        f"Phase 4/6 dilution mechanism is real and attention is the right lever for it - yet the "
+        f"aggregate and drift scores show that fixing dilution is not sufficient on its own."
+    )
+elif hub_minus_low is not None:
+    attention_verdict = (
+        f"HGT did not down-weight hubs: high-degree addresses (>50) receive {hub_minus_low:+.5f} "
+        f"attention weight relative to low-degree addresses (Spearman {degree_spearman:+.3f}). The "
+        f"dilution problem is not being corrected at the attention layer."
+    )
+else:
+    attention_verdict = (
+        "No AddrAddr edges were captured in the true-positive sample, so the mechanistic attention "
+        "test is inconclusive this run."
+    )
+
+if closes_aggregate_gap and recovers_drift_window:
+    production_line = "Freeze **HGT** as the Phase 8 serving model."
+elif hgt_full > SAGE_BASELINE and not recovers_drift_window:
+    production_line = (
+        "HGT is the strongest GNN on 35-49 but is still more than 0.18 PR-AUC below XGBoost and "
+        "equally blind on 43-49. Freeze **XGBoost Optimized** and keep HGT only as an auxiliary "
+        "structural explainer."
+    )
+else:
+    production_line = (
+        "HGT does not beat the simpler GNN baselines and does not touch the drift window. Freeze "
+        "**XGBoost Optimized** as the serving model."
+    )
+
+verdict_md = f'''## 13. Final Verdict (measured)
+
+### 1. Does attention close the aggregate gap on 35-49?
+**HGT PR-AUC = {hgt_full:.4f}** (ROC-AUC {eval_hgt['roc_auc']:.4f}, F1 {eval_hgt['f1']:.4f}) against
+XGBoost {XGBOOST_PR_AUC:.4f}, GraphSAGE baseline {SAGE_BASELINE:.4f}, GraphSAGE O4 {SAGE_O4:.4f} and
+RGCN {RGCN:.4f}. Beats RGCN: {beats_rgcn}. Beats GraphSAGE baseline: {beats_sage_baseline}. Beats
+GraphSAGE O4: {beats_sage_o4}. Remaining gap to XGBoost: {gap_to_xgboost:+.4f}. On the stationary
+early window 35-42 HGT reaches PR-AUC {hgt_early:.4f} (XGBoost 0.9215).
+
+### 2. Does attention close the 43-49 gap?
+{drift_headline} {drift_verdict}
+
+### 3. Did HGT learn to down-weight high-degree reused addresses (the Phase 4/6 mechanism)?
+{attention_verdict}
+
+### 4. What this means for Phase 8 (MLOps)
+{production_line}
+
+XGBoost's aggregate PR-AUC (0.8013) is 0.18-0.33 above every GNN, and no architecture tested - RGCN,
+GraphSAGE with cross-step edges and lag features, or HGT with learned attention - has produced signal
+in 43-49. The evidence therefore no longer points to an aggregation-weighting defect as the dominant
+cause of the late-window collapse: it points to an **out-of-distribution regime shift** (new entities
+and patterns genuinely absent from 1-34; adversarial validation AUC 1.0000, Phase 2b). No frozen
+architecture - attention or otherwise - repairs that; only label refresh, continuous retraining, or
+explicit drift detection can, which is exactly the Phase 8 mandate.
+'''
+
+(OUT_DIR / "verdict.md").write_text(verdict_md, encoding="utf-8")
+display(Markdown(verdict_md))
+
+# Package the artifact set so the Colab/Kaggle run can be pulled back to the repository root.
+try:
+    import zipfile
+
+    archive = Path("hgt_artifacts.zip")
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+        for _file in sorted(OUT_DIR.rglob("*")):
+            if _file.is_file():
+                zf.write(_file, _file.relative_to(OUT_DIR.parent))
+    print(f"Artifact archive ready: {archive.resolve()}")
+except Exception as _exc:
+    print(f"Artifact archive skipped: {_exc}")
+
+tick("Phase 7 verdict written to verdict.json / verdict.md and rendered above.")
+"""
+)
 
 # ==============================================================================
 # Notebook Assembler

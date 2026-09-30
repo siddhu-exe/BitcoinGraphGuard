@@ -1,0 +1,31 @@
+{
+  "model": "Heterogeneous Graph Transformer (HGT)",
+  "architecture": {
+    "tx_in_channels": 165,
+    "addr_in_channels": 55,
+    "hidden_channels": 64,
+    "out_channels": 1,
+    "num_heads": 4,
+    "num_layers": 2,
+    "group_aggregation": "sum",
+    "dropout": 0.3
+  },
+  "training": {
+    "batch_size": 1024,
+    "num_neighbors": [
+      10,
+      10
+    ],
+    "optimizer": "AdamW",
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "loss": "BCEWithLogitsLoss",
+    "pos_weight_fit": 9.6381,
+    "pos_weight_train": 7.6349,
+    "best_epoch": 57,
+    "val_pr_auc_best": 0.5878,
+    "threshold": 0.67
+  },
+  "seed": 42,
+  "device": "cuda"
+}

@@ -1,0 +1,30 @@
+
+================================================================================
+BitcoinGraphGuard — Phase 7 Heterogeneous Graph Transformer (HGT) Digest
+Generated: 2026-09-30 17:32:39
+================================================================================
+
+1. Dataset & Graph Topology:
+   - Transactions: 203,769 nodes (165 features)
+   - Addresses: 822,942 nodes (55 features)
+   - Relations: tx->tx (234k), addr->tx (477k), tx->addr (837k), addr->addr (2.87M)
+   - Protocol: Fit 1-24 | Val 25-34 | Train 1-34 | Test 35-49
+
+2. Benchmark Progression on Primary Test (35-49):
+   - Prevalence Baseline          : PR-AUC 0.0650
+   - Logistic Regression          : PR-AUC 0.2917 | F1 0.4385
+   - 2-Layer MLP Baseline         : PR-AUC 0.4768 | F1 0.5759
+   - HeteroRGCN (Mean Agg)        : PR-AUC 0.4682 | F1 0.5295
+   - GraphSAGE Baseline           : PR-AUC 0.6216 | F1 0.5943
+   - GraphSAGE O4 (Cross-Step/Lag): PR-AUC 0.6001 | F1 0.6077
+   - XGBoost Optimized (Ceiling)  : PR-AUC 0.8013 | F1 0.7818
+   - HeteroHGT (Transformer)      : PR-AUC 0.4861 | F1 0.3106
+
+3. Temporal Sub-Window Breakdown:
+   - Window 35-42 (Stationary) : HGT PR-AUC = 0.6921 | ROC-AUC = 0.9374 (vs XGB 0.9215 | SAGE 0.7352 | RGCN 0.6083)
+   - Window 43-49 (Late Drift) : HGT PR-AUC = 0.0386 | ROC-AUC = 0.6815 (vs XGB 0.0427 | SAGE 0.0505 | RGCN 0.0550)
+
+4. Key Scientific Conclusion:
+   - HGT does not close the aggregate gap to XGBoost (0.4861 vs 0.8013) and does not recover the 43-49 drift window (0.0386; prior architectures all sit near 0.05).
+   - Attention weight vs source-address degree: not computed (no sampled edges).
+================================================================================

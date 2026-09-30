@@ -1,0 +1,22 @@
+{
+  "protocol": {
+    "fit": "1-24",
+    "validation": "25-34",
+    "train": "1-34",
+    "test": "35-49"
+  },
+  "hgt_pr_auc_35_49": 0.486086787966851,
+  "hgt_pr_auc_35_42": 0.6920678628241227,
+  "hgt_pr_auc_43_49": 0.03858820264190791,
+  "xgboost_pr_auc_35_49": 0.8013,
+  "gap_to_xgboost_35_49": 0.315213212033149,
+  "beats_rgcn_35_49": true,
+  "beats_graphsage_baseline_35_49": false,
+  "beats_graphsage_o4_35_49": false,
+  "closes_aggregate_gap_35_49": false,
+  "recovers_drift_window_43_49": false,
+  "attention_downweights_hubs": false,
+  "addr_addr_hub_minus_low_attention": null,
+  "addr_addr_degree_spearman": NaN,
+  "frozen_model_recommendation": "XGBoost"
+}
