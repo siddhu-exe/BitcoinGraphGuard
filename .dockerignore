@@ -1,0 +1,24 @@
+# Keep the Docker build context small and secret-free.
+.git
+.gitignore
+.github
+.agents
+.codex
+.aws
+.venv
+bit
+Og data
+notebooks
+tests
+logs
+.pytest_cache
+.ruff_cache
+**/__pycache__
+**/*.py[cod]
+*.ipynb_checkpoints
+*.log
+
+# Regenerable monitoring caches / non-serving model binaries are not needed to
+# serve the frozen tabular model and would bloat the image.
+results/monitoring/features_cache.joblib
+results/temporal_inductive/rgcn_static_model.pt

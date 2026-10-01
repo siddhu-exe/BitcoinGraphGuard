@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bitcoingraphguard:latest
+    container_name: bitcoingraphguard-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PREDICTION_LOG_PATH=/app/logs/predictions.jsonl
+      - MAX_BATCH_SIZE=10000
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+        reservations:
+          memory: 512M
