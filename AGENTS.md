@@ -100,7 +100,9 @@ GraphSAGE achieves **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP
 (+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement
 (100% intra-step) proves homogeneous GNNs cannot bridge temporal steps. Phase 3 v2 (`notebooks/03_graphsage.ipynb`, artifacts in `results/graphsage_v2/`, record in `docs/GRAPHSAGE_V2.md`) evaluated cross-step extensions (projected graph 0.5959, lag features 0.5238, depth-3 0.6001), confirming uniform projections degrade performance and motivating Phase 7 (HGT).
 
-**Phase 7 (Heterogeneous Graph Transformer - HGT): COMPLETE (`notebooks/07_hgt.ipynb`, artifacts in `results/hgt/`, record in `docs/HGT.md`).** Achieved PR-AUC 0.4861 on 35–49 (early window 35–42: 0.6921; late drift 43–49: 0.0386). Proved late drift failure is an irreducible out-of-distribution regime shift, selecting XGBoost Optimized (0.8013) as the Phase 8 production engine. Phase 1 through 7 are completed. Proceeding to Phase 8 (MLOps & Monitoring).
+**Phase 7 (Heterogeneous Graph Transformer - HGT): COMPLETE (`notebooks/07_hgt.ipynb`, artifacts in `results/hgt/`, record in `docs/HGT.md`).** Achieved PR-AUC 0.4861 on 35–49 (early window 35–42: 0.6921; late drift 43–49: 0.0386). Proved late drift failure is an irreducible out-of-distribution regime shift, selecting XGBoost Optimized (0.8013) as the Phase 8 production engine.
+
+**Phase 7b (OOD Diagnosis & Leak-Feature Audit): COMPLETE (`notebooks/08_ood_diagnosis.ipynb`, artifacts in `results/ood_diagnosis/`, record in `docs/OOD_DIAGNOSIS.md`).** 6-step audit decoupled mechanical time proxies from distributed covariate drift. Zero mechanical timestamp leaks in Top 20 ($\eta^2 \ge 0.90 \land \bar{\sigma}^2_w \approx 0$). Adversarial separability is robust across ablations (Drop Top 20: AUC 0.9904; Local Only: AUC 0.9885). Fraud and drift attributions are largely disjoint (only 4/20 overlap). Phase 1 through 7b are completed. Proceeding to Phase 8 (MLOps & Monitoring).
 
 Carry-forward constraints from Phase 1 that must not be silently reversed:
 

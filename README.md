@@ -5,19 +5,13 @@ Transactions and wallet/addresses are modeled as a **temporal heterogeneous grap
 combining classical ML baselines, graph neural networks, explainability, drift
 monitoring, and a containerized inference service.
 
-> Status: dataset verified; Phases 1–5 complete. `notebooks/01_eda.ipynb`, `notebooks/02_xgboost.ipynb`,
-> `notebooks/03_graphsage.ipynb` and `notebooks/04_heterogeneous_gnn.ipynb` ran on Google Colab in 2026-09-25;
-> findings are in `docs/EDA.md` (artifacts in `eda/`), `docs/XGBOOST.md` (`xgboost/`),
-> `docs/GRAPHSAGE.md` (`GraphSage/`) and `docs/HETEROGENEOUS_GNN.md` (`results/heterogeneous_gnn/`).
-> On test 35–49 the frozen benchmark is XGBoost **PR-AUC 0.8013**, GraphSAGE **0.6209**, HeteroRGCN
-> **0.4682**; homogeneous GNNs cannot bridge steps (100% intra-step edges), while the heterogeneous graph
-> does connect 10,812 test transactions to history via wallets. Phase 5 — `notebooks/05_temporal_inductive_evaluation.ipynb`
-> (temporal degradation, static vs expanding/rolling retraining, inductive seen/unseen address context,
-> threshold adaptation) — **ran on Google Colab on 2026-09-27 (artifacts in `temporal_inductive/`, 91/91
-> checks passing)**. It locates an abrupt step-43 regime shift (illicit prevalence 9–11% → 2.53%), shows
-> retraining regimes are required, and records a prevalence-confounded seen/unseen gap that motivates —
-> but does not prove — an attention-based next architecture. See `docs/PROGRESS.md`, `docs/PLAN.md` and
-> `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`.
+> Status: dataset verified; Phases 1–7b complete. Benchmark runs on Google Colab (2026-09-25 through 2026-09-30)
+> establish frozen test 35–49 PR-AUC: XGBoost **0.8013**, GraphSAGE **0.6216**, HeteroRGCN **0.4682**, and HGT **0.4861**.
+> All models experience severe degradation in the late drift window 43–49 (PR-AUC 0.038–0.055) due to a 4x drop in illicit
+> prevalence (9.16% → 2.53%) and continuous covariate shift. Phase 7b OOD diagnosis (`notebooks/08_ood_diagnosis.ipynb`,
+> `docs/OOD_DIAGNOSIS.md`) confirmed 0 mechanical timestamp leaks, robust distributed covariate shift (Locals-only AUC 0.9885),
+> and disjoint fraud vs drift attributions (4/20 overlap), selecting XGBoost Optimized (0.8013) as the production engine.
+> Proceeding to Phase 8 (MLOps & Monitoring) and Phase 9 (Inference Service & Deployment). See `docs/PROGRESS.md` and `docs/PLAN.md`.
 
 ## Architecture at a Glance
 
@@ -68,16 +62,17 @@ split for the primary evaluation. Raw data lives in `Og data/` and is gitignored
 | `docs/GRAPHSAGE.md` | Phase 3 GraphSAGE baseline — methodology, executed results, and intra-step analysis (executed 2026-09-25) |
 | `docs/HETEROGENEOUS_GNN.md` | Phase 4 HeteroRGCN — design, leakage controls, and executed results (executed 2026-09-25) |
 | `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` | Phase 5 temporal & inductive evaluation — design and executed results (executed 2026-09-27) |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda`–`04_heterogeneous_gnn` executed 2026-09-25; `05_temporal_inductive_evaluation` executed 2026-09-27) |
-| `scripts/generate_notebook_05.py` | Authoring script for the Phase 5 notebook (reviewable and reproducible in Git) |
-| `temporal_inductive/` | Phase 5 artifacts exported from the 2026-09-27 Colab run (91/91 checks passing) |
-| `scripts/verify_dataset.py` | Reproducible, memory-safe dataset verification |
+| `docs/EXPLAINABILITY.md` | Phase 6 explainability (SHAP, Captum, relation ablations) — completed run (2026-09-30) |
+| `docs/HGT.md` | Phase 7 Heterogeneous Graph Transformer (HGT) — completed run (2026-09-30) |
+| `docs/OOD_DIAGNOSIS.md` | Phase 7b Out-of-Distribution (OOD) diagnosis & leak audit — completed run (2026-09-30) |
+| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda` through `08b_ood_permutation_check`) |
+| `results/` | Canonical artifacts exported from executed Colab/Kaggle runs (`xgboost/`, `graphsage/`, `heterogeneous_gnn/`, `temporal_inductive/`, `explainability/`, `hgt/`, `ood_diagnosis/`) |
+| `scripts/` | Notebook authoring scripts (`generate_notebook_*.py`) and memory-safe verifiers |
 | `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
 | `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |
 | `AGENTS.md`, `CLAUDE.md` | Contributor/agent operating rules |
 | `requirements.txt` | Tiered Python dependencies |
-| `scripts/` | Memory-safe verification helper (`eda_phase2.py` superseded by notebook 01) |
-| `src/`, `tests/` | Not created yet (planned) |
+| `src/`, `tests/` | Application and serving code (Phase 8–9, planned) |
 
 ## Getting Started
 

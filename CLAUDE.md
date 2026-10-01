@@ -52,6 +52,8 @@ Notebooks are programmatically authored via reviewable generator scripts:
 python scripts/generate_notebook_02_v2.py    # Generates notebooks/02_xgboost_v2.ipynb
 python scripts/generate_notebook_03_v2.py    # Generates notebooks/03_graphsage.ipynb
 python scripts/generate_notebook_07.py       # Generates notebooks/07_hgt.ipynb
+python scripts/generate_notebook_08.py       # Generates notebooks/08_ood_diagnosis.ipynb
+python scripts/generate_notebook_08b.py      # Generates notebooks/08b_ood_permutation_check.ipynb
 ```
 
 ### Testing (Pytest)
@@ -93,6 +95,7 @@ dvc repro
 | **Phase 5** | Temporal & Inductive Eval | ✅ Complete | Analysis | Analysis | `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`, `results/temporal_inductive/` |
 | **Phase 6** | Explainability (SHAP/Captum)| ✅ Complete | Analysis | Analysis | `docs/EXPLAINABILITY.md`, `results/explainability/` |
 | **Phase 7** | Hetero Graph Transformer | ✅ Complete | 0.4861 | 0.0386 | `docs/HGT.md`, `results/hgt/` |
+| **Phase 7b**| OOD Diagnosis & Leak Audit | ✅ Complete | Adversarial AUC 1.0000 | Locals Only AUC 0.9885 | `docs/OOD_DIAGNOSIS.md`, `results/ood_diagnosis/` (inc. `permutation_check/`) |
 | **Phase 8–9**| Serving & MLOps | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
 
 ## Strict Carry-Forward Constraints & Evaluation Rules
