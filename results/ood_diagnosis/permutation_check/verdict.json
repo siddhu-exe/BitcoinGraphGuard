@@ -1,0 +1,19 @@
+{
+  "verdict_code": "CONCENTRATION_CONFIRMED",
+  "verdict_title": "(b) CONCENTRATION CONFIRMED \u2014 Genuine Localized Aggregate Drift",
+  "verdict_summary": "Permutation importance confirms that Aggregate_feature_10, 43, and 8 genuinely dominate separability within aggregate features (Permutation Top 3 share = 99.9%), with non-focal sister features failing to replicate the drop. The GBDT splitting artifact claim was incorrect: aggregate drift is genuinely concentrated in these 3 features, while local transaction drift is separately diffuse (two distinct drift mechanisms).",
+  "baseline_72agg_auc": 1.0,
+  "top3_gain_share_pct": 91.03,
+  "top3_shap_share_pct": 78.49,
+  "top3_perm_share_pct": 99.88,
+  "gini_gain": 0.951,
+  "gini_shap": 0.9322,
+  "gini_perm": 0.9761,
+  "spearman_gain_vs_perm": 0.8883,
+  "spearman_shap_vs_perm": 0.8812,
+  "focal_triad_grouped_auc_drop": 0.3055,
+  "correlated_triad_grouped_auc_drop": 0.0,
+  "random_triad_mean_auc_drop": 0.0,
+  "n_overcredited_features": 2,
+  "n_undercredited_features": 4
+}

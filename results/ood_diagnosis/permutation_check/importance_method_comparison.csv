@@ -1,0 +1,73 @@
+rank_perm,rank_gain,rank_shap,feature,mean_auc_drop,std_auc_drop,perm_share_pct,gain_share_pct,shap_share_pct,rank_diff_gain_perm,gain_to_perm_ratio,disagreement_flag,disagreement_note
+1,2,2,Aggregate_feature_43,0.0010683886080788741,0.0004884239955817581,64.7017343323157,26.95975607346672,30.580195205449677,1,0.41667748711337865,CONCORDANT_DOMINANT,"Confirmed high importance across Gain, SHAP, and Permutation"
+2,3,1,Aggregate_feature_8,0.0005790171005605971,0.000558573777821764,35.06534076744267,26.776219063370522,33.53747015124464,1,0.7636092642291273,CONCORDANT_DOMINANT,"Confirmed high importance across Gain, SHAP, and Permutation"
+3,1,3,Aggregate_feature_10,1.8783766960828174e-06,3.1158785179598658e-06,0.1137547040907713,37.295996940223745,14.372956804596141,-2,327.86333750614097,OVERCREDITED_BY_SPLIT,High Gain share inflated relative to causal Permutation drop
+4,7,9,Aggregate_feature_44,5.925409161022799e-07,7.937812272121196e-07,0.03588434455849826,0.3459813210101556,0.7469350727318783,3,9.641567242398443,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+5,4,4,Aggregate_feature_7,4.58489414911778e-07,6.092928029586722e-07,0.027766170561424303,4.277061462053948,9.565193271697392,-1,154.0385791620863,CONCORDANT_DOMINANT,"Confirmed high importance across Gain, SHAP, and Permutation"
+6,11,17,Aggregate_feature_50,2.459603802873467e-07,5.142807951298144e-07,0.014895388308420061,0.0849627766950057,0.24339691325165405,5,5.70396520961981,UNDERCREDITED_BY_SPLIT,Low Gain rank but Top-10 Permutation causal impact (Masked Sister Feature)
+7,14,6,Aggregate_feature_52,1.677002592948007e-07,4.776105477880404e-07,0.01015594657440564,0.06135752038929192,1.0575476516270144,7,6.04153634914949,UNDERCREDITED_BY_SPLIT,Low Gain rank but Top-10 Permutation causal impact (Masked Sister Feature)
+8,16,8,Aggregate_feature_49,1.1180853488834686e-07,2.2361707679561127e-07,0.006771137454787613,0.051198452797964575,0.8843466326598456,8,7.561278018623607,UNDERCREDITED_BY_SPLIT,Low Gain rank but Top-10 Permutation causal impact (Masked Sister Feature)
+9,9,14,Aggregate_feature_55,1.118001728772633e-07,2.2360034574342435e-07,0.006770631050455406,0.08886664594259516,0.26707110541647766,0,13.12531214304135,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+10,15,13,Aggregate_feature_56,1.0062015558087723e-07,2.1476111898561342e-07,0.006093567944885431,0.05961442857891555,0.3116902229535542,5,9.783172866555507,UNDERCREDITED_BY_SPLIT,Low Gain rank but Top-10 Permutation causal impact (Masked Sister Feature)
+11,20,7,Aggregate_feature_58,8.944013829559339e-08,2.0493310194132412e-07,0.0054165048399878075,0.038188539187037754,0.9363887890353066,9,7.0504024855858365,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+12,8,25,Aggregate_feature_37,7.826012103251401e-08,1.9396605050392042e-07,0.004739441736434889,0.0993252324254073,0.08039560431153123,-4,20.95715865896938,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+13,5,5,Aggregate_feature_46,1.1180017318590529e-08,3.9511516079761924e-07,0.00067706310691468,2.1915319781574816,4.07262237294809,-8,3236.820845466104,OVERCREDITED_BY_SPLIT,Top-5 in Gain/SHAP but rank >10 in Permutation (Splitting Artifact)
+14,6,23,Aggregate_feature_45,3.7747582837255325e-17,7.565825760292109e-17,2.2859978644052216e-12,1.0490990896577064,0.10736355275473902,-8,10490.990896577063,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+15,31,22,Aggregate_feature_64,2.886579864025407e-17,5.794470836795136e-17,1.748116013956934e-12,0.013066079185236121,0.1566308053014918,16,130.6607918523612,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+16,21,11,Aggregate_feature_2,2.6645352591003756e-17,5.2357345670335656e-17,1.6136455513448623e-12,0.037906855061687776,0.4052634293271541,5,379.06855061687776,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+17,10,28,Aggregate_feature_67,2.6645352591003756e-17,5.687116766346677e-17,1.6136455513448623e-12,0.08697552005706115,0.04298698881734091,-7,869.7552005706115,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+18,19,27,Aggregate_feature_40,2.4424906541753444e-17,4.599057840605876e-17,1.4791750887327903e-12,0.03928188785054418,0.07195101572633691,1,392.8188785054418,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+19,18,20,Aggregate_feature_38,2.4424906541753444e-17,6.393188222769894e-17,1.4791750887327903e-12,0.042568249872387214,0.22765864425157933,-1,425.68249872387213,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+20,17,16,Aggregate_feature_16,2.4424906541753444e-17,5.995204332975846e-17,1.4791750887327903e-12,0.050966400472595506,0.2435059110844875,-3,509.66400472595507,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+21,37,35,Aggregate_feature_4,1.3322676295501878e-17,3.607797795906347e-17,8.068227756724312e-13,0.005106435971713177,0.006008354235632611,16,51.06435971713177,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+22,25,32,Aggregate_feature_68,6.661338147750939e-18,2.636633597461006e-17,4.034113878362156e-13,0.0185114240733604,0.024485571403196592,3,185.114240733604,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+23,26,19,Aggregate_feature_61,4.440892098500626e-18,2.1755839288168298e-17,2.689409252241437e-13,0.014869317166832166,0.23751431003807263,3,148.69317166832167,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+24,29,30,Aggregate_feature_70,4.440892098500626e-18,2.1755839288168298e-17,2.689409252241437e-13,0.013766172603608611,0.027456634526464817,5,137.6617260360861,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+25,23,24,Aggregate_feature_34,4.440892098500626e-18,2.1755839288168298e-17,2.689409252241437e-13,0.020700164634929533,0.08055280525833834,-2,207.00164634929533,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+26,12,26,Aggregate_feature_31,4.440892098500626e-18,2.1755839288168298e-17,2.689409252241437e-13,0.0677681826620776,0.07864993692462113,-14,677.681826620776,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+27,32,15,Aggregate_feature_39,2.220446049250313e-18,1.554312234475219e-17,1.3447046261207186e-13,0.012919986801319346,0.26133403625888807,5,129.19986801319345,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+28,33,31,Aggregate_feature_1,2.220446049250313e-18,1.554312234475219e-17,1.3447046261207186e-13,0.012625901899557932,0.027340046647662347,5,126.25901899557931,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+29,22,34,Aggregate_feature_26,2.220446049250313e-18,1.554312234475219e-17,1.3447046261207186e-13,0.02222013325283977,0.00890462192584656,-7,222.20133252839767,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+30,24,12,Aggregate_feature_32,2.220446049250313e-18,1.554312234475219e-17,1.3447046261207186e-13,0.020188336110134545,0.3584667134065789,-6,201.88336110134543,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+31,36,10,Aggregate_feature_22,2.220446049250313e-18,1.554312234475219e-17,1.3447046261207186e-13,0.007587067431545301,0.45683946492070676,5,75.870674315453,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+32,40,40,Aggregate_feature_3,0.0,0.0,0.0,0.0,0.0,8,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+33,41,45,Aggregate_feature_5,0.0,0.0,0.0,0.0,0.0,8,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+34,42,42,Aggregate_feature_6,0.0,0.0,0.0,0.0,0.0,8,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+35,56,43,Aggregate_feature_24,0.0,0.0,0.0,0.0,0.0,21,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+36,57,44,Aggregate_feature_11,0.0,0.0,0.0,0.0,0.0,21,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+37,58,41,Aggregate_feature_12,0.0,0.0,0.0,0.0,0.0,21,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+38,28,39,Aggregate_feature_13,0.0,0.0,0.0,0.013850674452313673,0.0021162963778676054,-10,138.50674452313672,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+39,27,21,Aggregate_feature_14,0.0,0.0,0.0,0.014114329877401447,0.21903975585707344,-12,141.14329877401445,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+40,13,33,Aggregate_feature_9,0.0,0.0,0.0,0.06431348216903877,0.011843033263196662,-27,643.1348216903878,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+41,43,46,Aggregate_feature_35,0.0,0.0,0.0,0.0,0.0,2,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+42,44,48,Aggregate_feature_33,0.0,0.0,0.0,0.0,0.0,2,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+43,59,47,Aggregate_feature_36,0.0,0.0,0.0,0.0,0.0,16,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+44,60,52,Aggregate_feature_25,0.0,0.0,0.0,0.0,0.0,16,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+45,45,53,Aggregate_feature_28,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+46,46,54,Aggregate_feature_27,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+47,47,55,Aggregate_feature_30,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+48,48,56,Aggregate_feature_29,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+49,49,49,Aggregate_feature_15,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+50,50,50,Aggregate_feature_17,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+51,51,51,Aggregate_feature_19,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+52,52,61,Aggregate_feature_18,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+53,53,60,Aggregate_feature_20,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+54,54,59,Aggregate_feature_21,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+55,55,58,Aggregate_feature_23,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+56,61,57,Aggregate_feature_47,0.0,0.0,0.0,0.0,0.0,5,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+57,65,62,Aggregate_feature_53,0.0,0.0,0.0,0.0,0.0,8,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+58,66,64,Aggregate_feature_54,0.0,0.0,0.0,0.0,0.0,8,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+59,63,63,Aggregate_feature_51,0.0,0.0,0.0,0.0,0.0,4,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+60,64,68,Aggregate_feature_48,0.0,0.0,0.0,0.0,0.0,4,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+61,30,36,Aggregate_feature_41,0.0,0.0,0.0,0.013191924747308828,0.004067100547426361,-31,131.9192474730883,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+62,62,67,Aggregate_feature_42,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+63,68,66,Aggregate_feature_60,0.0,0.0,0.0,0.0,0.0,5,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+64,67,65,Aggregate_feature_57,0.0,0.0,0.0,0.0,0.0,3,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+65,39,29,Aggregate_feature_63,0.0,0.0,0.0,0.0017228254467005731,0.033123599345812466,-26,17.22825446700573,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+66,38,18,Aggregate_feature_62,0.0,0.0,0.0,0.0029772321977887383,0.2429476716922526,-28,29.772321977887383,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+67,35,38,Aggregate_feature_59,0.0,0.0,0.0,0.011394168249508186,0.0038334582032320623,-32,113.94168249508186,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+68,34,37,Aggregate_feature_66,0.0,0.0,0.0,0.012247723796002714,0.003906443980793087,-34,122.47723796002713,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+69,69,69,Aggregate_feature_65,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+70,70,70,Aggregate_feature_69,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+71,71,71,Aggregate_feature_71,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods
+72,72,72,Aggregate_feature_72,0.0,0.0,0.0,0.0,0.0,0,0.0,CONCORDANT_MINOR,Consistent mid/low importance across all methods

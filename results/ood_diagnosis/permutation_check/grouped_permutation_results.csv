@@ -1,0 +1,9 @@
+block_name,n_features,features,mean_auc_drop,std_auc_drop,permuted_auc_mean,permuted_auc_std,baseline_auc
+"Block A: Focal Triad {10, 43, 8}",3,"Aggregate_feature_10, Aggregate_feature_43, Aggregate_feature_8",0.3055,0.03747,0.6945,0.0375,1.0
+Block B: Top Correlated Sister Triad,3,"Aggregate_feature_7, Aggregate_feature_46, Aggregate_feature_44",0.0,0.0,1.0,0.0,1.0
+Block C: Top-3 Permutation Triad,3,"Aggregate_feature_43, Aggregate_feature_8, Aggregate_feature_10",0.30227,0.03758,0.6977,0.0376,1.0
+Block E: Combined Top 6 (Focal + Correlated),6,"Aggregate_feature_46, Aggregate_feature_8, Aggregate_feature_43, Aggregate_feature_7, Aggregate_feature_10, Aggregate_feature_44",0.47254,0.00987,0.5275,0.0099,1.0
+Block D: Random Triad #1,3,"Aggregate_feature_25, Aggregate_feature_1, Aggregate_feature_51",0.0,0.0,1.0,0.0,1.0
+Block D: Random Triad #2,3,"Aggregate_feature_20, Aggregate_feature_21, Aggregate_feature_2",0.0,0.0,1.0,0.0,1.0
+Block D: Random Triad #3,3,"Aggregate_feature_66, Aggregate_feature_18, Aggregate_feature_33",0.0,0.0,1.0,0.0,1.0
+Block D: Random Triads (15-Sample Aggregate Distribution),3,15 sampled random triplets,0.0,0.0,1.0,0.0,1.0

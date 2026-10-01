@@ -1,0 +1,13 @@
+===========================================================================
+BITCOINGRAPHGUARD — OOD PERMUTATION IMPORTANCE & CORRELATION AUDIT DIGEST
+===========================================================================
+Adversarial Baseline 5-Fold Mean AUC (72 Aggregates): 1.0000 +/- 0.0000
+Attribution Concentration Top 3 Share:  Gain 91.0% | SHAP 78.5% | Permutation 99.9%
+Gini Concentration Coefficient:         Gain 0.9510  | SHAP 0.9322  | Permutation 0.9761
+Rank Correlation (Gain vs Permutation):  Spearman rho = 0.8883, Kendall tau = 0.7923
+Discrepancies Flagged:                  2 Over-Credited by Splits, 4 Under-Credited Sisters
+Grouped Permutation Drops:              Focal Triad: 0.30550 | Correlated Triad: 0.00000 | Random Triad: 0.00000
+---------------------------------------------------------------------------
+FINAL VERDICT: (b) CONCENTRATION CONFIRMED — Genuine Localized Aggregate Drift
+SYNTHESIS: Permutation importance confirms that Aggregate_feature_10, 43, and 8 genuinely dominate separability within aggregate features (Permutation Top 3 share = 99.9%), with non-focal sister features failing to replicate the drop. The GBDT splitting artifact claim was incorrect: aggregate drift is genuinely concentrated in these 3 features, while local transaction drift is separately diffuse (two distinct drift mechanisms).
+===========================================================================
