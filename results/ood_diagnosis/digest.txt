@@ -1,0 +1,12 @@
+======================================================================
+BITCOINGRAPHGUARD — OOD REGIME SHIFT & LEAK AUDIT DIGEST
+======================================================================
+Adversarial Validation 5-Fold Mean AUC (1-34 vs 43-49): 1.0000 +/- 0.0000
+Attribution Concentration Top 1 / Top 3 / Top 10 (Gain): 36.5% / 95.2% / 98.4%
+Identified Mechanical Time Proxies in Top 20: 0
+Leave-One-Out AUC (Drop Top 1):  1.0000
+Leave-One-Out AUC (Drop Top 3):  1.0000
+Leave-One-Out AUC (Drop Top 20): 0.9904
+Leave-One-Out AUC (Locals Only): 0.9885
+Top 20 Overlap (Fraud vs Drift): 4 / 20 features
+======================================================================

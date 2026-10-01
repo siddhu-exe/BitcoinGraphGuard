@@ -1,0 +1,21 @@
+rank,feature,group,gain_share_pct,shap_share_pct,spearman_rho_step,spearman_p_val,within_step_var,between_step_var,total_var,between_var_ratio_eta2,cumulative_name_flag,leak_verdict,note
+1,Aggregate_feature_10,Aggregate,36.54,14.29,0.9965,0.0,0.0152,0.8561,1.0,0.8561,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+2,Aggregate_feature_43,Aggregate,30.47,33.48,0.9949,0.0,0.167,0.7237,1.0,0.7237,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+3,Aggregate_feature_8,Aggregate,28.15,32.56,0.9976,0.0,0.0118,0.8589,1.0,0.8589,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+4,Aggregate_feature_7,Aggregate,2.4,9.52,0.995,0.0,0.0333,0.8409,1.0,0.8409,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+5,Aggregate_feature_44,Aggregate,0.2,0.44,0.9019,0.0,0.3674,0.5434,1.0,0.5434,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+6,Aggregate_feature_46,Aggregate,0.2,1.87,0.9704,0.0,0.2062,0.6888,1.0,0.6888,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+7,Local_feature_2,Local,0.14,0.37,0.6309,0.0,0.9076,0.0418,1.0,0.0418,False,STRONG_TRENDING_DRIFT,Strong secular trend with substantial intra-step variance
+8,Aggregate_feature_55,Aggregate,0.11,0.23,0.5282,0.0,0.732,0.2579,1.0,0.2579,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+9,Local_feature_88,Local,0.09,0.34,0.0198,3.229408264778851e-19,0.9877,0.0086,1.0,0.0086,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+10,Aggregate_feature_31,Aggregate,0.08,0.1,0.0703,3.0876813808056773e-221,0.8292,0.0168,1.0,0.0168,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+11,Aggregate_feature_56,Aggregate,0.08,0.15,0.4155,0.0,0.7219,0.1858,1.0,0.1858,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+12,Aggregate_feature_37,Aggregate,0.08,0.07,-0.0943,0.0,0.9907,0.0125,1.0,0.0125,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+13,Local_feature_53,Local,0.07,0.33,-0.0021,0.34699124110488944,0.9704,0.0213,1.0,0.0213,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+14,Aggregate_feature_50,Aggregate,0.07,0.16,0.4205,0.0,0.8304,0.1685,1.0,0.1685,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+15,Local_feature_49,Local,0.07,0.01,-0.0477,6.674503203737682e-103,1.0457,0.0308,1.0,0.0308,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+16,Local_feature_9,Local,0.06,0.05,-0.0811,2.9173396461162207e-294,1.0102,0.0219,1.0,0.0219,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+17,Aggregate_feature_49,Aggregate,0.06,0.77,0.533,0.0,1.0954,0.0342,1.0,0.0342,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+18,Aggregate_feature_9,Aggregate,0.06,0.02,-0.0967,0.0,0.9736,0.0361,1.0,0.0361,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+19,Aggregate_feature_67,Aggregate,0.05,0.01,0.0185,5.859204663590285e-17,1.3296,0.0039,1.0,0.0039,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions
+20,Local_feature_89,Local,0.05,0.02,-0.12,0.0,0.9435,0.0337,1.0,0.0337,False,BEHAVIORAL_COVARIATE_DRIFT,Genuine behavioral shift across distributions

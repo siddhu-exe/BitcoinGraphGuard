@@ -1,0 +1,10 @@
+configuration,n_features_remaining,mean_adversarial_auc,std_adversarial_auc,delta_auc_from_full
+All 165 Features (Full),165,1.0,0.0,0.0
+Drop Top 1,164,1.0,0.0,0.0
+Drop Top 3,162,1.0,0.0,-0.0
+Drop Top 5,160,1.0,0.0,-0.0
+Drop Top 10,155,0.9909,0.0009,-0.0091
+Drop Top 20,145,0.9904,0.0015,-0.0096
+Drop Top 15 KS-Drifted,150,0.9834,0.0021,-0.0166
+Local Features Only (93 feats),93,0.9885,0.0026,-0.0115
+Aggregate Features Only (72 feats),72,1.0,0.0,0.0

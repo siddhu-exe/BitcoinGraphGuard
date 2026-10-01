@@ -1,0 +1,15 @@
+{
+  "top1_gain_share_pct": 36.54,
+  "top3_gain_share_pct": 95.16,
+  "top5_gain_share_pct": 97.76,
+  "top10_gain_share_pct": 98.38,
+  "top20_gain_share_pct": 99.03,
+  "top1_shap_share_pct": 14.29,
+  "top3_shap_share_pct": 80.32,
+  "top5_shap_share_pct": 90.28,
+  "top10_shap_share_pct": 93.19,
+  "top20_shap_share_pct": 94.78,
+  "gini_gain": 0.977,
+  "gini_shap": 0.9688,
+  "is_hyper_concentrated_top3": true
+}
