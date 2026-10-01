@@ -89,3 +89,10 @@ pipeline.png
 xgboost/xgb_model*.json
 xgboost/*.joblib
 xgboost/*.pkl
+
+# ==========================================
+# 7. Monitoring Caches (regenerate, do not commit)
+# ==========================================
+# Intermediate feature cache built by scripts/run_monitoring_backtest.py.
+# The per-step CSVs in results/monitoring/ are the committed evidence.
+results/monitoring/features_cache.joblib
