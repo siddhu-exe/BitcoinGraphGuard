@@ -1,0 +1,2245 @@
+{
+  "metadata": {
+    "phase": "Phase 8a - Drift Monitoring & Retraining Triggers",
+    "model": "XGBoost Optimized (Frozen, Phase 2)",
+    "test_window": "35-49",
+    "timestamp": "2026-10-01",
+    "execution_time_seconds": 214.26
+  },
+  "simulation_steps": [
+    {
+      "time_step": 35,
+      "n_transactions": 5507,
+      "n_labeled": 1341,
+      "n_illicit": 182,
+      "prevalence": 0.1357,
+      "feature_drift": {
+        "time_step": 35,
+        "n_samples": 5507,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.3375,
+            "drift_score": 0.0483,
+            "ks_statistic": 0.2156,
+            "ks_p_value": 6.311599509292908e-121,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0066,
+            "ref_std": 0.1371,
+            "target_std": 0.0964
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.3977,
+            "drift_score": 0.0435,
+            "ks_statistic": 0.1921,
+            "ks_p_value": 5.435054453264855e-96,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0563,
+            "ref_std": 0.6695,
+            "target_std": 0.9496
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.2404,
+            "drift_score": 0.0357,
+            "ks_statistic": 0.2342,
+            "ks_p_value": 7.4861421668043035e-143,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0047,
+            "ref_std": 0.1233,
+            "target_std": 0.0764
+          }
+        },
+        "pct_local_drifted_moderate": 16.129,
+        "pct_local_drifted_significant": 6.4516,
+        "local_drift_level": "STABLE",
+        "overall_drift_level": "STABLE",
+        "reasons": []
+      },
+      "prevalence_drift": {
+        "time_step": 35,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.1682,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": 45.27,
+        "absolute_change": 0.0524,
+        "window_size": 5,
+        "available_steps_in_window": [
+          30,
+          31,
+          32,
+          33,
+          34
+        ],
+        "total_labeled_in_window": 3513,
+        "total_illicit_in_window": 591,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.1682) deviated by +45.3% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": {
+        "time_step": 35,
+        "adversarial_auc": 0.9002,
+        "auc_std": 0.0203,
+        "drift_level": "ALERT",
+        "n_reference_samples": 1200,
+        "n_target_samples": 1200,
+        "n_folds": 3,
+        "execution_time_seconds": 0.6122,
+        "model_type": "logistic",
+        "is_periodic_run": true,
+        "reasons": [
+          "AdversarialAlert: Domain separability AUC=0.9002 >= 0.85 (severe OOD covariate shift from training)."
+        ]
+      },
+      "threshold_comparison": {
+        "time_step": 35,
+        "prevalence": 0.1357,
+        "pr_auc": 0.9934,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.9596,
+        "frozen_precision": 0.9418,
+        "frozen_recall": 0.978,
+        "frozen_tp": 178,
+        "frozen_fp": 11,
+        "adaptive_f1_tau": 0.435,
+        "adaptive_f1_f1": 0.9596,
+        "adaptive_f1_precision": 0.9418,
+        "adaptive_f1_recall": 0.978,
+        "adaptive_f1_tp": 178,
+        "adaptive_f1_fp": 11,
+        "bayes_tau": 0.435,
+        "bayes_f1": 0.9596,
+        "bayes_precision": 0.9418,
+        "bayes_recall": 0.978,
+        "bayes_tp": 178,
+        "bayes_fp": 11,
+        "oracle_tau": 0.905,
+        "oracle_f1": 0.9777,
+        "oracle_precision": 0.9943,
+        "oracle_recall": 0.9615,
+        "f1_lift_adaptive_f1": 0.0,
+        "f1_lift_bayes": 0.0
+      },
+      "decision": {
+        "time_step": 35,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "PrevalenceWarning: Rolling prevalence (0.1682) shifted by +45.3% vs baseline.",
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.1682) shifted by +45.3% vs baseline.",
+          "AdversarialOODAlert: Domain classifier AUC=0.9002 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "STABLE",
+          "feature_overall": "STABLE",
+          "prevalence": "WARNING",
+          "adversarial": "ALERT"
+        },
+        "telemetry_summary": {
+          "time_step": 35,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.33750138848191547,
+            "Aggregate_feature_43": 0.3977324934840467,
+            "Aggregate_feature_8": 0.2404211219056897
+          },
+          "pct_local_drifted_sig": 6.451612903225806,
+          "pct_local_drifted_mod": 16.129032258064516,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.1682322801024765,
+          "prevalence_rel_change_pct": 45.26701733239776,
+          "adversarial_auc": 0.9002145833333334,
+          "frozen_f1": 0.9595687331536388,
+          "adaptive_f1": 0.9595687331536388,
+          "bayes_f1": 0.9595687331536388,
+          "pr_auc": 0.9934392989321705
+        }
+      }
+    },
+    {
+      "time_step": 36,
+      "n_transactions": 6393,
+      "n_labeled": 1708,
+      "n_illicit": 33,
+      "prevalence": 0.0193,
+      "feature_drift": {
+        "time_step": 36,
+        "n_samples": 6393,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.4653,
+            "drift_score": 0.0402,
+            "ks_statistic": 0.2277,
+            "ks_p_value": 7.539783648374026e-146,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0077,
+            "ref_std": 0.1371,
+            "target_std": 0.0979
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.2942,
+            "drift_score": 0.0421,
+            "ks_statistic": 0.2541,
+            "ks_p_value": 6.905271828755555e-182,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.001,
+            "ref_std": 0.6695,
+            "target_std": 0.1783
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.604,
+            "drift_score": 0.0169,
+            "ks_statistic": 0.2515,
+            "ks_p_value": 3.9354326712942646e-178,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.007,
+            "ref_std": 0.1233,
+            "target_std": 0.0978
+          }
+        },
+        "pct_local_drifted_moderate": 51.6129,
+        "pct_local_drifted_significant": 22.5806,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 51.6% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 36,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.1594,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": 37.6,
+        "absolute_change": 0.0435,
+        "window_size": 5,
+        "available_steps_in_window": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "total_labeled_in_window": 4330,
+        "total_illicit_in_window": 690,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.1594) deviated by +37.6% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 36,
+        "prevalence": 0.0193,
+        "pr_auc": 0.9946,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.8354,
+        "frozen_precision": 0.7174,
+        "frozen_recall": 1.0,
+        "frozen_tp": 33,
+        "frozen_fp": 13,
+        "adaptive_f1_tau": 0.905,
+        "adaptive_f1_f1": 0.9697,
+        "adaptive_f1_precision": 0.9697,
+        "adaptive_f1_recall": 0.9697,
+        "adaptive_f1_tp": 32,
+        "adaptive_f1_fp": 1,
+        "bayes_tau": 0.3472,
+        "bayes_f1": 0.7416,
+        "bayes_precision": 0.5893,
+        "bayes_recall": 1.0,
+        "bayes_tp": 33,
+        "bayes_fp": 23,
+        "oracle_tau": 0.93,
+        "oracle_f1": 0.9846,
+        "oracle_precision": 1.0,
+        "oracle_recall": 0.9697,
+        "f1_lift_adaptive_f1": 0.1343,
+        "f1_lift_bayes": -0.0939
+      },
+      "decision": {
+        "time_step": 36,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "PrevalenceWarning: Rolling prevalence (0.1594) shifted by +37.6% vs baseline.",
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.1594) shifted by +37.6% vs baseline."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "WARNING"
+        },
+        "telemetry_summary": {
+          "time_step": 36,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.46534250685082384,
+            "Aggregate_feature_43": 0.2941638033124664,
+            "Aggregate_feature_8": 0.6040025525947653
+          },
+          "pct_local_drifted_sig": 22.58064516129032,
+          "pct_local_drifted_mod": 51.61290322580645,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.15935334872979215,
+          "prevalence_rel_change_pct": 37.600142242651394,
+          "frozen_f1": 0.8354430379746836,
+          "adaptive_f1": 0.9696969696969697,
+          "bayes_f1": 0.7415730337078652,
+          "pr_auc": 0.994628982128982
+        }
+      }
+    },
+    {
+      "time_step": 37,
+      "n_transactions": 3306,
+      "n_labeled": 498,
+      "n_illicit": 40,
+      "prevalence": 0.0803,
+      "feature_drift": {
+        "time_step": 37,
+        "n_samples": 3306,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 1.0402,
+            "drift_score": 0.0456,
+            "ks_statistic": 0.1533,
+            "ks_p_value": 3.83172673573489e-45,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.007,
+            "ref_std": 0.1371,
+            "target_std": 0.0861
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 1.4331,
+            "drift_score": 0.0436,
+            "ks_statistic": 0.2861,
+            "ks_p_value": 8.532881509674503e-158,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.002,
+            "ref_std": 0.6695,
+            "target_std": 0.0336
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 1.1693,
+            "drift_score": 0.0387,
+            "ks_statistic": 0.1554,
+            "ks_p_value": 2.2018879482531686e-46,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0043,
+            "ref_std": 0.1233,
+            "target_std": 0.0563
+          }
+        },
+        "pct_local_drifted_moderate": 51.6129,
+        "pct_local_drifted_significant": 34.4086,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 51.6% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 37,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.1158,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -0.0,
+        "absolute_change": -0.0,
+        "window_size": 5,
+        "available_steps_in_window": [
+          32,
+          33,
+          34,
+          35,
+          36
+        ],
+        "total_labeled_in_window": 5328,
+        "total_illicit_in_window": 617,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 37,
+        "prevalence": 0.0803,
+        "pr_auc": 0.8893,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.8116,
+        "frozen_precision": 0.9655,
+        "frozen_recall": 0.7,
+        "frozen_tp": 28,
+        "frozen_fp": 1,
+        "adaptive_f1_tau": 0.93,
+        "adaptive_f1_f1": 0.7692,
+        "adaptive_f1_precision": 1.0,
+        "adaptive_f1_recall": 0.625,
+        "adaptive_f1_tp": 25,
+        "adaptive_f1_fp": 0,
+        "bayes_tau": 0.435,
+        "bayes_f1": 0.8116,
+        "bayes_precision": 0.9655,
+        "bayes_recall": 0.7,
+        "bayes_tp": 28,
+        "bayes_fp": 1,
+        "oracle_tau": 0.61,
+        "oracle_f1": 0.8235,
+        "oracle_precision": 1.0,
+        "oracle_recall": 0.7,
+        "f1_lift_adaptive_f1": -0.0424,
+        "f1_lift_bayes": 0.0
+      },
+      "decision": {
+        "time_step": 37,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+        "reasons": [
+          "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE"
+        },
+        "telemetry_summary": {
+          "time_step": 37,
+          "triad_psi": {
+            "Aggregate_feature_10": 1.0402110880701738,
+            "Aggregate_feature_43": 1.433122167571281,
+            "Aggregate_feature_8": 1.1693379353751827
+          },
+          "pct_local_drifted_sig": 34.40860215053764,
+          "pct_local_drifted_mod": 51.61290322580645,
+          "local_drift_streak": 1,
+          "rolling_prevalence": 0.11580330330330331,
+          "prevalence_rel_change_pct": -0.004919044890022306,
+          "frozen_f1": 0.8115942028985508,
+          "adaptive_f1": 0.7692307692307693,
+          "bayes_f1": 0.8115942028985508,
+          "pr_auc": 0.8893308691794047
+        }
+      }
+    },
+    {
+      "time_step": 38,
+      "n_transactions": 2891,
+      "n_labeled": 756,
+      "n_illicit": 111,
+      "prevalence": 0.1468,
+      "feature_drift": {
+        "time_step": 38,
+        "n_samples": 2891,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.1313,
+            "drift_score": 0.0513,
+            "ks_statistic": 0.1131,
+            "ks_p_value": 1.2471821523543632e-22,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0202,
+            "ref_std": 0.1371,
+            "target_std": 0.2005
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.9066,
+            "drift_score": 0.0342,
+            "ks_statistic": 0.1366,
+            "ks_p_value": 7.246590316588976e-33,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0043,
+            "ref_std": 0.6695,
+            "target_std": 0.3703
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.2727,
+            "drift_score": 0.0603,
+            "ks_statistic": 0.0879,
+            "ks_p_value": 7.73519454754704e-14,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0165,
+            "ref_std": 0.1233,
+            "target_std": 0.1882
+          }
+        },
+        "pct_local_drifted_moderate": 26.8817,
+        "pct_local_drifted_significant": 4.3011,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 26.9% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 38,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.07,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -39.6,
+        "absolute_change": -0.0459,
+        "window_size": 5,
+        "available_steps_in_window": [
+          33,
+          34,
+          35,
+          36,
+          37
+        ],
+        "total_labeled_in_window": 4503,
+        "total_illicit_in_window": 315,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0700) deviated by -39.6% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 38,
+        "prevalence": 0.1468,
+        "pr_auc": 0.9532,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.9182,
+        "frozen_precision": 0.9266,
+        "frozen_recall": 0.9099,
+        "frozen_tp": 101,
+        "frozen_fp": 8,
+        "adaptive_f1_tau": 0.93,
+        "adaptive_f1_f1": 0.9327,
+        "adaptive_f1_precision": 1.0,
+        "adaptive_f1_recall": 0.8739,
+        "adaptive_f1_tp": 97,
+        "adaptive_f1_fp": 0,
+        "bayes_tau": 0.5728,
+        "bayes_f1": 0.9174,
+        "bayes_precision": 0.9346,
+        "bayes_recall": 0.9009,
+        "bayes_tp": 100,
+        "bayes_fp": 7,
+        "oracle_tau": 0.775,
+        "oracle_f1": 0.9479,
+        "oracle_precision": 1.0,
+        "oracle_recall": 0.9009,
+        "f1_lift_adaptive_f1": 0.0145,
+        "f1_lift_bayes": -0.0008
+      },
+      "decision": {
+        "time_step": 38,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "PrevalenceWarning: Rolling prevalence (0.0700) shifted by -39.6% vs baseline.",
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0700) shifted by -39.6% vs baseline."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "WARNING"
+        },
+        "telemetry_summary": {
+          "time_step": 38,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.13126398615016224,
+            "Aggregate_feature_43": 0.9066184029489586,
+            "Aggregate_feature_8": 0.27272738880079533
+          },
+          "pct_local_drifted_sig": 4.301075268817205,
+          "pct_local_drifted_mod": 26.881720430107524,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.06995336442371752,
+          "prevalence_rel_change_pct": -39.59591704986873,
+          "frozen_f1": 0.9181818181818182,
+          "adaptive_f1": 0.9326923076923077,
+          "bayes_f1": 0.9174311926605505,
+          "pr_auc": 0.9532094081576619
+        }
+      }
+    },
+    {
+      "time_step": 39,
+      "n_transactions": 2760,
+      "n_labeled": 1183,
+      "n_illicit": 81,
+      "prevalence": 0.0685,
+      "feature_drift": {
+        "time_step": 39,
+        "n_samples": 2760,
+        "triad_drift_level": "MODERATE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.9085,
+            "drift_score": 0.0886,
+            "ks_statistic": 0.1771,
+            "ks_p_value": 2.728463796947069e-53,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0254,
+            "ref_std": 0.1371,
+            "target_std": 0.328
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 1.4354,
+            "drift_score": 0.055,
+            "ks_statistic": 0.2006,
+            "ks_p_value": 2.0846306420737727e-68,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.0097,
+            "ref_std": 0.6695,
+            "target_std": 0.0972
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 1.0079,
+            "drift_score": 0.1132,
+            "ks_statistic": 0.1523,
+            "ks_p_value": 1.6701826643862614e-39,
+            "level": "MODERATE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.023,
+            "ref_std": 0.1233,
+            "target_std": 0.3234
+          }
+        },
+        "pct_local_drifted_moderate": 41.9355,
+        "pct_local_drifted_significant": 21.5054,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "HighPriorityTriad: Aggregate_feature_8 moderate drift (score=0.113 >= 0.1, method=detrended_linear_residual)",
+          "BroadLocalTier: 41.9% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 39,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0836,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -27.77,
+        "absolute_change": -0.0322,
+        "window_size": 5,
+        "available_steps_in_window": [
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "total_labeled_in_window": 4818,
+        "total_illicit_in_window": 403,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 39,
+        "prevalence": 0.0685,
+        "pr_auc": 0.9608,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.9102,
+        "frozen_precision": 0.8837,
+        "frozen_recall": 0.9383,
+        "frozen_tp": 76,
+        "frozen_fp": 10,
+        "adaptive_f1_tau": 0.815,
+        "adaptive_f1_f1": 0.9487,
+        "adaptive_f1_precision": 0.9867,
+        "adaptive_f1_recall": 0.9136,
+        "adaptive_f1_tp": 74,
+        "adaptive_f1_fp": 1,
+        "bayes_tau": 0.5249,
+        "bayes_f1": 0.9268,
+        "bayes_precision": 0.9157,
+        "bayes_recall": 0.9383,
+        "bayes_tp": 76,
+        "bayes_fp": 7,
+        "oracle_tau": 0.725,
+        "oracle_f1": 0.956,
+        "oracle_precision": 0.9744,
+        "oracle_recall": 0.9383,
+        "f1_lift_adaptive_f1": 0.0385,
+        "f1_lift_bayes": 0.0166
+      },
+      "decision": {
+        "time_step": 39,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "FeatureDriftWarning: Triad features show moderate detrended-drift score in [0.10, 0.25].",
+        "reasons": [
+          "FeatureDriftWarning: Triad features show moderate detrended-drift score in [0.10, 0.25]."
+        ],
+        "component_statuses": {
+          "feature_triad": "MODERATE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE"
+        },
+        "telemetry_summary": {
+          "time_step": 39,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.9085311368946534,
+            "Aggregate_feature_43": 1.4354456803060556,
+            "Aggregate_feature_8": 1.0079029178472847
+          },
+          "pct_local_drifted_sig": 21.50537634408602,
+          "pct_local_drifted_mod": 41.935483870967744,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.08364466583644665,
+          "prevalence_rel_change_pct": -27.773604956051205,
+          "frozen_f1": 0.9101796407185628,
+          "adaptive_f1": 0.9487179487179487,
+          "bayes_f1": 0.926829268292683,
+          "pr_auc": 0.9608283362476222
+        }
+      }
+    },
+    {
+      "time_step": 40,
+      "n_transactions": 4481,
+      "n_labeled": 1211,
+      "n_illicit": 112,
+      "prevalence": 0.0925,
+      "feature_drift": {
+        "time_step": 40,
+        "n_samples": 4481,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.3547,
+            "drift_score": 0.0588,
+            "ks_statistic": 0.1674,
+            "ks_p_value": 5.8038704338562444e-65,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0213,
+            "ref_std": 0.1371,
+            "target_std": 0.2262
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 1.6575,
+            "drift_score": 0.0335,
+            "ks_statistic": 0.4081,
+            "ks_p_value": 6.45e-321,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0048,
+            "ref_std": 0.6695,
+            "target_std": 0.4296
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.4821,
+            "drift_score": 0.0577,
+            "ks_statistic": 0.2443,
+            "ks_p_value": 1.6569275586173714e-138,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0162,
+            "ref_std": 0.1233,
+            "target_std": 0.2148
+          }
+        },
+        "pct_local_drifted_moderate": 21.5054,
+        "pct_local_drifted_significant": 3.2258,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 21.5% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 40,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0815,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -29.64,
+        "absolute_change": -0.0343,
+        "window_size": 5,
+        "available_steps_in_window": [
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "total_labeled_in_window": 5486,
+        "total_illicit_in_window": 447,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": {
+        "time_step": 40,
+        "adversarial_auc": 0.8777,
+        "auc_std": 0.0133,
+        "drift_level": "ALERT",
+        "n_reference_samples": 1200,
+        "n_target_samples": 1200,
+        "n_folds": 3,
+        "execution_time_seconds": 1.0108,
+        "model_type": "logistic",
+        "is_periodic_run": true,
+        "reasons": [
+          "AdversarialAlert: Domain separability AUC=0.8777 >= 0.85 (severe OOD covariate shift from training)."
+        ]
+      },
+      "threshold_comparison": {
+        "time_step": 40,
+        "prevalence": 0.0925,
+        "pr_auc": 0.7678,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.7716,
+        "frozen_precision": 0.8941,
+        "frozen_recall": 0.6786,
+        "frozen_tp": 76,
+        "frozen_fp": 9,
+        "adaptive_f1_tau": 0.775,
+        "adaptive_f1_f1": 0.7766,
+        "adaptive_f1_precision": 0.9605,
+        "adaptive_f1_recall": 0.6518,
+        "adaptive_f1_tp": 73,
+        "adaptive_f1_fp": 3,
+        "bayes_tau": 0.532,
+        "bayes_f1": 0.7772,
+        "bayes_precision": 0.9259,
+        "bayes_recall": 0.6696,
+        "bayes_tp": 75,
+        "bayes_fp": 6,
+        "oracle_tau": 0.5,
+        "oracle_f1": 0.7835,
+        "oracle_precision": 0.9268,
+        "oracle_recall": 0.6786,
+        "f1_lift_adaptive_f1": 0.005,
+        "f1_lift_bayes": 0.0056
+      },
+      "decision": {
+        "time_step": 40,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "AdversarialOODAlert: Domain classifier AUC=0.8777 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger).",
+        "reasons": [
+          "AdversarialOODAlert: Domain classifier AUC=0.8777 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE",
+          "adversarial": "ALERT"
+        },
+        "telemetry_summary": {
+          "time_step": 40,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.3546891257828824,
+            "Aggregate_feature_43": 1.6574923894494258,
+            "Aggregate_feature_8": 0.48208851307295475
+          },
+          "pct_local_drifted_sig": 3.225806451612903,
+          "pct_local_drifted_mod": 21.50537634408602,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.08148013124316442,
+          "prevalence_rel_change_pct": -29.642660550419723,
+          "adversarial_auc": 0.8776604166666666,
+          "frozen_f1": 0.7715736040609137,
+          "adaptive_f1": 0.776595744680851,
+          "bayes_f1": 0.7772020725388601,
+          "pr_auc": 0.767752672527802
+        }
+      }
+    },
+    {
+      "time_step": 41,
+      "n_transactions": 5342,
+      "n_labeled": 1132,
+      "n_illicit": 116,
+      "prevalence": 0.1025,
+      "feature_drift": {
+        "time_step": 41,
+        "n_samples": 5342,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.9051,
+            "drift_score": 0.0357,
+            "ks_statistic": 0.2012,
+            "ks_p_value": 1.5599746439663613e-103,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0083,
+            "ref_std": 0.1371,
+            "target_std": 0.0904
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 1.4298,
+            "drift_score": 0.0195,
+            "ks_statistic": 0.208,
+            "ks_p_value": 1.0424900104962908e-110,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0402,
+            "ref_std": 0.6695,
+            "target_std": 0.7983
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 1.0083,
+            "drift_score": 0.0224,
+            "ks_statistic": 0.1955,
+            "ks_p_value": 9.670250386984977e-98,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0063,
+            "ref_std": 0.1233,
+            "target_std": 0.0883
+          }
+        },
+        "pct_local_drifted_moderate": 39.7849,
+        "pct_local_drifted_significant": 16.129,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 39.8% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 41,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0704,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -39.22,
+        "absolute_change": -0.0454,
+        "window_size": 5,
+        "available_steps_in_window": [
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "total_labeled_in_window": 5356,
+        "total_illicit_in_window": 377,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0704) deviated by -39.2% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 41,
+        "prevalence": 0.1025,
+        "pr_auc": 0.9641,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.9442,
+        "frozen_precision": 0.9402,
+        "frozen_recall": 0.9483,
+        "frozen_tp": 110,
+        "frozen_fp": 7,
+        "adaptive_f1_tau": 0.775,
+        "adaptive_f1_f1": 0.9646,
+        "adaptive_f1_precision": 0.9909,
+        "adaptive_f1_recall": 0.9397,
+        "adaptive_f1_tp": 109,
+        "adaptive_f1_fp": 1,
+        "bayes_tau": 0.5711,
+        "bayes_f1": 0.9607,
+        "bayes_precision": 0.9735,
+        "bayes_recall": 0.9483,
+        "bayes_tp": 110,
+        "bayes_fp": 3,
+        "oracle_tau": 0.615,
+        "oracle_f1": 0.9692,
+        "oracle_precision": 0.991,
+        "oracle_recall": 0.9483,
+        "f1_lift_adaptive_f1": 0.0204,
+        "f1_lift_bayes": 0.0165
+      },
+      "decision": {
+        "time_step": 41,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "PrevalenceWarning: Rolling prevalence (0.0704) shifted by -39.2% vs baseline.",
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0704) shifted by -39.2% vs baseline."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "WARNING"
+        },
+        "telemetry_summary": {
+          "time_step": 41,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.905113021361348,
+            "Aggregate_feature_43": 1.4297665957380232,
+            "Aggregate_feature_8": 1.008319754670717
+          },
+          "pct_local_drifted_sig": 16.129032258064516,
+          "pct_local_drifted_mod": 39.784946236559136,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.0703883495145631,
+          "prevalence_rel_change_pct": -39.220311448537586,
+          "frozen_f1": 0.944206008583691,
+          "adaptive_f1": 0.9646017699115044,
+          "bayes_f1": 0.9606986899563319,
+          "pr_auc": 0.9640915486597283
+        }
+      }
+    },
+    {
+      "time_step": 42,
+      "n_transactions": 7140,
+      "n_labeled": 2154,
+      "n_illicit": 239,
+      "prevalence": 0.111,
+      "feature_drift": {
+        "time_step": 42,
+        "n_samples": 7140,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.975,
+            "drift_score": 0.0039,
+            "ks_statistic": 0.3928,
+            "ks_p_value": 0.0,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0127,
+            "ref_std": 0.1371,
+            "target_std": 0.1545
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 1.4604,
+            "drift_score": 0.0024,
+            "ks_statistic": 0.5107,
+            "ks_p_value": 0.0,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0255,
+            "ref_std": 0.6695,
+            "target_std": 0.7408
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 1.31,
+            "drift_score": 0.0084,
+            "ks_statistic": 0.4355,
+            "ks_p_value": 0.0,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0081,
+            "ref_std": 0.1233,
+            "target_std": 0.1291
+          }
+        },
+        "pct_local_drifted_moderate": 25.8065,
+        "pct_local_drifted_significant": 2.1505,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 25.8% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 42,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0962,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -16.9,
+        "absolute_change": -0.0196,
+        "window_size": 5,
+        "available_steps_in_window": [
+          37,
+          38,
+          39,
+          40,
+          41
+        ],
+        "total_labeled_in_window": 4780,
+        "total_illicit_in_window": 460,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 42,
+        "prevalence": 0.111,
+        "pr_auc": 0.8935,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.8477,
+        "frozen_precision": 0.8972,
+        "frozen_recall": 0.8033,
+        "frozen_tp": 192,
+        "frozen_fp": 22,
+        "adaptive_f1_tau": 0.775,
+        "adaptive_f1_f1": 0.8776,
+        "adaptive_f1_precision": 0.9794,
+        "adaptive_f1_recall": 0.795,
+        "adaptive_f1_tp": 190,
+        "adaptive_f1_fp": 4,
+        "bayes_tau": 0.4864,
+        "bayes_f1": 0.8533,
+        "bayes_precision": 0.91,
+        "bayes_recall": 0.8033,
+        "bayes_tp": 192,
+        "bayes_fp": 19,
+        "oracle_tau": 0.88,
+        "oracle_f1": 0.8791,
+        "oracle_precision": 0.9895,
+        "oracle_recall": 0.7908,
+        "f1_lift_adaptive_f1": 0.0299,
+        "f1_lift_bayes": 0.0057
+      },
+      "decision": {
+        "time_step": 42,
+        "action": "NO_ACTION",
+        "severity": "INFO",
+        "primary_reason": "All monitoring channels within stable operational envelope.",
+        "reasons": [
+          "Nominal feature distributions, stable prevalence, and calibrated thresholds."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE"
+        },
+        "telemetry_summary": {
+          "time_step": 42,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.97499555910317,
+            "Aggregate_feature_43": 1.4603555868103109,
+            "Aggregate_feature_8": 1.3100419210267955
+          },
+          "pct_local_drifted_sig": 2.1505376344086025,
+          "pct_local_drifted_mod": 25.806451612903224,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.09623430962343096,
+          "prevalence_rel_change_pct": -16.902564029193787,
+          "frozen_f1": 0.847682119205298,
+          "adaptive_f1": 0.8775981524249422,
+          "bayes_f1": 0.8533333333333334,
+          "pr_auc": 0.8935297438703486
+        }
+      }
+    },
+    {
+      "time_step": 43,
+      "n_transactions": 5063,
+      "n_labeled": 1370,
+      "n_illicit": 24,
+      "prevalence": 0.0175,
+      "feature_drift": {
+        "time_step": 43,
+        "n_samples": 5063,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.2059,
+            "drift_score": 0.0505,
+            "ks_statistic": 0.1236,
+            "ks_p_value": 4.2543978147046564e-38,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0063,
+            "ref_std": 0.1371,
+            "target_std": 0.0589
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.3504,
+            "drift_score": 0.0355,
+            "ks_statistic": 0.1408,
+            "ks_p_value": 2.6716139161932804e-49,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0034,
+            "ref_std": 0.6695,
+            "target_std": 0.2858
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.2863,
+            "drift_score": 0.0425,
+            "ks_statistic": 0.1513,
+            "ks_p_value": 6.317562407887782e-57,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0038,
+            "ref_std": 0.1233,
+            "target_std": 0.0477
+          }
+        },
+        "pct_local_drifted_moderate": 46.2366,
+        "pct_local_drifted_significant": 7.5269,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 46.2% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 43,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.1024,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -11.58,
+        "absolute_change": -0.0134,
+        "window_size": 5,
+        "available_steps_in_window": [
+          38,
+          39,
+          40,
+          41,
+          42
+        ],
+        "total_labeled_in_window": 6436,
+        "total_illicit_in_window": 659,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 43,
+        "prevalence": 0.0175,
+        "pr_auc": 0.0365,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.0,
+        "frozen_precision": 0.0,
+        "frozen_recall": 0.0,
+        "frozen_tp": 0,
+        "frozen_fp": 8,
+        "adaptive_f1_tau": 0.775,
+        "adaptive_f1_f1": 0.0,
+        "adaptive_f1_precision": 0.0,
+        "adaptive_f1_recall": 0.0,
+        "adaptive_f1_tp": 0,
+        "adaptive_f1_fp": 1,
+        "bayes_tau": 0.4692,
+        "bayes_f1": 0.0,
+        "bayes_precision": 0.0,
+        "bayes_recall": 0.0,
+        "bayes_tp": 0,
+        "bayes_fp": 4,
+        "oracle_tau": 0.01,
+        "oracle_f1": 0.0795,
+        "oracle_precision": 0.0461,
+        "oracle_recall": 0.2917,
+        "f1_lift_adaptive_f1": 0.0,
+        "f1_lift_bayes": 0.0
+      },
+      "decision": {
+        "time_step": 43,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0365).",
+        "reasons": [
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0365)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE"
+        },
+        "telemetry_summary": {
+          "time_step": 43,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.20591659117338923,
+            "Aggregate_feature_43": 0.350394810766821,
+            "Aggregate_feature_8": 0.28633531041885374
+          },
+          "pct_local_drifted_sig": 7.526881720430108,
+          "pct_local_drifted_mod": 46.236559139784944,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.1023927905531386,
+          "prevalence_rel_change_pct": -11.584772726525049,
+          "frozen_f1": 0.0,
+          "adaptive_f1": 0.0,
+          "bayes_f1": 0.0,
+          "pr_auc": 0.036512374546720676
+        }
+      }
+    },
+    {
+      "time_step": 44,
+      "n_transactions": 4975,
+      "n_labeled": 1591,
+      "n_illicit": 24,
+      "prevalence": 0.0151,
+      "feature_drift": {
+        "time_step": 44,
+        "n_samples": 4975,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.115,
+            "drift_score": 0.0328,
+            "ks_statistic": 0.1865,
+            "ks_p_value": 1.3474915331090142e-85,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0087,
+            "ref_std": 0.1371,
+            "target_std": 0.0727
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.5929,
+            "drift_score": 0.0356,
+            "ks_statistic": 0.2783,
+            "ks_p_value": 2.2615044507832648e-191,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0033,
+            "ref_std": 0.6695,
+            "target_std": 0.356
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.2495,
+            "drift_score": 0.0334,
+            "ks_statistic": 0.2506,
+            "ks_p_value": 7.485730420897838e-155,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.005,
+            "ref_std": 0.1233,
+            "target_std": 0.0563
+          }
+        },
+        "pct_local_drifted_moderate": 47.3118,
+        "pct_local_drifted_significant": 8.6022,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 47.3% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 44,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0811,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -29.94,
+        "absolute_change": -0.0347,
+        "window_size": 5,
+        "available_steps_in_window": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "total_labeled_in_window": 7050,
+        "total_illicit_in_window": 572,
+        "drift_level": "STABLE",
+        "label_lag": 1,
+        "reasons": []
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 44,
+        "prevalence": 0.0151,
+        "pr_auc": 0.0372,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.0727,
+        "frozen_precision": 0.0645,
+        "frozen_recall": 0.0833,
+        "frozen_tp": 2,
+        "frozen_fp": 29,
+        "adaptive_f1_tau": 0.755,
+        "adaptive_f1_f1": 0.0571,
+        "adaptive_f1_precision": 0.0909,
+        "adaptive_f1_recall": 0.0417,
+        "adaptive_f1_tp": 1,
+        "adaptive_f1_fp": 10,
+        "bayes_tau": 0.5332,
+        "bayes_f1": 0.0851,
+        "bayes_precision": 0.087,
+        "bayes_recall": 0.0833,
+        "bayes_tp": 2,
+        "bayes_fp": 21,
+        "oracle_tau": 0.36,
+        "oracle_f1": 0.125,
+        "oracle_precision": 0.1,
+        "oracle_recall": 0.1667,
+        "f1_lift_adaptive_f1": -0.0156,
+        "f1_lift_bayes": 0.0124
+      },
+      "decision": {
+        "time_step": 44,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0727 (PR-AUC=0.0372).",
+        "reasons": [
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0727 (PR-AUC=0.0372)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "STABLE"
+        },
+        "telemetry_summary": {
+          "time_step": 44,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.11503689891365394,
+            "Aggregate_feature_43": 0.5928859447634734,
+            "Aggregate_feature_8": 0.24953880732322054
+          },
+          "pct_local_drifted_sig": 8.60215053763441,
+          "pct_local_drifted_mod": 47.31182795698925,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.08113475177304964,
+          "prevalence_rel_change_pct": -29.9408925273082,
+          "frozen_f1": 0.07272727272727272,
+          "adaptive_f1": 0.05714285714285714,
+          "bayes_f1": 0.0851063829787234,
+          "pr_auc": 0.037187389250635916
+        }
+      }
+    },
+    {
+      "time_step": 45,
+      "n_transactions": 5598,
+      "n_labeled": 1221,
+      "n_illicit": 5,
+      "prevalence": 0.0041,
+      "feature_drift": {
+        "time_step": 45,
+        "n_samples": 5598,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.4757,
+            "drift_score": 0.0401,
+            "ks_statistic": 0.1379,
+            "ks_p_value": 5.648051787386515e-50,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0077,
+            "ref_std": 0.1371,
+            "target_std": 0.1233
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.4115,
+            "drift_score": 0.0437,
+            "ks_statistic": 0.1579,
+            "ks_p_value": 2.190909382891313e-65,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.0021,
+            "ref_std": 0.6695,
+            "target_std": 0.2017
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.654,
+            "drift_score": 0.0261,
+            "ks_statistic": 0.1117,
+            "ks_p_value": 7.14521412941898e-33,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0059,
+            "ref_std": 0.1233,
+            "target_std": 0.116
+          }
+        },
+        "pct_local_drifted_moderate": 22.5806,
+        "pct_local_drifted_significant": 6.4516,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 22.6% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 45,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0691,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -40.37,
+        "absolute_change": -0.0468,
+        "window_size": 5,
+        "available_steps_in_window": [
+          40,
+          41,
+          42,
+          43,
+          44
+        ],
+        "total_labeled_in_window": 7458,
+        "total_illicit_in_window": 515,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0691) deviated by -40.4% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": {
+        "time_step": 45,
+        "adversarial_auc": 0.8245,
+        "auc_std": 0.0101,
+        "drift_level": "MODERATE",
+        "n_reference_samples": 1200,
+        "n_target_samples": 1200,
+        "n_folds": 3,
+        "execution_time_seconds": 1.7088,
+        "model_type": "logistic",
+        "is_periodic_run": true,
+        "reasons": [
+          "AdversarialWarning: Domain separability AUC=0.8245 >= 0.75 (moderate domain divergence)."
+        ]
+      },
+      "threshold_comparison": {
+        "time_step": 45,
+        "prevalence": 0.0041,
+        "pr_auc": 0.007,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.0,
+        "frozen_precision": 0.0,
+        "frozen_recall": 0.0,
+        "frozen_tp": 0,
+        "frozen_fp": 16,
+        "adaptive_f1_tau": 0.88,
+        "adaptive_f1_f1": 0.0,
+        "adaptive_f1_precision": 0.0,
+        "adaptive_f1_recall": 0.0,
+        "adaptive_f1_tp": 0,
+        "adaptive_f1_fp": 1,
+        "bayes_tau": 0.5762,
+        "bayes_f1": 0.0,
+        "bayes_precision": 0.0,
+        "bayes_recall": 0.0,
+        "bayes_tp": 0,
+        "bayes_fp": 12,
+        "oracle_tau": 0.03,
+        "oracle_f1": 0.0245,
+        "oracle_precision": 0.0127,
+        "oracle_recall": 0.4,
+        "f1_lift_adaptive_f1": 0.0,
+        "f1_lift_bayes": 0.0
+      },
+      "decision": {
+        "time_step": 45,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0070).",
+        "reasons": [
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0070).",
+          "PrevalenceWarning: Rolling prevalence (0.0691) shifted by -40.4% vs baseline.",
+          "AdversarialWarning: Domain classifier AUC=0.8245 shows moderate divergence."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "WARNING",
+          "adversarial": "MODERATE"
+        },
+        "telemetry_summary": {
+          "time_step": 45,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.4756577261700252,
+            "Aggregate_feature_43": 0.41145887527629943,
+            "Aggregate_feature_8": 0.653998600198654
+          },
+          "pct_local_drifted_sig": 6.451612903225806,
+          "pct_local_drifted_mod": 22.58064516129032,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.0690533655135425,
+          "prevalence_rel_change_pct": -40.37305778174191,
+          "adversarial_auc": 0.8244572916666667,
+          "frozen_f1": 0.0,
+          "adaptive_f1": 0.0,
+          "bayes_f1": 0.0,
+          "pr_auc": 0.0070351398720408095
+        }
+      }
+    },
+    {
+      "time_step": 46,
+      "n_transactions": 3519,
+      "n_labeled": 712,
+      "n_illicit": 2,
+      "prevalence": 0.0028,
+      "feature_drift": {
+        "time_step": 46,
+        "n_samples": 3519,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.4615,
+            "drift_score": 0.0113,
+            "ks_statistic": 0.1783,
+            "ks_p_value": 1.4888830024791443e-63,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0117,
+            "ref_std": 0.1371,
+            "target_std": 0.1448
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.3238,
+            "drift_score": 0.0455,
+            "ks_statistic": 0.1597,
+            "ks_p_value": 5.3705722404836e-51,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.0033,
+            "ref_std": 0.6695,
+            "target_std": 0.4377
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.4486,
+            "drift_score": 0.0004,
+            "ks_statistic": 0.1414,
+            "ks_p_value": 4.5521740400138314e-40,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.009,
+            "ref_std": 0.1233,
+            "target_std": 0.1391
+          }
+        },
+        "pct_local_drifted_moderate": 50.5376,
+        "pct_local_drifted_significant": 30.1075,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 50.5% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 46,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0546,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -52.82,
+        "absolute_change": -0.0612,
+        "window_size": 5,
+        "available_steps_in_window": [
+          41,
+          42,
+          43,
+          44,
+          45
+        ],
+        "total_labeled_in_window": 7468,
+        "total_illicit_in_window": 408,
+        "drift_level": "WARNING",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceWarning: Rolling prevalence (0.0546) deviated by -52.8% from baseline (0.1158) [warning threshold: 30%]."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 46,
+        "prevalence": 0.0028,
+        "pr_auc": 0.0925,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.1333,
+        "frozen_precision": 0.0769,
+        "frozen_recall": 0.5,
+        "frozen_tp": 1,
+        "frozen_fp": 12,
+        "adaptive_f1_tau": 0.88,
+        "adaptive_f1_f1": 0.2857,
+        "adaptive_f1_precision": 0.2,
+        "adaptive_f1_recall": 0.5,
+        "adaptive_f1_tp": 1,
+        "adaptive_f1_fp": 4,
+        "bayes_tau": 0.6357,
+        "bayes_f1": 0.2,
+        "bayes_precision": 0.125,
+        "bayes_recall": 0.5,
+        "bayes_tp": 1,
+        "bayes_fp": 7,
+        "oracle_tau": 0.915,
+        "oracle_f1": 0.3333,
+        "oracle_precision": 0.25,
+        "oracle_recall": 0.5,
+        "f1_lift_adaptive_f1": 0.1524,
+        "f1_lift_bayes": 0.0667
+      },
+      "decision": {
+        "time_step": 46,
+        "action": "RECALIBRATE_ONLY",
+        "severity": "WARNING",
+        "primary_reason": "DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+        "reasons": [
+          "DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+          "PrevalenceWarning: Rolling prevalence (0.0546) shifted by -52.8% vs baseline."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "WARNING"
+        },
+        "telemetry_summary": {
+          "time_step": 46,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.4614820744668149,
+            "Aggregate_feature_43": 0.32378351494983365,
+            "Aggregate_feature_8": 0.44855254122092314
+          },
+          "pct_local_drifted_sig": 30.107526881720432,
+          "pct_local_drifted_mod": 50.53763440860215,
+          "local_drift_streak": 1,
+          "rolling_prevalence": 0.05463310123192287,
+          "prevalence_rel_change_pct": -52.82482256826078,
+          "frozen_f1": 0.13333333333333333,
+          "adaptive_f1": 0.2857142857142857,
+          "bayes_f1": 0.2,
+          "pr_auc": 0.09251731406202951
+        }
+      }
+    },
+    {
+      "time_step": 47,
+      "n_transactions": 5121,
+      "n_labeled": 846,
+      "n_illicit": 22,
+      "prevalence": 0.026,
+      "feature_drift": {
+        "time_step": 47,
+        "n_samples": 5121,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.3317,
+            "drift_score": 0.012,
+            "ks_statistic": 0.0983,
+            "ks_p_value": 2.326267114152524e-24,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0116,
+            "ref_std": 0.1371,
+            "target_std": 0.1673
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.6084,
+            "drift_score": 0.0354,
+            "ks_statistic": 0.2259,
+            "ks_p_value": 9.599594661155439e-128,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": -0.0034,
+            "ref_std": 0.6695,
+            "target_std": 0.413
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.3085,
+            "drift_score": 0.0235,
+            "ks_statistic": 0.1723,
+            "ks_p_value": 3.696683589526962e-74,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0062,
+            "ref_std": 0.1233,
+            "target_std": 0.1308
+          }
+        },
+        "pct_local_drifted_moderate": 36.5591,
+        "pct_local_drifted_significant": 8.6022,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 36.6% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 47,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0417,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -63.98,
+        "absolute_change": -0.0741,
+        "window_size": 5,
+        "available_steps_in_window": [
+          42,
+          43,
+          44,
+          45,
+          46
+        ],
+        "total_labeled_in_window": 7048,
+        "total_illicit_in_window": 294,
+        "drift_level": "ALERT",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceAlert: Rolling prevalence (0.0417) deviated by -64.0% from baseline (0.1158) [alert threshold: 60%]."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 47,
+        "prevalence": 0.026,
+        "pr_auc": 0.0476,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.0,
+        "frozen_precision": 0.0,
+        "frozen_recall": 0.0,
+        "frozen_tp": 0,
+        "frozen_fp": 4,
+        "adaptive_f1_tau": 0.93,
+        "adaptive_f1_f1": 0.0,
+        "adaptive_f1_precision": 0.0,
+        "adaptive_f1_recall": 0.0,
+        "adaptive_f1_tp": 0,
+        "adaptive_f1_fp": 0,
+        "bayes_tau": 0.6985,
+        "bayes_f1": 0.0,
+        "bayes_precision": 0.0,
+        "bayes_recall": 0.0,
+        "bayes_tp": 0,
+        "bayes_fp": 2,
+        "oracle_tau": 0.01,
+        "oracle_f1": 0.0734,
+        "oracle_precision": 0.046,
+        "oracle_recall": 0.1818,
+        "f1_lift_adaptive_f1": 0.0,
+        "f1_lift_bayes": 0.0
+      },
+      "decision": {
+        "time_step": 47,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0476).",
+        "reasons": [
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0476).",
+          "PrevalenceAlert: Rolling prevalence (0.0417) shifted by -64.0% vs baseline."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "ALERT"
+        },
+        "telemetry_summary": {
+          "time_step": 47,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.33172386674116733,
+            "Aggregate_feature_43": 0.6083817966809383,
+            "Aggregate_feature_8": 0.30852383497600255
+          },
+          "pct_local_drifted_sig": 8.60215053763441,
+          "pct_local_drifted_mod": 36.55913978494624,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.041713961407491486,
+          "prevalence_rel_change_pct": -63.980380274856465,
+          "frozen_f1": 0.0,
+          "adaptive_f1": 0.0,
+          "bayes_f1": 0.0,
+          "pr_auc": 0.04757312927933914
+        }
+      }
+    },
+    {
+      "time_step": 48,
+      "n_transactions": 2954,
+      "n_labeled": 471,
+      "n_illicit": 36,
+      "prevalence": 0.0764,
+      "feature_drift": {
+        "time_step": 48,
+        "n_samples": 2954,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.2433,
+            "drift_score": 0.0124,
+            "ks_statistic": 0.1497,
+            "ks_p_value": 5.411664805285622e-40,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0115,
+            "ref_std": 0.1371,
+            "target_std": 0.0651
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.2401,
+            "drift_score": 0.0457,
+            "ks_statistic": 0.151,
+            "ks_p_value": 1.2043376216551982e-40,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.0035,
+            "ref_std": 0.6695,
+            "target_std": 0.2801
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.3659,
+            "drift_score": 0.0233,
+            "ks_statistic": 0.1445,
+            "ks_p_value": 3.054144681579316e-37,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0062,
+            "ref_std": 0.1233,
+            "target_std": 0.0428
+          }
+        },
+        "pct_local_drifted_moderate": 39.7849,
+        "pct_local_drifted_significant": 17.2043,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 39.8% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 48,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0134,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -88.42,
+        "absolute_change": -0.1024,
+        "window_size": 5,
+        "available_steps_in_window": [
+          43,
+          44,
+          45,
+          46,
+          47
+        ],
+        "total_labeled_in_window": 5740,
+        "total_illicit_in_window": 77,
+        "drift_level": "ALERT",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceCollapse: Rolling prevalence (0.0134) dropped below absolute critical floor (0.0350)."
+        ]
+      },
+      "adversarial_drift": null,
+      "threshold_comparison": {
+        "time_step": 48,
+        "prevalence": 0.0764,
+        "pr_auc": 0.181,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.05,
+        "frozen_precision": 0.25,
+        "frozen_recall": 0.0278,
+        "frozen_tp": 1,
+        "frozen_fp": 3,
+        "adaptive_f1_tau": 0.365,
+        "adaptive_f1_f1": 0.0476,
+        "adaptive_f1_precision": 0.1667,
+        "adaptive_f1_recall": 0.0278,
+        "adaptive_f1_tp": 1,
+        "adaptive_f1_fp": 5,
+        "bayes_tau": 0.8812,
+        "bayes_f1": 0.0,
+        "bayes_precision": 0.0,
+        "bayes_recall": 0.0,
+        "bayes_tp": 0,
+        "bayes_fp": 0,
+        "oracle_tau": 0.01,
+        "oracle_f1": 0.1714,
+        "oracle_precision": 0.1765,
+        "oracle_recall": 0.1667,
+        "f1_lift_adaptive_f1": -0.0024,
+        "f1_lift_bayes": -0.05
+      },
+      "decision": {
+        "time_step": 48,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134) plummeted below critical floor (0.0350).",
+        "reasons": [
+          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134) plummeted below critical floor (0.0350).",
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0500 (PR-AUC=0.1810)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "ALERT"
+        },
+        "telemetry_summary": {
+          "time_step": 48,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.24330483658715957,
+            "Aggregate_feature_43": 0.24011217165294796,
+            "Aggregate_feature_8": 0.36592338892585974
+          },
+          "pct_local_drifted_sig": 17.20430107526882,
+          "pct_local_drifted_mod": 39.784946236559136,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.013414634146341463,
+          "prevalence_rel_change_pct": -88.41658753089875,
+          "frozen_f1": 0.05,
+          "adaptive_f1": 0.047619047619047616,
+          "bayes_f1": 0.0,
+          "pr_auc": 0.18101147752571092
+        }
+      }
+    },
+    {
+      "time_step": 49,
+      "n_transactions": 2454,
+      "n_labeled": 476,
+      "n_illicit": 56,
+      "prevalence": 0.1176,
+      "feature_drift": {
+        "time_step": 49,
+        "n_samples": 2454,
+        "triad_drift_level": "STABLE",
+        "triad_metrics": {
+          "Aggregate_feature_10": {
+            "feature_name": "Aggregate_feature_10",
+            "method": "detrended_linear_residual",
+            "psi": 0.2251,
+            "drift_score": 0.0094,
+            "ks_statistic": 0.186,
+            "ks_p_value": 4.01050361629613e-54,
+            "level": "STABLE",
+            "ref_mean": -0.0132,
+            "target_mean": -0.0145,
+            "ref_std": 0.1371,
+            "target_std": 0.1483
+          },
+          "Aggregate_feature_43": {
+            "feature_name": "Aggregate_feature_43",
+            "method": "detrended_linear_residual",
+            "psi": 0.1808,
+            "drift_score": 0.0427,
+            "ks_statistic": 0.1273,
+            "ks_p_value": 1.7137351914515407e-25,
+            "level": "STABLE",
+            "ref_mean": -0.0272,
+            "target_mean": 0.0014,
+            "ref_std": 0.6695,
+            "target_std": 0.3038
+          },
+          "Aggregate_feature_8": {
+            "feature_name": "Aggregate_feature_8",
+            "method": "detrended_linear_residual",
+            "psi": 0.3897,
+            "drift_score": 0.0225,
+            "ks_statistic": 0.1262,
+            "ks_p_value": 4.538529783889261e-25,
+            "level": "STABLE",
+            "ref_mean": -0.0091,
+            "target_mean": -0.0119,
+            "ref_std": 0.1233,
+            "target_std": 0.1454
+          }
+        },
+        "pct_local_drifted_moderate": 45.1613,
+        "pct_local_drifted_significant": 11.828,
+        "local_drift_level": "MODERATE",
+        "overall_drift_level": "MODERATE",
+        "reasons": [
+          "BroadLocalTier: 45.2% local features in moderate drift (>= 20.0%)"
+        ]
+      },
+      "prevalence_drift": {
+        "time_step": 49,
+        "step_prevalence": 0.0,
+        "rolling_prevalence": 0.0184,
+        "baseline_prevalence": 0.1158,
+        "relative_change_pct": -84.13,
+        "absolute_change": -0.0974,
+        "window_size": 5,
+        "available_steps_in_window": [
+          44,
+          45,
+          46,
+          47,
+          48
+        ],
+        "total_labeled_in_window": 4841,
+        "total_illicit_in_window": 89,
+        "drift_level": "ALERT",
+        "label_lag": 1,
+        "reasons": [
+          "PrevalenceCollapse: Rolling prevalence (0.0184) dropped below absolute critical floor (0.0350)."
+        ]
+      },
+      "adversarial_drift": {
+        "time_step": 49,
+        "adversarial_auc": 0.8706,
+        "auc_std": 0.0063,
+        "drift_level": "ALERT",
+        "n_reference_samples": 1200,
+        "n_target_samples": 1200,
+        "n_folds": 3,
+        "execution_time_seconds": 0.5821,
+        "model_type": "logistic",
+        "is_periodic_run": true,
+        "reasons": [
+          "AdversarialAlert: Domain separability AUC=0.8706 >= 0.85 (severe OOD covariate shift from training)."
+        ]
+      },
+      "threshold_comparison": {
+        "time_step": 49,
+        "prevalence": 0.1176,
+        "pr_auc": 0.1823,
+        "frozen_tau": 0.435,
+        "frozen_f1": 0.0282,
+        "frozen_precision": 0.0667,
+        "frozen_recall": 0.0179,
+        "frozen_tp": 1,
+        "frozen_fp": 14,
+        "adaptive_f1_tau": 0.365,
+        "adaptive_f1_f1": 0.0278,
+        "adaptive_f1_precision": 0.0625,
+        "adaptive_f1_recall": 0.0179,
+        "adaptive_f1_tp": 1,
+        "adaptive_f1_fp": 15,
+        "bayes_tau": 0.8434,
+        "bayes_f1": 0.0339,
+        "bayes_precision": 0.3333,
+        "bayes_recall": 0.0179,
+        "bayes_tp": 1,
+        "bayes_fp": 2,
+        "oracle_tau": 0.01,
+        "oracle_f1": 0.1197,
+        "oracle_precision": 0.1148,
+        "oracle_recall": 0.125,
+        "f1_lift_adaptive_f1": -0.0004,
+        "f1_lift_bayes": 0.0057
+      },
+      "decision": {
+        "time_step": 49,
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184) plummeted below critical floor (0.0350).",
+        "reasons": [
+          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184) plummeted below critical floor (0.0350).",
+          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0282 (PR-AUC=0.1823).",
+          "AdversarialOODAlert: Domain classifier AUC=0.8706 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger)."
+        ],
+        "component_statuses": {
+          "feature_triad": "STABLE",
+          "feature_local": "MODERATE",
+          "feature_overall": "MODERATE",
+          "prevalence": "ALERT",
+          "adversarial": "ALERT"
+        },
+        "telemetry_summary": {
+          "time_step": 49,
+          "triad_psi": {
+            "Aggregate_feature_10": 0.22508774437597145,
+            "Aggregate_feature_43": 0.1808292086768243,
+            "Aggregate_feature_8": 0.38970637559071036
+          },
+          "pct_local_drifted_sig": 11.827956989247312,
+          "pct_local_drifted_mod": 45.16129032258064,
+          "local_drift_streak": 0,
+          "rolling_prevalence": 0.018384631274530057,
+          "prevalence_rel_change_pct": -84.12504099462905,
+          "adversarial_auc": 0.87056875,
+          "frozen_f1": 0.028169014084507043,
+          "adaptive_f1": 0.027777777777777776,
+          "bayes_f1": 0.03389830508474576,
+          "pr_auc": 0.18225106911311845
+        }
+      }
+    }
+  ]
+}
