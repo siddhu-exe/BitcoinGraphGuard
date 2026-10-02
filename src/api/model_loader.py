@@ -64,6 +64,8 @@ class ModelContainer:
         self.load_timestamp: str | None = None
         self.startup_validations_passed: bool = False
         self.step_metrics_lookup: dict[int, dict[str, float]] = {}
+        self.using_fallback_metrics: bool = False
+        self.metrics_fallback_reason: str = ""
 
         self.load_artifacts()
 
@@ -111,8 +113,12 @@ class ModelContainer:
                 raise ModelLoadError(
                     f"Feature set mismatch: missing={missing}, extra={extra}"
                 )
-            logger.warning(
-                "Feature list order differs from schema canonical order. Using loaded order."
+            raise ModelLoadError(
+                "Feature list order mismatch: the artifact lists the canonical 165 "
+                "features in a different order than MODEL_FEATURES. Inference vectors "
+                "are emitted in MODEL_FEATURES order, so using the loaded order would "
+                "silently map values into the wrong DMatrix columns. Regenerate the "
+                "feature artifact in canonical order."
             )
 
         # 2. Validate and load XGBoost model artifact
@@ -158,37 +164,73 @@ class ModelContainer:
 
     def _load_step_metrics(self) -> None:
         """Load empirical per-step metrics from Phase 5 benchmark artifacts."""
-        if self.metrics_path and self.metrics_path.exists():
+        reason: str | None = None
+
+        if self.metrics_path is None:
+            reason = "metrics artifact path is not configured"
+        elif not self.metrics_path.exists():
+            reason = f"file not found: {self.metrics_path}"
+        else:
             try:
                 import pandas as pd
 
                 df = pd.read_csv(self.metrics_path)
-                xgb_df = df[df["model"].str.contains("XGBoost", case=False, na=False)]
-                for _, row in xgb_df.iterrows():
-                    step = int(row["time_step"])
-                    self.step_metrics_lookup[step] = {
-                        "pr_auc": float(row.get("pr_auc", 0.0))
-                        if not pd.isna(row.get("pr_auc"))
-                        else 0.0,
-                        "f1": float(row.get("f1", 0.0))
-                        if not pd.isna(row.get("f1"))
-                        else 0.0,
-                        "precision": float(row.get("precision", 0.0))
-                        if not pd.isna(row.get("precision"))
-                        else 0.0,
-                        "recall": float(row.get("recall", 0.0))
-                        if not pd.isna(row.get("recall"))
-                        else 0.0,
-                    }
+                required_columns = {
+                    "model",
+                    "time_step",
+                    "pr_auc",
+                    "f1",
+                    "precision",
+                    "recall",
+                }
+                missing_columns = required_columns - set(df.columns)
+                if missing_columns:
+                    reason = (
+                        f"schema mismatch in {self.metrics_path}: missing columns "
+                        f"{sorted(missing_columns)}"
+                    )
+                else:
+                    xgb_df = df[
+                        df["model"].str.contains("XGBoost", case=False, na=False)
+                    ]
+                    if xgb_df.empty:
+                        reason = f"schema mismatch in {self.metrics_path}: no XGBoost rows found"
+                    else:
+                        for _, row in xgb_df.iterrows():
+                            step = int(row["time_step"])
+                            self.step_metrics_lookup[step] = {
+                                "pr_auc": float(row["pr_auc"])
+                                if not pd.isna(row["pr_auc"])
+                                else 0.0,
+                                "f1": float(row["f1"])
+                                if not pd.isna(row["f1"])
+                                else 0.0,
+                                "precision": float(row["precision"])
+                                if not pd.isna(row["precision"])
+                                else 0.0,
+                                "recall": float(row["recall"])
+                                if not pd.isna(row["recall"])
+                                else 0.0,
+                            }
             except Exception as e:  # noqa: BLE001 - fall back to verified benchmarks
-                logger.warning(
-                    "Could not load step metrics from %s: %s. Using hardcoded benchmarks.",
-                    self.metrics_path,
-                    e,
-                )
+                reason = f"parse error reading {self.metrics_path}: {e}"
+
+        if reason is not None:
+            self.using_fallback_metrics = True
+            self.metrics_fallback_reason = reason
+            logger.warning(
+                "Per-step metrics unavailable (%s). Using hardcoded Phase 8a "
+                "benchmark values for confidence_context instead of live per-step "
+                "metrics from %s. Set / fix the metrics artifact to clear this.",
+                reason,
+                self.metrics_path,
+            )
 
         # Fallback / verified benchmarks if file not loaded
-        if not self.step_metrics_lookup:
+        if self.using_fallback_metrics or not self.step_metrics_lookup:
+            self.using_fallback_metrics = True
+            if not self.metrics_fallback_reason:
+                self.metrics_fallback_reason = "no per-step metrics loaded"
             # Benchmark values from reports/monitoring_backtest_report.md
             benchmarks = {
                 35: {"pr_auc": 0.9934, "f1": 0.9596},

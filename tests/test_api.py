@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+import random
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +25,8 @@ import pytest
 
 from src.api.logging_utils import StructuredPredictionLogger
 from src.api.main import app
-from src.api.model_loader import get_model_container
+from src.api.model_loader import ModelContainer, ModelLoadError, get_model_container
+from src.api.schemas import MODEL_FEATURES
 
 
 class SyncASGIClient:
@@ -545,3 +548,137 @@ def test_structured_prediction_logging(
     assert last_record["model_reliability"] == "reliable"
     assert last_record["input_feature_hash"] != ""
     assert "timestamp" in last_record
+
+
+# ---------------------------------------------------------------------------
+# Task 2: per-step metrics fallback must be loud, not silent
+# ---------------------------------------------------------------------------
+
+_PER_STEP_METRICS_HEADER = (
+    "time_step,model,n,illicit,licit,prevalence,pr_auc,roc_auc,threshold,"
+    "precision,recall,f1,tp,fp,tn,fn\n"
+)
+
+
+def _write_metrics_csv(path: Path, pr_auc: float, f1: float) -> None:
+    """Write a minimal but schema-valid per-step metrics CSV with one XGBoost row."""
+    row = (
+        f"35,XGBoost (frozen),100,10,90,0.1,{pr_auc},0.99,0.435,"
+        f"0.5,0.5,{f1},10,10,80,0\n"
+    )
+    path.write_text(_PER_STEP_METRICS_HEADER + row, encoding="utf-8")
+
+
+def test_health_no_fallback_when_metrics_csv_present(client, tmp_path, monkeypatch):
+    """Valid CSV -> using_fallback_metrics=false and context values from the CSV."""
+    metrics_csv = tmp_path / "per_step_metrics.csv"
+    _write_metrics_csv(metrics_csv, pr_auc=0.424242, f1=0.111111)
+
+    container = ModelContainer(metrics_path=metrics_csv)
+    assert container.using_fallback_metrics is False
+    ctx = container.get_confidence_context(35)
+    assert ctx.historical_pr_auc == pytest.approx(0.424242)
+    assert ctx.historical_f1 == pytest.approx(0.111111)
+
+    from src.api import model_loader
+
+    monkeypatch.setattr(model_loader, "_model_container", container)
+    data = client.get("/health").json()
+    assert data["using_fallback_metrics"] is False
+    assert data["metrics_fallback_reason"] is None
+
+
+def test_health_fallback_when_metrics_missing_logs_warning(
+    client, tmp_path, monkeypatch, caplog
+):
+    """Missing CSV -> using_fallback_metrics=true AND an explicit WARNING is logged."""
+    missing_csv = tmp_path / "does_not_exist.csv"
+    assert not missing_csv.exists()
+
+    with caplog.at_level(logging.WARNING, logger="src.api.model_loader"):
+        container = ModelContainer(metrics_path=missing_csv)
+
+    assert container.using_fallback_metrics is True
+    assert "file not found" in container.metrics_fallback_reason
+
+    warnings = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    assert any(
+        "hardcoded Phase 8a" in msg and "file not found" in msg for msg in warnings
+    ), f"Expected loud fallback warning, got: {warnings}"
+
+    from src.api import model_loader
+
+    monkeypatch.setattr(model_loader, "_model_container", container)
+    data = client.get("/health").json()
+    assert data["using_fallback_metrics"] is True
+    assert "file not found" in (data["metrics_fallback_reason"] or "")
+
+
+def test_startup_rejects_wrong_feature_names_not_just_count(tmp_path):
+    """165 keys but wrong names must fail startup (name validation, not count)."""
+    bogus = tmp_path / "features.json"
+    bogus.write_text(
+        json.dumps({"features": [f"Wrong_feature_{i}" for i in range(1, 166)]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ModelLoadError, match="Feature set mismatch"):
+        ModelContainer(feature_list_path=bogus)
+
+
+# ---------------------------------------------------------------------------
+# Task 3: feature values must map by NAME, never by JSON key order
+# ---------------------------------------------------------------------------
+
+
+def test_feature_values_map_by_name_not_json_key_order(client):
+    """Shuffling JSON key order must not change predictions; swapped values do."""
+    base = dict(SAMPLE_TX_1813992_FEATURES)
+    swapped = dict(base)
+    swapped["Local_feature_1"], swapped["Local_feature_2"] = (
+        base["Local_feature_2"],
+        base["Local_feature_1"],
+    )
+
+    base_prob = client.post("/predict", json={"time_step": 35, **base}).json()[
+        "probability"
+    ]
+    swapped_prob = client.post("/predict", json={"time_step": 35, **swapped}).json()[
+        "probability"
+    ]
+
+    # Values are honored per named column: swapping them changes the score.
+    assert swapped_prob != pytest.approx(base_prob, rel=1e-6, abs=1e-12)
+
+    # Same named values, arbitrary JSON insertion order -> identical prediction.
+    items = list(swapped.items())
+    random.Random(0).shuffle(items)
+    shuffled_prob = client.post(
+        "/predict", json={"time_step": 35, **dict(items)}
+    ).json()["probability"]
+    assert shuffled_prob == pytest.approx(swapped_prob, rel=1e-9, abs=1e-12)
+
+
+def test_misspelled_feature_name_rejected_and_named(client):
+    """165 keys with one typo -> 422 naming the unrecognized key, no silent default."""
+    typo = dict(SAMPLE_TX_1813992_FEATURES)
+    typo["Local_feature_1a"] = typo.pop("Local_feature_1")
+
+    response = client.post("/predict", json={"time_step": 35, **typo})
+    assert response.status_code == 422
+    body = json.dumps(response.json())
+    assert "Local_feature_1a" in body
+    assert "Local_feature_1" in body
+    assert "Unrecognized" in body
+
+
+def test_startup_rejects_correct_names_in_wrong_order(tmp_path):
+    """165 canonical names in wrong order must fail startup, not silently misalign."""
+    reordered = tmp_path / "features.json"
+    reordered.write_text(
+        json.dumps({"features": list(reversed(MODEL_FEATURES))}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ModelLoadError, match="order mismatch"):
+        ModelContainer(feature_list_path=reordered)

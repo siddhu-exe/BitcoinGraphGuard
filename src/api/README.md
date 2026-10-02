@@ -177,7 +177,10 @@ inventing a status.
 ---
 
 ### 4. `GET /health`
-Returns service status, model artifact paths, feature count (165), threshold, and startup validation checks.
+Returns service status, model artifact paths, feature count (165), threshold, startup validation
+checks, and whether hardcoded Phase 8a benchmarks are being used in place of the live per-step
+metrics artifact (`using_fallback_metrics`, with `metrics_fallback_reason`). A `true` flags that
+`confidence_context` values are the fallback benchmarks, not the live CSV — check the logs too.
 
 ```json
 {
@@ -188,6 +191,8 @@ Returns service status, model artifact paths, feature count (165), threshold, an
   "operating_threshold": 0.435,
   "startup_timestamp": "2026-10-01T20:00:00.000000+00:00",
   "startup_validations_passed": true,
+  "using_fallback_metrics": false,
+  "metrics_fallback_reason": null,
   "artifact_paths": {
     "model_path": "results/xgboost/xgb_model_optimized.json",
     "feature_list_path": "results/xgboost/selected_features.json",

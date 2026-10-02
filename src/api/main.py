@@ -182,6 +182,8 @@ async def health_check():
             operating_threshold=container.threshold,
             startup_timestamp=container.load_timestamp or "unknown",
             startup_validations_passed=container.startup_validations_passed,
+            using_fallback_metrics=container.using_fallback_metrics,
+            metrics_fallback_reason=container.metrics_fallback_reason or None,
             artifact_paths={
                 "model_path": str(container.model_path),
                 "feature_list_path": str(container.feature_list_path),

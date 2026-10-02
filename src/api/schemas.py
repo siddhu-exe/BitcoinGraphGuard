@@ -63,6 +63,26 @@ class ConfidenceContext(BaseModel):
 
 # Dynamically create TransactionFeatures schema with all 165 typed fields
 # to provide OpenAPI schema generation while keeping code clean.
+def _build_example_payload() -> dict[str, Any]:
+    """
+    Build a complete, valid 165-feature example payload for the OpenAPI docs.
+
+    The production model requires every feature in ``MODEL_FEATURES``; a partial
+    vector is rejected with a 422. The example must therefore be complete so that
+    the Swagger/`/docs` "Try it out" body is directly scorable.
+    """
+    example: dict[str, Any] = {
+        "tx_id": "1813992",
+        "time_step": 35,
+    }
+    example.update({feat: 0.0 for feat in MODEL_FEATURES})
+    # A few representative non-zero values so the example is not all zeros.
+    example["Local_feature_1"] = 0.105155
+    example["Local_feature_6"] = -0.123
+    example["Aggregate_feature_1"] = -0.169584
+    return example
+
+
 def _create_transaction_model() -> type[BaseModel]:
     """Generate dynamic Pydantic model with explicit 165 feature fields."""
     fields: dict[str, Any] = {
@@ -101,13 +121,7 @@ def _create_transaction_model() -> type[BaseModel]:
                 populate_by_name=True,
                 extra="ignore",
                 json_schema_extra={
-                    "example": {
-                        "tx_id": "1813992",
-                        "time_step": 35,
-                        **{feat: 0.0 for feat in MODEL_FEATURES[:5]},
-                        "Local_feature_6": -0.123,
-                        "Aggregate_feature_1": 0.456,
-                    }
+                    "example": _build_example_payload(),
                 },
             ),
         },
@@ -149,9 +163,26 @@ class TransactionInput(TransactionInputBase):
         flat_missing = []
         nan_or_inf_features = []
         invalid_type_features = []
+        unrecognized_features: list[str] = []
         feature_dict: dict[str, float] = {}
 
         nested_features = data.get("features")
+
+        # Detect feature-namespace keys that are not canonical (e.g. a typo such
+        # as "Local_feature_1a"). These would otherwise be silently dropped by
+        # extra="ignore", masking the real mistake as a generic "missing feature".
+        feature_prefixes = ("Local_feature_", "Aggregate_feature_")
+        candidate_keys = list(data.keys())
+        if isinstance(nested_features, dict):
+            candidate_keys.extend(nested_features.keys())
+        for key in candidate_keys:
+            if (
+                isinstance(key, str)
+                and key.startswith(feature_prefixes)
+                and key not in MODEL_FEATURES
+                and key not in unrecognized_features
+            ):
+                unrecognized_features.append(key)
 
         for feat in MODEL_FEATURES:
             val = None
@@ -206,6 +237,17 @@ class TransactionInput(TransactionInputBase):
             errors.append(
                 f"Feature(s) have non-numeric values: {', '.join(sample_invalid)}{more_str}"
             )
+        if unrecognized_features:
+            sample_unknown = unrecognized_features[:5]
+            more_str = (
+                f" and {len(unrecognized_features) - 5} more"
+                if len(unrecognized_features) > 5
+                else ""
+            )
+            errors.append(
+                "Unrecognized feature name(s) (check spelling): "
+                f"{', '.join(sample_unknown)}{more_str}"
+            )
 
         if errors:
             raise ValueError("; ".join(errors))
@@ -225,6 +267,10 @@ class TransactionInput(TransactionInputBase):
 
 class BatchTransactionInput(BaseModel):
     """Batch input schema with safety guardrail on maximum batch size."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"transactions": [_build_example_payload()]}},
+    )
 
     transactions: list[TransactionInput] = Field(
         ...,
@@ -294,6 +340,17 @@ class HealthResponse(BaseModel):
     )
     startup_validations_passed: bool = Field(
         ..., description="Whether all startup sanity checks passed"
+    )
+    using_fallback_metrics: bool = Field(
+        ...,
+        description=(
+            "True when hardcoded Phase 8a benchmarks are used instead of live "
+            "per-step metrics for confidence_context (metrics artifact missing/malformed)."
+        ),
+    )
+    metrics_fallback_reason: str | None = Field(
+        None,
+        description="Why the per-step metrics fallback is active, if it is.",
     )
     artifact_paths: dict[str, str] = Field(..., description="Paths to loaded artifacts")
 
