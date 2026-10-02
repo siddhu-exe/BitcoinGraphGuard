@@ -1,0 +1,145 @@
+# ---------------------------------------------------------------------------
+# BitcoinGraphGuard - Phase 8c CI: frozen-model consistency gate.
+#
+# This job is deliberately separate from the general test suite. The three checks
+# below are the exact silent-failure bugs this project found during Phase 8a/8b,
+# so each is a named, individually-reported gate rather than a line buried inside
+# a 33-test summary. If any check fails, the job states which one and why.
+#
+# Validation only: no training, no GPU, no dataset download. It scores the small
+# committed artifacts under results/ against the frozen XGBoost model.
+# ---------------------------------------------------------------------------
+name: model-consistency-check
+
+on:
+  push:
+    paths:
+      - "src/api/**"
+      - "src/monitoring/**"
+      - "results/xgboost*/**"
+      - "results/temporal_inductive/per_step_metrics.csv"
+      - "reports/monitoring_backtest_report.json"
+      - "tests/test_api.py"
+      - ".github/workflows/model-consistency-check.yml"
+  pull_request:
+    paths:
+      - "src/api/**"
+      - "src/monitoring/**"
+      - "results/xgboost*/**"
+      - "results/temporal_inductive/per_step_metrics.csv"
+      - "reports/monitoring_backtest_report.json"
+      - "tests/test_api.py"
+      - ".github/workflows/model-consistency-check.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-consistency-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frozen-model-consistency:
+    name: frozen-model-consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Recorded score for tx 1813992 @ step 35 in results/xgboost/predictions.csv.
+      BENCHMARK_PROB: "1.7188735e-05"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-serving.txt
+
+      - name: Install serving and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-serving.txt
+          pip install "pytest>=8.2,<10"
+
+      # Check 1/3 - frozen-model consistency. Guards against a served model that
+      # no longer reproduces the recorded Phase 2 prediction (wrong checkpoint,
+      # retrained weights, stale build), and against the wider class of
+      # plausible-but-not-real output that the hardcoded /monitoring/status
+      # response belonged to.
+      - name: "Check 1/3 - frozen-model prediction reproduction (tx 1813992 == 1.7188735e-05)"
+        id: frozen
+        continue-on-error: true
+        run: |
+          pytest tests/test_api.py::test_predict_known_good_transaction_reproduces_benchmark -q
+
+      # Check 2/3 - feature name/order integrity (Task 3). Guards against values
+      # being mapped into the XGBoost DMatrix by JSON key order instead of by the
+      # canonical feature name, which silently mis-scores swapped/reordered input.
+      - name: "Check 2/3 - feature name/order integrity (swapped features must not mis-score)"
+        id: feature_order
+        continue-on-error: true
+        run: |
+          pytest -q \
+            tests/test_api.py::test_feature_values_map_by_name_not_json_key_order \
+            tests/test_api.py::test_startup_rejects_correct_names_in_wrong_order \
+            tests/test_api.py::test_startup_rejects_wrong_feature_names_not_just_count \
+            tests/test_api.py::test_misspelled_feature_name_rejected_and_named
+
+      # Check 3/3 - metrics-fallback visibility (Task 2). Guards against the API
+      # serving the hardcoded Phase 8a per-step metrics as if they were real
+      # telemetry: using_fallback_metrics must track actual CSV presence/absence.
+      - name: "Check 3/3 - metrics fallback visibility (using_fallback_metrics reflects CSV presence)"
+        id: fallback
+        continue-on-error: true
+        run: |
+          pytest -q \
+            tests/test_api.py::test_health_fallback_when_metrics_missing_logs_warning \
+            tests/test_api.py::test_health_no_fallback_when_metrics_csv_present
+
+      # Gate: fail with an explicit statement of which check failed and why,
+      # never a bare "tests failed".
+      - name: Gate - report which specific check failed
+        if: always()
+        env:
+          FROZEN: ${{ steps.frozen.outcome }}
+          FEATURE_ORDER: ${{ steps.feature_order.outcome }}
+          FALLBACK: ${{ steps.fallback.outcome }}
+        run: |
+          set -uo pipefail
+
+          {
+            echo "## frozen-model-consistency gate"
+            echo
+            echo "| # | Check | Result |"
+            echo "|---|-------|--------|"
+            echo "| 1 | frozen-model prediction reproduction | ${FROZEN} |"
+            echo "| 2 | feature name/order integrity | ${FEATURE_ORDER} |"
+            echo "| 3 | metrics fallback visibility | ${FALLBACK} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          failed=0
+          report() {
+            label="$1"; outcome="$2"; guard="$3"
+            if [ "$outcome" != "success" ]; then
+              failed=1
+              echo "::error::FAILED - ${label} (outcome=${outcome})"
+              echo "    Why this gate exists: ${guard}"
+            else
+              echo "PASSED - ${label}"
+            fi
+          }
+
+          report "Check 1/3 frozen-model prediction reproduction" "${FROZEN}" \
+            "The API was once found returning a hardcoded /monitoring/status response instead of real telemetry, and a wrong feature mapping silently mis-scored inputs. A served model must reproduce the recorded 1.7188735e-05 benchmark for tx 1813992 @ step 35."
+          report "Check 2/3 feature name/order integrity" "${FEATURE_ORDER}" \
+            "Feature values were once mapped into the DMatrix by JSON key order rather than by canonical feature name, so reordered or swapped features produced plausible but wrong probabilities."
+          report "Check 3/3 metrics fallback visibility" "${FALLBACK}" \
+            "The API once served hardcoded Phase 8a fallback metrics as if they were real per-step telemetry. using_fallback_metrics must now track actual CSV presence/absence and log a loud warning when falling back."
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::frozen-model-consistency FAILED - see the per-check lines above."
+            exit 1
+          fi
+          echo "frozen-model-consistency: all three silent-failure gates passed."

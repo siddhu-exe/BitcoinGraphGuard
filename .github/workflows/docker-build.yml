@@ -1,0 +1,104 @@
+# ---------------------------------------------------------------------------
+# BitcoinGraphGuard - Phase 8c CI: build, run and verify the Docker artifact.
+#
+# Closes the gap that existed for two full review cycles: the Dockerfile existed
+# and was documented, but was never actually built or run in CI. This workflow
+# builds the image, starts it via docker-compose, polls GET /health until 200,
+# and re-checks the frozen-model benchmark *inside the running container*.
+#
+# Validation only: no training, no GPU, no dataset download -- the image is built
+# from the small committed results/ and reports/ artifacts.
+# ---------------------------------------------------------------------------
+name: docker-build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build:
+    name: docker build - run - verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      IMAGE: bitcoingraphguard:latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Layer cache (type=gha) keeps repeat runs from rebuilding from scratch.
+      # `load: true` makes the freshly built image available to docker-compose
+      # without pushing it anywhere.
+      - name: Build image (with GitHub Actions layer cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: ${{ env.IMAGE }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Recorded, not enforced: size drift should be visible in workflow history.
+      - name: Record final image size
+        run: |
+          docker images "${IMAGE}"
+          bytes=$(docker image inspect "${IMAGE}" --format '{{.Size}}')
+          mib=$(python3 -c "print(f'{${bytes}/1024/1024:.1f}')")
+          echo "Final image size: ${mib} MiB (${bytes} bytes)"
+          {
+            echo "### Docker image size"
+            echo
+            echo "- \`${IMAGE}\` = **${mib} MiB** (${bytes} bytes)"
+            echo
+            echo "_Recorded only; this workflow does not fail on size. Track drift here over time._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Start container via docker compose
+        run: |
+          docker compose up -d --no-build
+          docker compose ps
+
+      # Poll until GET /health returns 200 or the 60s budget is exhausted.
+      # This step is the whole point of the workflow: Docker existing is not the
+      # same as Docker working.
+      - name: Poll GET /health until 200 (60s budget)
+        run: |
+          set -uo pipefail
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health || true)
+            if [ "$code" = "200" ]; then
+              echo "GET /health returned 200 after ~$((i * 2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::GET /health never returned HTTP 200 within 60s - the container did not become ready."
+          docker compose ps || true
+          docker compose logs api || true
+          exit 1
+
+      # Container-level version of the consistency check: the same benchmark
+      # transaction used in the manual verification must reproduce the recorded
+      # frozen-model probability inside the running image. The script is
+      # stdlib-only, so no serving deps are needed on the host runner.
+      - name: Verify container benchmark prediction (tx 1813992 == 1.7188735e-05)
+        run: python3 .github/scripts/verify_container_prediction.py
+
+      # Tear down on success *and* failure so a failed health poll never leaves
+      # an orphaned container behind on the runner.
+      - name: Tear down container
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans || true

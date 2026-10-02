@@ -1,0 +1,98 @@
+# ---------------------------------------------------------------------------
+# BitcoinGraphGuard - Phase 8c CI: full test suite + scoped lint gate.
+#
+# Purpose: protect the two failure classes this project has repeatedly hit --
+#   (1) silent miscalibration / wrong-but-plausible outputs, and
+#   (2) unverified artifacts.
+# This job is validation-only: no GPU, no dataset download, no model training.
+# All ML execution stays on Colab/Kaggle (see AGENTS.md compute split).
+# ---------------------------------------------------------------------------
+name: test
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "requirements-serving.txt"
+      - "pytest.ini"
+      - ".github/ruff-ci.toml"
+      - ".github/workflows/test.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "requirements-serving.txt"
+      - "pytest.ini"
+      - ".github/ruff-ci.toml"
+      - ".github/workflows/test.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest-suite:
+    name: pytest - full suite (33 tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-serving.txt
+
+      # requirements-serving.txt already covers the monitoring engines
+      # (numpy/pandas/scipy/scikit-learn); there is no requirements-monitoring.txt
+      # to install. pytest is a dev-only tool, not part of the serving contract,
+      # so it is installed explicitly here.
+      - name: Install serving and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-serving.txt
+          pip install "pytest>=8.2,<10"
+
+      # All 33 tests: 19 in tests/test_api.py + 14 in tests/test_monitoring.py.
+      - name: Run full test suite
+        run: pytest tests/ -q
+
+  lint-scoped:
+    name: ruff - scoped lint and format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Pinned to the version the scoped config was validated against, so lint
+      # results are deterministic across runs.
+      - name: Install ruff
+        run: pip install "ruff==0.16.8"
+
+      # Scoped deliberately. .github/ruff-ci.toml tolerates ONLY the 138
+      # pre-existing violations in src/monitoring/ and tests/ -- the repo-wide
+      # debt elsewhere is untouched. src/api/ is enforced strictly, and any NEW
+      # violation still fails the build. --force-exclude makes the exclusions
+      # apply even when a path is named explicitly in the future.
+      - name: Ruff lint (src/api, src/monitoring, tests)
+        run: |
+          ruff check --force-exclude --config .github/ruff-ci.toml \
+            src/api src/monitoring tests
+
+      - name: Ruff format check (src/api, src/monitoring, tests)
+        run: |
+          ruff format --check --force-exclude --config .github/ruff-ci.toml \
+            src/api src/monitoring tests
