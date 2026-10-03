@@ -58,7 +58,7 @@ python scripts/generate_notebook_08b.py      # Generates notebooks/08b_ood_permu
 
 ### Testing (Pytest)
 ```bash
-# Run entire test suite (once src/ and tests/ are created)
+# Run entire test suite (33 tests: 19 in test_api.py, 14 in test_monitoring.py)
 pytest -q
 
 # Run single test file or specific test function
@@ -69,18 +69,34 @@ pytest tests/test_api.py::test_predict_endpoint
 pytest --cov=src tests/
 ```
 
-### Serving & MLOps (Phases 8–9)
+### Serving & Monitoring (Phase 8)
 ```bash
-# FastAPI local development
+# FastAPI local development (needs requirements-serving.txt, not the full requirements.txt)
 uvicorn src.api.main:app --reload --port 8000
 
-# Docker build
+# Docker (CPU-only XGBoost image; copies src/, results/, reports/ in)
 docker build -t bitcoingraphguard:latest .
+docker compose up        # logs mounted at ./logs, 1.5 GB memory cap
 
-# MLflow UI & DVC tracking
-mlflow ui --port 5000
-dvc repro
+# Regenerate the retrospective monitoring backtest (reports/monitoring_backtest_report.*)
+python scripts/run_monitoring_backtest.py
+
+# CI-equivalent scoped lint (full-repo `ruff check .` has pre-existing debt)
+ruff check --force-exclude --config .github/ruff-ci.toml src/api src/monitoring tests
+ruff format --check --force-exclude --config .github/ruff-ci.toml src/api src/monitoring tests
 ```
+MLflow/DVC (Phase 9) are planned only; there is no `dvc.yaml` yet.
+
+## Serving & Monitoring Architecture (`src/`)
+
+- `src/api/main.py`: FastAPI app. Endpoints: `GET /`, `GET /health`, `POST /predict`, `POST /batch_predict` (cap via `MAX_BATCH_SIZE`), `GET /monitoring/status`. Prediction audit logs go to JSONL at `PREDICTION_LOG_PATH`.
+- `src/api/model_loader.py`: `ModelContainer` loads the **frozen** XGBoost model (`results/xgboost/xgb_model_optimized.json`, features in `selected_features.json`) once at startup at threshold tau* = 0.435. Startup validates the 165 feature names *and order*; inputs are mapped into the DMatrix by feature **name**, never JSON key order.
+- Every prediction carries a `confidence_context`: steps 35–42 `reliable`, 43–49 `degraded` (drift collapse), 50+ `unknown`. Per-step reliability comes from `results/temporal_inductive/per_step_metrics.csv`; if missing it falls back to hardcoded Phase 8a values, exposed as `using_fallback_metrics` on `/health` and logged loudly. Never make such fallbacks silent.
+- `src/monitoring/`: drift engines (feature KS, prevalence, adversarial validation, threshold calibration, retraining trigger) plus `backtest.py`; `/monitoring/status` reads the latest decision from the backtest report, not a stub.
+- Serving deliberately excludes PyTorch/PyG/MLflow: only the tabular XGBoost model is served.
+
+### CI (`.github/workflows/`)
+Validation-only (no GPU, no data download). `test.yml` runs pytest plus a *scoped* ruff gate; `model-consistency-check.yml` runs three named gates: frozen-model reproduction (tx 1813992 @ step 35 must score 1.7188735e-05), feature name/order integrity, and metrics-fallback visibility; `docker-build.yml` builds the image. Changing the model or `results/xgboost*` artifacts will trip the consistency gate.
 
 ## Phase & Benchmark Status
 
@@ -96,7 +112,8 @@ dvc repro
 | **Phase 6** | Explainability (SHAP/Captum)| ✅ Complete | Analysis | Analysis | `docs/EXPLAINABILITY.md`, `results/explainability/` |
 | **Phase 7** | Hetero Graph Transformer | ✅ Complete | 0.4861 | 0.0386 | `docs/HGT.md`, `results/hgt/` |
 | **Phase 7b**| OOD Diagnosis & Leak Audit | ✅ Complete | Adversarial AUC 1.0000 | Locals Only AUC 0.9885 | `docs/OOD_DIAGNOSIS.md`, `results/ood_diagnosis/` (inc. `permutation_check/`) |
-| **Phase 8–9**| Serving & MLOps | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
+| **Phase 8a–8c**| Monitoring, Serving API, CI | ✅ Complete | Serves Phase 2 XGBoost | — | `src/`, `reports/monitoring_backtest_report.md`, `docs/CI_CD.md` |
+| **Phase 9** | MLOps (MLflow/DVC) | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
 
 ## Strict Carry-Forward Constraints & Evaluation Rules
 

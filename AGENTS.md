@@ -14,7 +14,7 @@ context and `docs/ARCHITECTURE.md` for the full design.
 | `eda/` | Canonical Phase 1 EDA run artifacts exported from `notebooks/01_eda.ipynb`: `eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures. **Source of truth for EDA numbers.** |
 | `reports/` | Verification evidence (`phase1_verification.json`) and `reports/eda/` from the superseded pre-notebook streaming pass |
 | `scripts/` | Repository tooling: `verify_dataset.py` (Phase 1 verifier); `eda_phase2.py` + `plot_phase2_eda.py` are superseded by notebook 01 and kept only as reference |
-| `src/`, `tests/` | Application and serving code plus tests — planned, not created yet |
+| `src/`, `tests/` | `src/api/` FastAPI inference service (frozen XGBoost, tau* = 0.435), `src/monitoring/` drift engines and backtest, plus 33 pytest tests (Phase 8). CI in `.github/workflows/` |
 | `CLAUDE.md` | Claude Code mirror of this file — keep the two in sync when either changes |
 
 ## Build, Test, and Development Commands
@@ -24,11 +24,13 @@ uv venv .venv && source .venv/bin/activate && uv pip install -r requirements.txt
 python scripts/verify_dataset.py     # streaming, memory-safe dataset verification (laptop-safe)
 MPLCONFIGDIR=/tmp/mplconfig ./bit/bin/python scripts/plot_phase2_eda.py  # reference-only plot render
 ruff check . && ruff format .        # lint and format (notebooks included)
-pytest -q                            # test suite (once src/ and tests/ exist)
+pytest -q                            # 33 tests (test_api.py, test_monitoring.py)
 pytest --cov=src tests/              # coverage run
 mlflow ui --port 5000                # experiment tracking UI (Phase 2/6)
 dvc repro                            # versioned data/training pipeline (Phase 6)
-uvicorn src.api.main:app --reload    # FastAPI inference service (Phase 7)
+uvicorn src.api.main:app --reload    # FastAPI inference service (Phase 8b; needs requirements-serving.txt)
+ruff check --force-exclude --config .github/ruff-ci.toml src/api src/monitoring tests  # CI-scoped lint (repo-wide has pre-existing debt)
+python scripts/run_monitoring_backtest.py  # regenerate reports/monitoring_backtest_report.*
 ```
 
 `.venv/` and `bit/` are gitignored local virtualenvs — never referenced from committed code, never
