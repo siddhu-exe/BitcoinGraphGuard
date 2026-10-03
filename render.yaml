@@ -1,0 +1,20 @@
+# Render Blueprint for the BitcoinGraphGuard inference API (Docker web service).
+# No secrets: the service reads only artifacts baked into the image.
+# Render injects PORT itself; the Dockerfile binds uvicorn to ${PORT:-8000}.
+services:
+  - type: web
+    name: bitcoingraphguard-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Measured peak RSS was ~511 MiB for a 10,000-row batch, i.e. the whole
+      # free-tier 512 MB. Cap batches so a single request cannot OOM the service.
+      - key: MAX_BATCH_SIZE
+        value: "1000"
+      # Ephemeral disk on the free plan: resets on every deploy/restart.
+      - key: PREDICTION_LOG_PATH
+        value: /app/logs/predictions.jsonl
