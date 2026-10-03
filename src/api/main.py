@@ -72,6 +72,19 @@ async def lifespan(app: FastAPI):
         logger.critical("Fatal: Failed to load model artifacts during startup: %s", e)
         raise
 
+    # /monitoring/status reads this artifact lazily; fail at boot instead of
+    # serving a permanent 503 if it was left out of the image.
+    try:
+        decision = load_latest_monitoring_decision()
+        logger.info(
+            "Monitoring report loaded: latest step %d, action %s",
+            decision.time_step,
+            decision.action.value,
+        )
+    except Exception as e:
+        logger.critical("Fatal: Monitoring report unusable during startup: %s", e)
+        raise
+
     yield
 
     logger.info("Shutting down BitcoinGraphGuard API service.")

@@ -47,6 +47,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
+    PORT=8000 \
     PREDICTION_LOG_PATH=/app/logs/predictions.jsonl \
     MAX_BATCH_SIZE=10000
 
@@ -67,7 +68,9 @@ EXPOSE 8000
 
 # Health check configured against GET /health
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f "http://localhost:${PORT:-8000}/health" || exit 1
 
-# Launch FastAPI application via Uvicorn with single worker to respect RAM limits
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Launch FastAPI application via Uvicorn with single worker to respect RAM limits.
+# Binds to $PORT (injected by Render; defaults to 8000 locally). Shell form via
+# `sh -c` so the variable expands, `exec` so uvicorn receives SIGTERM directly.
+CMD ["sh", "-c", "exec uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
