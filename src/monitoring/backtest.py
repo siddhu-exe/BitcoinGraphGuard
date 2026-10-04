@@ -5,7 +5,9 @@ Simulates a live production deployment of the monitoring system walking step-by-
 from step 35 to 49 over real Elliptic++ data under strict no-future-lookahead constraints:
 - Ingests streaming feature batches per step.
 - Computes two-tier feature drift (Triad Aggregate 10, 43, 8 + 93 Broad Local features).
-- Tracks rolling label prevalence respecting label arrival lag (L=1).
+- Every label-based input (rolling prevalence, performance F1) reads labels of steps <= t - L only
+  (``label_delay_steps``, default 1); step t's own labels are recorded AFTER its decision.
+- Adds a label-free score-shift channel (PSI of the frozen model's scores vs labelled steps).
 - Executes periodic adversarial validation on scheduled cadence (every 5 steps).
 - Compares frozen threshold (tau*=0.435) against adaptive F1 and Bayesian recalibration.
 - Synthesizes all streams into an auditable Retraining Decision per step.
@@ -26,6 +28,14 @@ import pandas as pd
 
 from src.monitoring.adversarial_drift import AdversarialDriftMonitor, AdversarialDriftReport
 from src.monitoring.feature_drift import FeatureDriftMonitor, FeatureDriftReport
+from src.monitoring.lag_safe import (
+    LabelledScoreHistory,
+    LagSafePerformanceMonitor,
+    PerformanceWindowReport,
+    ScoreShiftMonitor,
+    ScoreShiftReport,
+    derive_f1_floor,
+)
 from src.monitoring.prevalence_drift import PrevalenceDriftMonitor, PrevalenceDriftReport
 from src.monitoring.retraining_trigger import (
     AlertSeverity,
@@ -56,6 +66,8 @@ class StepSimulationRecord:
     adversarial_report: Optional[AdversarialDriftReport]
     threshold_comparison: ThresholdComparisonResult
     decision: RetrainingDecision
+    performance_report: Optional[PerformanceWindowReport] = None
+    score_shift_report: Optional[ScoreShiftReport] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -69,6 +81,8 @@ class StepSimulationRecord:
             "adversarial_drift": self.adversarial_report.to_dict() if self.adversarial_report else None,
             "threshold_comparison": self.threshold_comparison.to_dict(),
             "decision": self.decision.to_dict(),
+            "lag_safe_performance": self.performance_report.to_dict() if self.performance_report else None,
+            "score_shift": self.score_shift_report.to_dict() if self.score_shift_report else None,
         }
 
 
@@ -83,15 +97,21 @@ class MonitoringBacktester:
         predictions_path: str = "results/xgboost/predictions.csv",
         label_counts_path: str = "results/temporal_inductive/per_step_label_counts.csv",
         window_size: int = 5,
-        label_lag: int = 1,
+        label_delay_steps: int = 1,
         frozen_threshold: float = 0.435,
         baseline_prevalence: float = 0.115809,
+        metrics_path: str = "results/xgboost/metrics.json",
+        perf_floor_fraction: float = 0.5,
+        perf_window_steps: int = 2,
+        perf_min_positives: int = 10,
+        score_reference_steps: int = 5,
     ):
         self.features_path = features_path
         self.predictions_path = predictions_path
         self.label_counts_path = label_counts_path
         self.window_size = window_size
-        self.label_lag = label_lag
+        self.label_delay_steps = label_delay_steps
+        self.metrics_path = metrics_path
         self.frozen_threshold = frozen_threshold
         self.baseline_prevalence = baseline_prevalence
 
@@ -100,7 +120,7 @@ class MonitoringBacktester:
         self.prevalence_monitor = PrevalenceDriftMonitor(
             baseline_prevalence=baseline_prevalence,
             window_size=window_size,
-            label_lag=label_lag,
+            label_lag=label_delay_steps,
         )
         self.adversarial_monitor = AdversarialDriftMonitor(
             cadence_steps=5,
@@ -111,11 +131,40 @@ class MonitoringBacktester:
             frozen_threshold=frozen_threshold,
             baseline_prevalence=baseline_prevalence,
             window_size=window_size,
-            label_lag=label_lag,
+            label_lag=label_delay_steps,
         )
-        self.trigger_engine = RetrainingTriggerEngine()
+        self.trigger_engine = RetrainingTriggerEngine(label_delay_steps=label_delay_steps)
+
+        # Lag-safe channels. The F1 floor is a fixed fraction of the validation-period F1 of the
+        # deployed operating point (read from the Phase 2 metrics artifact); nothing from steps
+        # 43-49 enters it. Fails loudly if the artifact is missing (no silent fallback).
+        self.validation_f1 = self.load_validation_f1(metrics_path)
+        self.perf_floor_fraction = perf_floor_fraction
+        self.f1_floor = derive_f1_floor(self.validation_f1, perf_floor_fraction)
+        self.label_history = LabelledScoreHistory(label_delay_steps=label_delay_steps)
+        self.performance_monitor = LagSafePerformanceMonitor(
+            self.label_history,
+            f1_floor=self.f1_floor,
+            threshold=frozen_threshold,
+            window_steps=perf_window_steps,
+            min_positives=perf_min_positives,
+        )
+        self.score_shift_monitor = ScoreShiftMonitor(
+            self.label_history, reference_steps=score_reference_steps
+        )
 
         self.simulation_records: List[StepSimulationRecord] = []
+
+    @staticmethod
+    def load_validation_f1(metrics_path: str, model_key: str = "xgboost_optimized") -> float:
+        """Validation-window (steps 25-34) F1 of the deployed operating point, from the Phase 2 artifact.
+
+        Only the pooled validation F1 is stored (per-step validation F1 is not saved), so the
+        floor is a fraction of the pooled value. Reported as such in the backtest report.
+        """
+        with open(metrics_path, "r", encoding="utf-8") as f:
+            metrics = json.load(f)
+        return float(metrics["operating_points"][model_key]["validation_f1"])
 
     def load_and_prepare_data(self) -> Tuple[pd.DataFrame, Dict[int, pd.DataFrame], pd.DataFrame]:
         """
@@ -214,6 +263,9 @@ class MonitoringBacktester:
 
         self.simulation_records.clear()
         self.trigger_engine.reset()
+        self.label_history = LabelledScoreHistory(label_delay_steps=self.label_delay_steps)
+        self.performance_monitor.history = self.label_history
+        self.score_shift_monitor.history = self.label_history
         logger.info("Starting step-by-step retrospective monitoring loop (steps 35-49)...")
 
         for time_step in range(35, 50):
@@ -229,8 +281,13 @@ class MonitoringBacktester:
             feat_report = self.feature_monitor.evaluate_step(step_feats, time_step=time_step)
 
             # 2. Prevalence Drift Evaluation (Lag-Aware)
-            # Under lag L=1, evaluate drift BEFORE recording current step's true labels
+            # Reads labels of steps <= t - L only; step t's labels are recorded after the decision.
             prev_report = self.prevalence_monitor.evaluate_drift(current_time_step=time_step)
+
+            # 2b. Lag-safe performance (labels <= t - L) and score shift (no labels of step t).
+            scores_t = step_preds["xgboost_score"].to_numpy()
+            perf_report = self.performance_monitor.evaluate(time_step)
+            shift_report = self.score_shift_monitor.evaluate(time_step, scores_t)
 
             # 3. Adversarial Validation (Scheduled on Cadence)
             adv_report = None
@@ -252,10 +309,13 @@ class MonitoringBacktester:
                 prevalence_report=prev_report,
                 adversarial_report=adv_report,
                 threshold_report=thresh_result,
+                performance_report=perf_report,
+                score_shift_report=shift_report,
             )
 
-            # Record step labels for future steps
+            # Record step t's labels/scores for FUTURE steps only (visible from t + L).
             self.prevalence_monitor.record_step_labels(time_step, (n_labeled, n_illicit))
+            self.label_history.record(time_step, step_preds["y_true"].to_numpy(), scores_t)
 
             record = StepSimulationRecord(
                 time_step=time_step,
@@ -268,6 +328,8 @@ class MonitoringBacktester:
                 adversarial_report=adv_report,
                 threshold_comparison=thresh_result,
                 decision=decision,
+                performance_report=perf_report,
+                score_shift_report=shift_report,
             )
             self.simulation_records.append(record)
 
@@ -326,6 +388,16 @@ class MonitoringBacktester:
                 "adaptive_f1_f1": r.threshold_comparison.adaptive_f1_metrics.f1,
                 "bayes_f1": r.threshold_comparison.adaptive_bayes_metrics.f1,
                 "oracle_f1": r.threshold_comparison.oracle_metrics.f1,
+                "lag_safe_f1_min": r.performance_report.f1_min if r.performance_report else np.nan,
+                "lag_safe_f1_steps": ",".join(str(x) for x in r.performance_report.steps_used) if r.performance_report else "",
+                "score_psi": r.score_shift_report.psi if r.score_shift_report else np.nan,
+                "performance_status": r.decision.channels.get("performance", {}).get("status", ""),
+                "score_shift_status": r.decision.channels.get("score_shift", {}).get("status", ""),
+                "prevalence_channel_status": r.decision.channels.get("prevalence", {}).get("status", ""),
+                "feature_shift_status": r.decision.channels.get("feature_shift", {}).get("status", ""),
+                "critical_channels": ",".join(
+                    k for k, v in r.decision.channels.items() if v.get("status") == "CRITICAL"
+                ),
                 "trigger_action": r.decision.action.value,
                 "trigger_severity": r.decision.severity.value,
                 "primary_reason": r.decision.primary_reason,

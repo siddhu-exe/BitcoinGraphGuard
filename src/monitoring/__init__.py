@@ -19,6 +19,15 @@ from src.monitoring.feature_drift import (
     calculate_ks,
     calculate_psi,
 )
+from src.monitoring.lag_safe import (
+    LabelledScoreHistory,
+    LagSafePerformanceMonitor,
+    LagViolationError,
+    PerformanceWindowReport,
+    ScoreShiftMonitor,
+    ScoreShiftReport,
+    derive_f1_floor,
+)
 from src.monitoring.prevalence_drift import (
     PrevalenceDriftLevel,
     PrevalenceDriftMonitor,
@@ -64,6 +73,13 @@ __all__ = [
     "evaluate_predictions",
     "find_optimal_f1_threshold",
     "bayesian_prior_shift_threshold",
+    "LabelledScoreHistory",
+    "LagSafePerformanceMonitor",
+    "LagViolationError",
+    "PerformanceWindowReport",
+    "ScoreShiftMonitor",
+    "ScoreShiftReport",
+    "derive_f1_floor",
     "TriggerAction",
     "AlertSeverity",
     "RetrainingDecision",

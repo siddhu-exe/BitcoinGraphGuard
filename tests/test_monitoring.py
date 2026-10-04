@@ -17,6 +17,14 @@ from src.monitoring.feature_drift import (
     calculate_ks,
     calculate_psi,
 )
+from src.monitoring.lag_safe import (
+    LabelledScoreHistory,
+    LagSafePerformanceMonitor,
+    LagViolationError,
+    PerformanceWindowReport,
+    ScoreShiftMonitor,
+    derive_f1_floor,
+)
 from src.monitoring.prevalence_drift import (
     PrevalenceDriftLevel,
     PrevalenceDriftMonitor,
@@ -405,37 +413,232 @@ def test_monotone_feature_detrending_avoids_permanent_false_alarm():
     assert m_off.level == DriftLevel.SIGNIFICANT
 
 
-def test_local_tier_persistence_suppresses_single_step_spike():
-    """A one-step local-tier spike must not solo-trigger CRITICAL (the step-37 case)."""
+def _local_report(step: int, pct: float) -> FeatureDriftReport:
+    return FeatureDriftReport(
+        time_step=step,
+        n_samples=1000,
+        triad_metrics={},
+        triad_drift_level=DriftLevel.STABLE,
+        local_metrics={},
+        pct_local_drifted_moderate=pct,
+        pct_local_drifted_significant=pct,
+        local_drift_level=DriftLevel.STABLE,
+        overall_drift_level=DriftLevel.STABLE,
+        reasons=[],
+    )
+
+
+def test_feature_shift_is_warning_only_never_critical():
+    """The local-feature PSI channel is demoted: single-step or persistent, it is WARNING at most."""
     engine = RetrainingTriggerEngine()
     engine.reset()
 
-    def _report(step: int, pct: float) -> FeatureDriftReport:
-        return FeatureDriftReport(
-            time_step=step,
-            n_samples=1000,
-            triad_metrics={},
-            triad_drift_level=DriftLevel.STABLE,
-            local_metrics={},
-            pct_local_drifted_moderate=pct,
-            pct_local_drifted_significant=pct,
-            local_drift_level=DriftLevel.STABLE,
-            overall_drift_level=DriftLevel.STABLE,
-            reasons=[],
-        )
-
-    # Step 37 spikes to 34.4% with the previous step below threshold -> WARNING only.
-    d37 = engine.evaluate(time_step=37, feature_report=_report(37, 34.4))
+    # Step 37 case: one spike, then reversal.
+    d37 = engine.evaluate(time_step=37, feature_report=_local_report(37, 34.4))
     assert d37.action == TriggerAction.RECALIBRATE_ONLY
     assert d37.severity == AlertSeverity.WARNING
-
-    # Step 38 reverses to 4.3% -> back to NO_ACTION, never CRITICAL.
-    d38 = engine.evaluate(time_step=38, feature_report=_report(38, 4.3))
+    d38 = engine.evaluate(time_step=38, feature_report=_local_report(38, 4.3))
     assert d38.action == TriggerAction.NO_ACTION
 
-    # Two consecutive exceedances still escalate to CRITICAL.
+    # Even 5 consecutive exceedances (streak well past local_persistence_steps) stay WARNING.
     engine.reset()
-    engine.evaluate(time_step=40, feature_report=_report(40, 31.0))
-    d41 = engine.evaluate(time_step=41, feature_report=_report(41, 33.0))
-    assert d41.action == TriggerAction.RETRAIN
-    assert d41.severity == AlertSeverity.CRITICAL
+    last = None
+    for step in range(40, 45):
+        last = engine.evaluate(time_step=step, feature_report=_local_report(step, 90.0))
+        assert last.severity == AlertSeverity.WARNING
+        assert last.action == TriggerAction.RECALIBRATE_ONLY
+    assert last.telemetry_summary["local_drift_streak"] == 5
+    assert "consecutive steps" in last.primary_reason
+    ch = last.channels["feature_shift"]
+    assert ch["status"] == "WARNING"
+    assert ch["can_trigger_critical"] is False
+    assert ch["kind"] == "label_free"
+
+
+# =====================================================================
+# 6. Lag-safe performance channel
+# =====================================================================
+
+
+def _step_data(n_pos: int, good: bool, n_neg: int = 200):
+    """Labels + scores: a perfect model (F1 = 1.0) or a collapsed one (nothing flagged, F1 = 0)."""
+    y = np.array([1] * n_pos + [0] * n_neg)
+    if good:
+        sc = np.where(y == 1, 0.9, 0.05)
+    else:
+        sc = np.full(len(y), 0.05)
+    return y, sc.astype(float)
+
+
+def test_derive_f1_floor_is_fraction_of_validation_f1():
+    assert derive_f1_floor(0.9605, 0.5) == pytest.approx(0.48025)
+    with pytest.raises(ValueError):
+        derive_f1_floor(0.0)
+    with pytest.raises(ValueError):
+        derive_f1_floor(0.9, fraction=1.5)
+
+
+def test_label_from_step_t_never_influences_decision_at_step_t():
+    """Recording a catastrophic step t before evaluating t must change nothing; t+L sees it."""
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    mon = LagSafePerformanceMonitor(hist, f1_floor=0.48, window_steps=2, min_positives=10)
+    for step in (40, 41):
+        hist.record(step, *_step_data(20, good=True))
+
+    before = mon.evaluate(42)
+    hist.record(42, *_step_data(20, good=False))  # step 42's own labels: F1 = 0
+    after = mon.evaluate(42)
+    assert after.to_dict() == before.to_dict()
+    assert not after.breached
+    assert 42 not in after.steps_used
+    assert after.max_label_step_used == 41 <= 42 - 1
+
+    # One step later (L = 1) the crash is visible and fires.
+    at_43 = mon.evaluate(43)
+    assert at_43.breached
+    assert 42 in at_43.steps_used and at_43.f1_min == 0.0
+
+
+def test_label_delay_is_configurable():
+    """With L = 3 a crash at step 42 stays invisible until step 45."""
+    hist = LabelledScoreHistory(label_delay_steps=3)
+    mon = LagSafePerformanceMonitor(hist, f1_floor=0.48, window_steps=2, min_positives=10)
+    for step in (39, 40, 41):
+        hist.record(step, *_step_data(20, good=True))
+    hist.record(42, *_step_data(20, good=False))
+    assert not mon.evaluate(44).breached  # newest usable step is 41
+    assert mon.evaluate(44).max_label_step_used == 41
+    assert mon.evaluate(45).breached      # step 42 labels arrive at 45
+
+
+def test_performance_window_is_step_weighted_not_pooled():
+    """A big healthy step must not hide a crash at the next, small step."""
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    mon = LagSafePerformanceMonitor(hist, f1_floor=0.48, window_steps=2, min_positives=10)
+    hist.record(42, *_step_data(239, good=True, n_neg=1900))
+    hist.record(43, *_step_data(24, good=False, n_neg=1350))
+
+    # Pooled F1 over both steps would be well above the floor ...
+    y = np.concatenate([hist.get(42)[0], hist.get(43)[0]])
+    sc = np.concatenate([hist.get(42)[1], hist.get(43)[1]])
+    assert LagSafePerformanceMonitor._f1(y, sc, 0.435) > 0.85
+    # ... but the step-weighted window sees the crash.
+    rep = mon.evaluate(44)
+    assert rep.breached
+    assert rep.f1_min == 0.0
+    assert rep.per_step_f1[42] == 1.0
+
+
+def test_performance_ignores_low_positive_steps_and_reports_unavailable():
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    mon = LagSafePerformanceMonitor(hist, f1_floor=0.48, window_steps=2, min_positives=10)
+    assert not mon.evaluate(35).available  # nothing labelled yet
+    hist.record(45, *_step_data(5, good=False))  # 5 positives: too noisy to judge
+    rep = mon.evaluate(46)
+    assert not rep.available and not rep.breached
+
+
+def test_engine_rejects_label_inputs_newer_than_t_minus_l():
+    engine = RetrainingTriggerEngine(label_delay_steps=1)
+    leaky = PerformanceWindowReport(
+        time_step=43, label_delay_steps=1, max_label_step_allowed=42,
+        steps_used=[43], per_step_f1={43: 0.0}, per_step_positives={43: 24},
+        f1_floor=0.48, available=True, breached=True, f1_min=0.0, f1_mean=0.0,
+    )
+    with pytest.raises(LagViolationError):
+        engine.evaluate(time_step=43, performance_report=leaky)
+
+    leaky_prev = PrevalenceDriftReport(
+        time_step=43, step_prevalence=0.0175, rolling_prevalence=0.01,
+        baseline_prevalence=0.1158, relative_change=-0.9, absolute_change=-0.1,
+        window_size=5, available_steps_in_window=[39, 40, 41, 42, 43],
+        total_labeled_in_window=5000, total_illicit_in_window=50,
+        drift_level=PrevalenceDriftLevel.ALERT, label_lag=0,
+    )
+    with pytest.raises(LagViolationError):
+        engine.evaluate(time_step=43, prevalence_report=leaky_prev)
+
+
+def test_engine_performance_crash_is_critical_with_lag_safe_report():
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    mon = LagSafePerformanceMonitor(hist, f1_floor=0.48, window_steps=2, min_positives=10)
+    hist.record(42, *_step_data(20, good=True))
+    hist.record(43, *_step_data(20, good=False))
+    engine = RetrainingTriggerEngine(label_delay_steps=1)
+
+    d43 = engine.evaluate(time_step=43, performance_report=mon.evaluate(43))
+    assert d43.action == TriggerAction.NO_ACTION  # step 43's own crash is not visible at 43
+    d44 = engine.evaluate(time_step=44, performance_report=mon.evaluate(44))
+    assert d44.action == TriggerAction.RETRAIN
+    assert d44.primary_reason.startswith("PerformanceCrash")
+    assert d44.channels["performance"]["kind"] == "label_dependent"
+    assert d44.to_dict()["label_delay_steps"] == 1
+
+
+# =====================================================================
+# 7. Score-shift channel (label-free)
+# =====================================================================
+
+
+def _score_history(n_steps: int = 5, seed: int = 0) -> LabelledScoreHistory:
+    rng = np.random.default_rng(seed)
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    for step in range(35, 35 + n_steps):
+        y = (rng.random(1000) < 0.09).astype(int)
+        hist.record(step, y, rng.beta(1, 12, 1000))  # healthy: mass near 0
+    return hist
+
+
+def test_score_shift_stable_distribution_does_not_fire():
+    hist = _score_history()
+    rng = np.random.default_rng(1)
+    rep = ScoreShiftMonitor(hist).evaluate(40, rng.beta(1, 12, 1000))
+    assert rep.available and rep.psi < 0.10
+    assert rep.level == "STABLE"
+    dec = RetrainingTriggerEngine().evaluate(time_step=40, score_shift_report=rep)
+    assert dec.action == TriggerAction.NO_ACTION
+
+
+def test_score_shift_fires_critical_at_standard_025_band_without_labels():
+    hist = _score_history()
+    rng = np.random.default_rng(2)
+    shifted = rng.beta(4, 3, 1000)  # scores migrate toward the middle/high range
+    rep = ScoreShiftMonitor(hist).evaluate(40, shifted)
+    assert rep.psi >= 0.25 and rep.level == "CRITICAL"
+    assert rep.critical_threshold == 0.25
+
+    dec = RetrainingTriggerEngine().evaluate(time_step=40, score_shift_report=rep)
+    assert dec.action == TriggerAction.RETRAIN
+    assert dec.severity == AlertSeverity.CRITICAL
+    assert dec.primary_reason.startswith("ScoreShift")
+    ch = dec.channels["score_shift"]
+    assert ch["kind"] == "label_free" and ch["status"] == "CRITICAL" and ch["threshold"] == 0.25
+
+
+def test_score_shift_warning_band_is_recalibrate_only():
+    engine = RetrainingTriggerEngine()
+    rep = ScoreShiftMonitor(_score_history()).evaluate(40, np.random.default_rng(3).beta(1, 12, 1000))
+    rep.psi = 0.15  # inside [0.10, 0.25)
+    dec = engine.evaluate(time_step=40, score_shift_report=rep)
+    assert dec.action == TriggerAction.RECALIBRATE_ONLY
+    assert dec.channels["score_shift"]["status"] == "WARNING"
+
+
+def test_score_shift_reference_uses_labelled_steps_only_and_needs_two():
+    hist = LabelledScoreHistory(label_delay_steps=1)
+    mon = ScoreShiftMonitor(hist, reference_steps=5, min_reference_steps=2)
+    scores = np.random.default_rng(4).beta(1, 12, 500)
+    hist.record(35, np.zeros(500, dtype=int), scores)
+    assert not mon.evaluate(36, scores).available  # only one labelled step
+    hist.record(36, np.zeros(500, dtype=int), scores)
+    rep37 = mon.evaluate(37, scores)
+    assert rep37.available and rep37.reference_steps == [35, 36]
+    # Step 37's own record is invisible at 37 (strictly <= t - L), so the reference is unchanged.
+    hist.record(37, np.zeros(500, dtype=int), np.full(500, 0.95))
+    assert mon.evaluate(37, scores).reference_steps == [35, 36]
+    # Unavailable never fires.
+    dec = RetrainingTriggerEngine().evaluate(
+        time_step=36, score_shift_report=mon.evaluate(36, scores)
+    )
+    assert dec.action == TriggerAction.NO_ACTION
+    assert dec.channels["score_shift"]["status"] == "UNAVAILABLE"
