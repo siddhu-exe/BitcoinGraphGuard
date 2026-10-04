@@ -197,23 +197,25 @@ To test whether separability collapses when the dominant trending features are e
 
 ### 6.5. Per-Step Granular Adversarial AUC vs. Train (1–34)
 
-| Time Step $t$ | Evaluation Subgroup | Labeled $N$ | Adversarial AUC (Mean $\pm$ Std) | Illicit Prevalence |
-| :--- | :--- | :--- | :--- | :--- |
-| **Step 35** | Early Test (Stationary) | 1,341 | $1.0000 \pm 0.0000$ | 9.47% |
-| **Step 36** | Early Test (Stationary) | 1,708 | $1.0000 \pm 0.0000$ | 9.25% |
-| **Step 37** | Early Test (Stationary) | 498 | $1.0000 \pm 0.0000$ | 10.84% |
-| **Step 38** | Early Test (Stationary) | 756 | $1.0000 \pm 0.0000$ | 10.45% |
-| **Step 39** | Early Test (Stationary) | 1,183 | $1.0000 \pm 0.0000$ | 9.04% |
-| **Step 40** | Early Test (Stationary) | 1,211 | $1.0000 \pm 0.0000$ | 9.50% |
-| **Step 41** | Early Test (Stationary) | 1,132 | $1.0000 \pm 0.0000$ | 8.83% |
-| **Step 42** | Early Test (Stationary) | 2,154 | $1.0000 \pm 0.0000$ | 8.26% |
-| **Step 43** | Late Test (Drift Onset) | 1,370 | $0.9996 \pm 0.0007$ | **2.55%** |
-| **Step 44** | Late Test (Drift Window) | 1,591 | $1.0000 \pm 0.0000$ | 2.58% |
-| **Step 45** | Late Test (Drift Window) | 1,221 | $0.9996 \pm 0.0008$ | 2.54% |
-| **Step 46** | Late Test (Drift Window) | 712 | $1.0000 \pm 0.0000$ | 2.39% |
-| **Step 47** | Late Test (Drift Window) | 846 | $1.0000 \pm 0.0000$ | 2.60% |
-| **Step 48** | Late Test (Drift Window) | 471 | $1.0000 \pm 0.0000$ | 2.55% |
-| **Step 49** | Late Test (Drift Window) | 476 | $1.0000 \pm 0.0000$ | 2.52% |
+> **Correction (monitoring fix pass).** An earlier version of this table listed a near-constant "illicit prevalence" of about 2.4–2.6% for every step 43–49 (and 8.3–10.8% for 35–42). Those values do not match the labelled data: they look like the class mix of the balanced subsample used to fit the adversarial classifier, not the per-step prevalence. The column below is recomputed from `results/temporal_inductive/per_step_label_counts.csv` (labelled transactions only). The real illicit counts in steps 43–49 are **24, 24, 5, 2, 22, 36, 56**. The window aggregate (169 / 6,687 = 2.53%) is correct, but it hides a wide per-step spread (0.28% at step 46 to 11.76% at step 49), so statements that read the drop as a uniform ~2.5% per step do not hold. The adversarial AUC column is unchanged.
+
+| Time Step $t$ | Evaluation Subgroup | Labeled $N$ | Illicit $n$ | Adversarial AUC (Mean $\pm$ Std) | Illicit Prevalence |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Step 35** | Early Test (Stationary) | 1,341 | 182 | $1.0000 \pm 0.0000$ | 13.57% |
+| **Step 36** | Early Test (Stationary) | 1,708 | 33 | $1.0000 \pm 0.0000$ | 1.93% |
+| **Step 37** | Early Test (Stationary) | 498 | 40 | $1.0000 \pm 0.0000$ | 8.03% |
+| **Step 38** | Early Test (Stationary) | 756 | 111 | $1.0000 \pm 0.0000$ | 14.68% |
+| **Step 39** | Early Test (Stationary) | 1,183 | 81 | $1.0000 \pm 0.0000$ | 6.85% |
+| **Step 40** | Early Test (Stationary) | 1,211 | 112 | $1.0000 \pm 0.0000$ | 9.25% |
+| **Step 41** | Early Test (Stationary) | 1,132 | 116 | $1.0000 \pm 0.0000$ | 10.25% |
+| **Step 42** | Early Test (Stationary) | 2,154 | 239 | $1.0000 \pm 0.0000$ | 11.10% |
+| **Step 43** | Late Test (Drift Onset) | 1,370 | 24 | $0.9996 \pm 0.0007$ | **1.75%** |
+| **Step 44** | Late Test (Drift Window) | 1,591 | 24 | $1.0000 \pm 0.0000$ | 1.51% |
+| **Step 45** | Late Test (Drift Window) | 1,221 | 5 | $0.9996 \pm 0.0008$ | 0.41% |
+| **Step 46** | Late Test (Drift Window) | 712 | 2 | $1.0000 \pm 0.0000$ | 0.28% |
+| **Step 47** | Late Test (Drift Window) | 846 | 22 | $1.0000 \pm 0.0000$ | 2.60% |
+| **Step 48** | Late Test (Drift Window) | 471 | 36 | $1.0000 \pm 0.0000$ | 7.64% |
+| **Step 49** | Late Test (Drift Window) | 476 | 56 | $1.0000 \pm 0.0000$ | 11.76% |
 
 ### 6.6. Permutation Importance & Collinear Redundancy Audit (Notebook 08b)
 
@@ -278,6 +280,8 @@ This result definitively revises the initial "GBDT splitting artifact" conjectur
    Zero features have zero within-step variance ($\bar{\sigma}^2_w > 0$). Both aggregate and local shifts reflect real network evolution across Bitcoin transaction history.
 
 ### 7.2. Why Performance Collapses Specifically at Step 43
+
+> **Note (monitoring fix pass).** The 9.16% → 2.53% figures below are window aggregates (35–42 vs 43–49). Per step, the labelled prevalence in 43–49 is 1.75%, 1.51%, 0.41%, 0.28%, 2.60%, 7.64% and 11.76% (see the corrected §6.5), so "a 4x drop at step 43" should be read as a regime-level statement, not a uniform per-step value.
 The per-step adversarial audit reveals that while covariate drift progresses continuously from step 35 to 49 ($\text{AUC} \approx 1.0$), the models (XGBoost, GraphSAGE, RGCN, HGT) maintain high PR-AUC (0.73–0.92) across steps 35–42, but experience a cliff-edge collapse at step 43 (0.038–0.055).
 
 This proves that **covariate drift alone does not cause the collapse**; rather, the collapse is triggered by the interaction between **continuous covariate drift** and a **violent 4x drop in illicit class prevalence** at step 43 ($9.16\% \to 2.53\%$). Because static models fit thresholds $\tau^*$ on high-prevalence training data (steps 1–34), their uncalibrated risk scores generate massive false positives on the sparse late-regime distribution.

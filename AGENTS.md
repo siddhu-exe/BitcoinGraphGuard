@@ -14,7 +14,7 @@ context and `docs/ARCHITECTURE.md` for the full design.
 | `eda/` | Canonical Phase 1 EDA run artifacts exported from `notebooks/01_eda.ipynb`: `eda_digest.txt`, `checks.csv`, `eda_summary.json`, table CSVs, figures. **Source of truth for EDA numbers.** |
 | `reports/` | Verification evidence (`phase1_verification.json`) and `reports/eda/` from the superseded pre-notebook streaming pass |
 | `scripts/` | Repository tooling: `verify_dataset.py` (Phase 1 verifier); `eda_phase2.py` + `plot_phase2_eda.py` are superseded by notebook 01 and kept only as reference |
-| `src/`, `tests/` | `src/api/` FastAPI inference service (frozen XGBoost, tau* = 0.435), `src/monitoring/` drift engines and backtest, plus 33 pytest tests (Phase 8). CI in `.github/workflows/` |
+| `src/`, `tests/` | `src/api/` FastAPI inference service (frozen XGBoost, tau* = 0.435), `src/monitoring/` drift engines and backtest (lag-safe: label-based channels read steps <= t - `label_delay_steps` only; score-shift PSI is label-free; local-feature PSI is WARNING-only), plus 33 pytest tests (Phase 8). CI in `.github/workflows/` |
 | `CLAUDE.md` | Claude Code mirror of this file — keep the two in sync when either changes |
 
 ## Build, Test, and Development Commands
