@@ -184,11 +184,152 @@ def format_markdown_report(
     else:
         adv_attr_table = "| — | — |"
 
+
+    # --- Lag-safe narrative, computed from the actual decisions (never hardcoded) ---
+    L = backtester.label_delay_steps
+    VF = backtester.validation_f1
+    FLOOR = backtester.f1_floor
+    FRAC = backtester.perf_floor_fraction
+    crit_df = df_gen[df_gen["trigger_severity"] == "CRITICAL"]
+
+    def _steps(frame):
+        return [int(x) for x in frame["time_step"]]
+
+    def _fmt_steps(steps):
+        return ", ".join(str(x) for x in steps) if steps else "none"
+
+    crit_pre = _steps(crit_df[crit_df["time_step"] <= 42])
+    crit_drift = _steps(crit_df[crit_df["time_step"] >= 43])
+    warn_pre = _steps(df_gen[(df_gen["time_step"] <= 42) & (df_gen["trigger_severity"] == "WARNING")])
+    channel_first: dict[str, int | None] = {}
+    for ch in ("score_shift", "triad", "performance", "prevalence"):
+        steps_ch = [
+            int(r["time_step"])
+            for _, r in df_gen.iterrows()
+            if r["time_step"] >= 43 and ch in str(r["critical_channels"]).split(",")
+        ]
+        channel_first[ch] = min(steps_ch) if steps_ch else None
+    first_fire = min(crit_drift) if crit_drift else None
+    row43 = df_gen[df_gen["time_step"] == 43].iloc[0]
+    psi43 = row43["score_psi"]
+    channels_at_first = (
+        [c for c in str(df_gen[df_gen["time_step"] == first_fire].iloc[0]["critical_channels"]).split(",") if c]
+        if first_fire is not None
+        else []
+    )
+    label_free_first = [v for k, v in channel_first.items() if k in ("score_shift", "triad") and v is not None]
+    label_dep_first = [v for k, v in channel_first.items() if k in ("performance", "prevalence") and v is not None]
+    pretty = {
+        "score_shift": "ScoreShift (label-free)",
+        "triad": "Triad (label-free)",
+        "performance": "PerformanceCrash (label-dependent, lag-safe)",
+        "prevalence": "PrevalenceCollapse (label-dependent, lag-safe)",
+    }
+    if first_fire is None:
+        first_fire_text = "No `CRITICAL` fired anywhere in steps 43-49."
+    else:
+        first_fire_text = (
+            f"The first `CRITICAL` in the drift window is at **step {first_fire}**, raised by "
+            f"{' + '.join(pretty.get(c, c) for c in channels_at_first)}."
+        )
+    if channel_first["score_shift"] == 43:
+        step43_text = (
+            f"**The score-shift channel fires at step 43** (PSI = {psi43:.3f} >= 0.25, label-free): "
+            "it is the only channel that sees the regime change at its onset."
+        )
+    elif pd.notnull(psi43):
+        step43_text = (
+            f"**The score-shift channel does NOT fire at step 43** (PSI = {psi43:.3f}, below the 0.25 band). "
+            "No channel reaches `CRITICAL` at step 43."
+            if 43 not in crit_drift
+            else f"The score-shift channel does not fire at step 43 (PSI = {psi43:.3f}, below 0.25); step 43 is "
+            f"`CRITICAL` via {', '.join(channels_at_first)}."
+        )
+    else:
+        step43_text = "The score-shift channel is unavailable at step 43 (too few labelled reference steps)."
+    perf_first = channel_first["performance"]
+    perf_text = (
+        f"The performance channel first fires at step {perf_first} (= first labelled collapsed step + L = 43 + {L} "
+        "at the earliest): under label delay it cannot fire at step 43."
+        if perf_first is not None
+        else "The performance channel never fires in 43-49."
+    )
+    prev_first = channel_first["prevalence"]
+    prev_text = (
+        f"The rolling-prevalence collapse floor (< 3.5%) is first crossed at step {prev_first}."
+        if prev_first is not None
+        else "The rolling-prevalence collapse floor is never crossed in 43-49."
+    )
+    if label_free_first and label_dep_first:
+        order_text = (
+            f"Label-free channels first fire at step {min(label_free_first)}, label-dependent channels at step "
+            f"{min(label_dep_first)}."
+        )
+    elif label_free_first:
+        order_text = f"Only label-free channels fire in 43-49 (first at step {min(label_free_first)})."
+    elif label_dep_first:
+        order_text = f"Only label-dependent channels fire in 43-49 (first at step {min(label_dep_first)})."
+    else:
+        order_text = "No channel fires in 43-49."
+
+    # Robustness of the F1 floor (post-hoc check; the 0.5 fraction was fixed before the run).
+    big = df_gen[df_gen["n_illicit"] >= backtester.performance_monitor.min_positives]
+    pre_f1 = big.loc[big["time_step"] <= 42, "frozen_f1"]
+    drift_f1 = big.loc[big["time_step"] >= 43, "frozen_f1"]
+    if len(pre_f1) and len(drift_f1):
+        lo_frac, hi_frac = drift_f1.max() / VF, pre_f1.min() / VF
+        floor_robust_text = (
+            f"Per-step F1 on steps with >= {backtester.performance_monitor.min_positives} illicit labels ranges "
+            f"{pre_f1.min():.3f}-{pre_f1.max():.3f} in 35-42 and {drift_f1.min():.3f}-{drift_f1.max():.3f} in 43-49. "
+            f"Any fraction between {lo_frac:.2f} and {hi_frac:.2f} of the validation F1 would give the same "
+            f"performance-channel separation; the declared fraction {FRAC:.2f} sits inside that range, so the "
+            "result does not hinge on it (this is a post-hoc robustness check, not how the fraction was chosen)."
+        )
+    else:
+        floor_robust_text = "Not enough steps with sufficient positives for a floor-robustness check."
+
+    first_drift_label = f"{first_fire}" if first_fire is not None else "never"
+    action_row_drift = (
+        f"`RETRAIN` at {_fmt_steps(crit_drift)} (first: {first_drift_label}); other steps WARNING/INFO"
+    )
+    action_row_pre = (
+        f"`CRITICAL` at {_fmt_steps(crit_pre)}; WARNING at {_fmt_steps(warn_pre)}"
+        if crit_pre
+        else f"no `CRITICAL`; `RECALIBRATE_ONLY` (WARNING) at {_fmt_steps(warn_pre)}"
+    )
+
+    local_pre = df_gen.loc[df_gen["time_step"] <= 42, "pct_local_drift_sig"]
+    local43 = float(df_gen.loc[df_gen["time_step"] == 43, "pct_local_drift_sig"].iloc[0])
+
+    # Prevalence-window facts for Section 3.3 (computed from the matrix)
+    def _rp(t: int) -> float:
+        return float(df_gen.loc[df_gen["time_step"] == t, "rolling_prevalence"].iloc[0]) * 100.0
+
+    prev_lines_md = (
+        f"- Under lag L={L}, the decision at step 43 sees labels up to step {43 - L}: rolling prevalence {_rp(43):.2f}%.",
+        f"- At step 44 the step-43 labels enter the window and rolling prevalence falls to {_rp(44):.2f}%.",
+        f"- The rolling prevalence is {', '.join(f'{_rp(t):.2f}% (t={t})' for t in range(45, 50))}; "
+        f"{prev_text}",
+    )
+
+    # Section 10 tables
+    lag_rows_md = []
+    for _, row in df_gen.iterrows():
+        f1m = f"{row['lag_safe_f1_min']:.3f}" if pd.notnull(row["lag_safe_f1_min"]) else "—"
+        used = row["lag_safe_f1_steps"] if str(row["lag_safe_f1_steps"]) else "—"
+        psi = f"{row['score_psi']:.3f}" if pd.notnull(row["score_psi"]) else "—"
+        lag_rows_md.append(
+            f"| **{int(row['time_step'])}** | {used} | {f1m} | {row['performance_status']} | {psi} | "
+            f"{row['score_shift_status']} | {row['prevalence_channel_status']} | {row['feature_shift_status']} | "
+            f"{row['critical_channels'] or '—'} | `{row['trigger_action']}` ({row['trigger_severity']}) |"
+        )
+    lag_table_str = "\n".join(lag_rows_md)
+
     report_lines = [
         "# Phase 8a: Automated Drift Monitoring & Retraining Triggers — Backtest Report",
         "",
         "> **Retrospective Simulation Record.** This report documents the end-to-end retrospective validation of the BitcoinGraphGuard production monitoring system across **steps 35 through 49** on the real Elliptic++ dataset.",
-        "> Execution strictly enforces **no future lookahead**: monitoring evaluations at step t consume streaming feature distributions at t and labeled outcomes available under label-arrival lag L=1 (ground-truth labels up to t-1).",
+        f"> Execution strictly enforces **no future lookahead and a label delay of L={L} step(s)**: a decision at step t consumes feature distributions and model scores of step t, and labels of steps <= t-{L} only. Step t's own labels (e.g. its F1) are never used; where a same-step F1 appears below it is labelled *hindsight* and is diagnostic only. See Section 10 for the lag-safe rules.",
         "",
         "---",
         "",
@@ -231,17 +372,17 @@ def format_markdown_report(
         f"| **Adaptive Rolling F1 tau F1** | **{stat_adapt_f1:.4f}** (Lift {stat_adapt_f1 - stat_frozen_f1:+.4f}) | **{drift_adapt_f1:.4f}** (Lift {drift_adapt_f1 - drift_frozen_f1:+.4f}) | {df_thresh['adaptive_f1_f1'].mean():.4f} |",
         f"| **Bayesian Prior Shift tau F1** | **{stat_bayes_f1:.4f}** (Lift {stat_bayes_f1 - stat_frozen_f1:+.4f}) | **{drift_bayes_f1:.4f}** (Lift {drift_bayes_f1 - drift_frozen_f1:+.4f}) | {df_thresh['bayes_f1'].mean():.4f} |",
         f"| **Oracle Upper-Bound tau F1** | **{stat_oracle_f1:.4f}** | **{drift_oracle_f1:.4f}** | {df_thresh['oracle_f1'].mean():.4f} |",
-        "| **Primary Retraining Action** | `NO_ACTION` / `RECALIBRATE_ONLY` (1 local-tier false alarm at 37) | `RETRAIN` (100% of Drift Steps) | — |",
+        f"| **Primary Retraining Action (lag-safe, L={L})** | {action_row_pre} | {action_row_drift} | — |",
         "",
         "---",
         "",
         "## 2. Step-by-Step Retrospective Monitoring Matrix (Steps 35–49)",
         "",
         "```",
-        "STABLE ENVELOPE (Steps 35-42, local-tier spikes suppressed to WARNING at 37) -> REGIME COLLAPSE & MANDATORY RETRAIN (Steps 43-49)",
+        f"STEPS 35-42: CRITICAL at {_fmt_steps(crit_pre)} | STEPS 43-49: CRITICAL at {_fmt_steps(crit_drift)} (lag-safe, L={L})",
         "```",
         "",
-        "| Step | Labeled N | Illicit N | Step Prev | Rolling Prev (L=1) | Resid Score 10 | Resid Score 43 | Resid Score 8 | Local Drift % | Adv AUC | Frozen F1 | Adapt F1 | Trigger Decision & Severity |",
+        "| Step | Labeled N | Illicit N | Step Prev | Rolling Prev (labels <= t-L) | Resid Score 10 | Resid Score 43 | Resid Score 8 | Local Drift % | Adv AUC | Same-step F1 (hindsight) | Adapt F1 (hindsight) | Trigger Decision & Severity |",
         "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |",
         f"{step_table_str}",
         "",
@@ -266,15 +407,13 @@ def format_markdown_report(
         "- Measures the percentage of the 93 `Local_feature_*` columns exhibiting significant drift (PSI > 0.25).",
         "- These features are confirmed non-monotone (median |rho| = 0.29), so static-reference PSI is retained for this tier (see Section 8).",
         "- The single-step drift ratio is noisy: 6.5% (t=35), 22.6% (t=36), 34.4% (t=37), then 4.3% (t=38); in the drift window it reaches 30.1% at t=46.",
-        "- The trigger now requires **2 consecutive steps** above 30% before contributing to `CRITICAL`, so the step-37 spike (34.4% -> 4.3%) yields a WARNING, not a `CRITICAL` (Section 9, Fix 2).",
+        f"- This channel is **WARNING-only** (Section 10): it cannot raise `CRITICAL`, alone or when persistent. It spiked at step 37 (a false alarm) and at step 43 reads {local43:.1f}%, inside its pre-drift range of {local_pre.min():.1f}%-{local_pre.max():.1f}% over 35-42, so it carries no onset signal.",
         "",
         "### 3.3. Prevalence & Label Drift Monitor (`src/monitoring/prevalence_drift.py`)",
         "- Tracks rolling illicit prevalence over window W=5 under label arrival lag L=1.",
         "- Baseline training prevalence: 11.58%.",
         "- At **Step 43**, step prevalence drops from 11.10% (step 42) to **1.75%**.",
-        "- Under lag L=1, when predicting step 43, labels up to step 42 are available (rolling prevalence 10.42%).",
-        "- At **Step 44**, labels from step 43 enter the rolling window, causing rolling prevalence to drop to 8.21% (warning).",
-        "- By **Step 45–47**, rolling prevalence collapses to **1.15%–1.34%**, crossing the absolute collapse floor (< 3.5%) and firing persistent `PrevalenceCollapse` alerts.",
+        *prev_lines_md,
         "",
         "### 3.4. Periodic Adversarial Validation Monitor (`src/monitoring/adversarial_drift.py`)",
         "- Distinguishes reference training samples (steps 1–34) from current target transactions using cross-validated domain discrimination.",
@@ -316,15 +455,18 @@ def format_markdown_report(
         "",
         "## 5. Retraining Trigger Timing & Early Warning Verdict",
         "",
-        "### 5.1. Corrected Trigger Decisions Across Steps 35–49:",
-        "- **Steps 35–42 (Stationary Envelope):** the triad monitor is STABLE, the adversarial channel is corroborating-only (triad excluded from its features), and the local-tier persistence rule is active. Step 35 is `RECALIBRATE_ONLY` (WARNING). There is **no `CRITICAL` anywhere in 35–42**.",
-        "- **Step 43 (Drift Onset):** `RETRAIN` / `CRITICAL` fires from the `PerformanceCrash` channel (frozen F1 = 0.000, PR-AUC = 0.0365) — not from the triad.",
-        "- **Steps 43–49 (Drift Window):** `RETRAIN` / `CRITICAL` at 43, 44, 45, 47, 48, 49 (performance crash / prevalence collapse); step 46 is a WARNING because its single-step local spike is suppressed by the persistence rule.",
+        "### 5.1. Lag-safe trigger decisions across steps 35–49:",
+        f"- **Steps 35–42 (pre-drift):** `CRITICAL` at {_fmt_steps(crit_pre)}; WARNING at {_fmt_steps(warn_pre)}.",
+        f"- **Step 43 (drift onset):** {step43_text}",
+        f"- **Steps 43–49 (drift window):** `CRITICAL` at {_fmt_steps(crit_drift)}. {first_fire_text}",
+        f"- {perf_text}",
+        f"- {prev_text}",
+        f"- {order_text}",
         "",
-        "### 5.2. Scientific Verdict on Early Warning:",
-        "- **The triad monitor is now operationally silent by design**, because the three cumulative features carry no regime signal (Section 8). It no longer supplies a false 'always-on' alarm.",
-        "- **The genuine 42→43 escalation comes from the prediction-performance / prevalence channels**, which use labels (not PSI): frozen F1 collapses at step 43.",
-        "- **Local persistence** (Section 9, Fix 2) removes the step-37 false `CRITICAL`: a single-step spike above 30% now yields a WARNING, while two consecutive exceedances still escalate to `CRITICAL`.",
+        "### 5.2. Verdict on early warning:",
+        "- **The triad monitor is operationally silent by design**: the three cumulative features carry no regime signal (Section 8).",
+        f"- **Under label delay L={L}, no label-based channel can fire at step 43.** The collapse becomes visible to labels one step after it starts. Any earlier warning has to come from a label-free channel, and this report states plainly whether one did (above).",
+        "- The old statement that `PerformanceCrash` fired at step 43 read step 43's *own* F1, a label that has not arrived when step 43 is scored. It was hindsight, and it has been removed (Section 10).",
         "",
         "---",
         "",
@@ -334,10 +476,11 @@ def format_markdown_report(
         "- `src/monitoring/prevalence_drift.py`: Lag-aware rolling prevalence monitor.",
         "- `src/monitoring/adversarial_drift.py`: Periodic adversarial validation discriminator.",
         "- `src/monitoring/threshold_calibration.py`: Adaptive Bayesian and empirical F1 calibration.",
-        "- `src/monitoring/retraining_trigger.py`: Multi-signal decision engine.",
+        "- `src/monitoring/retraining_trigger.py`: Multi-signal decision engine (lag-checked, channel breakdown).",
+        "- `src/monitoring/lag_safe.py`: Lag-safe performance channel and label-free score-shift channel.",
         "- `src/monitoring/backtest.py`: Retrospective simulation orchestrator.",
         "- `scripts/compare_referencing_methods.py`: Four-method monotone-feature re-referencing comparison.",
-        "- `tests/test_monitoring.py`: 14 unit & integration tests (100% passing).",
+        "- `tests/test_monitoring.py`: unit & integration tests, including the lag, score-shift and feature-shift-demotion tests (run `pytest -q` for the current count).",
         "- `results/monitoring/step_monitoring_metrics.csv`: Per-step monitoring tabular record.",
         "- `results/monitoring/triad_drift_summary.csv`: Per-step PSI and KS for triad features.",
         "- `results/monitoring/threshold_comparison_summary.csv`: Per-step frozen vs adaptive metrics.",
@@ -403,16 +546,15 @@ def format_markdown_report(
         "",
         "`Local_feature_2` and `Local_feature_3` are the two most trend-like *local* features (reference |rho| = 0.79 / 0.80 over steps 1–34), so the residual always-on component is a milder instance of the same time-proxy issue plus genuine step-specific covariate differences. Since the channel is still not regime-discriminative (step 35 >= step 45) and the cause is now attributed, the adversarial `ALERT` remains a corroborating warning and cannot solo-trigger `CRITICAL`. The permanent fix — auto-excluding `|rho| >= 0.99` monotone features from the classifier — is implemented in `src/monitoring/adversarial_drift.py`.",
         "",
-        "### 8.7. Corrected trigger decisions (all 15 steps)",
-        "| Step | Triad drift_score 10/43/8 | Triad level | Local drift % | Prevalence | Frozen F1 | Trigger decision | Primary reason |",
+        "### 8.7. Trigger decisions (all 15 steps; lag-safe, see Section 10)",
+        "| Step | Triad drift_score 10/43/8 | Triad level | Local drift % | Prevalence | Same-step F1 (hindsight) | Trigger decision | Primary reason |",
         "| :--- | :--- | :--- | ---: | :--- | ---: | :--- | :--- |",
         f"{corrected_decisions_str}",
         "",
         "### 8.8. Success-criterion assessment",
-        "- **Step 35 is `RECALIBRATE_ONLY` (WARNING) on every channel**, including adversarial (triad excluded; 0.90 AUC is corroborating-only). ✅",
-        "- **The trigger escalates to `CRITICAL` at step 43** via the `PerformanceCrash` channel (frozen F1 = 0.000, PR-AUC = 0.0365), i.e. at the genuine regime onset. ✅",
-        "- **Step 37 no longer produces a standalone `CRITICAL`**: the 34.4% -> 4.3% single-step local spike now yields a WARNING under the 2-step persistence rule (Section 9, Fix 2). ✅",
-        "- Step 46 is likewise downgraded to WARNING (single-step local spike); the drift window still fires `CRITICAL` at 43, 44, 45, 47, 48, 49.",
+        f"- Pre-drift (35–42): `CRITICAL` at {_fmt_steps(crit_pre)}. " + ("✅" if not crit_pre else "❌ false alarm(s) — investigate."),
+        f"- Drift onset (step 43): {step43_text}",
+        f"- Drift window: `CRITICAL` at {_fmt_steps(crit_drift)}. {first_fire_text}",
         "",
         "---",
         "",
@@ -423,15 +565,41 @@ def format_markdown_report(
         "- **Residual attributed.** The remaining ~0.90 separability is dominated by `Local_feature_2` (+0.275 permutation importance) and `Local_feature_3` (+0.110), the two most trend-like local features (reference |rho| 0.79/0.80), plus step covariance.",
         "- **Fix.** `AdversarialDriftMonitor` now auto-excludes features with `|Spearman rho(step, per-step median)| >= 0.99` (the same rule as `FeatureDriftMonitor`); in practice this removes the triad. Because the residual channel is still non-discriminative with an attributed cause, its `ALERT` remains corroborating-only. Artifacts: `results/monitoring/adversarial_auc_comparison.csv`, `results/monitoring/adversarial_step35_attribution.csv`.",
         "",
-        "### 9.2. Fix 2 — local-tier temporal persistence",
-        "- `RetrainingTriggerEngine` now requires the broad local-tier drift ratio to exceed 30% for **2 consecutive steps** before contributing to `CRITICAL`; a single-step spike yields at most `WARNING`.",
-        "- Verified on the step-37 case (34.4% -> 4.3%): step 37 is `RECALIBRATE_ONLY` (WARNING), and two synthetic consecutive exceedances still fire `CRITICAL`. Regression test: `test_local_tier_persistence_suppresses_single_step_spike`.",
+        "### 9.2. Fix 2 — local-tier temporal persistence (superseded)",
+        "- Fix 2 added a 2-consecutive-step persistence rule so the step-37 spike (34.4% -> 4.3%) gave a WARNING. That rule still exists but only changes the wording of the warning: the whole channel is now WARNING-only (Section 10), so two consecutive exceedances no longer escalate to `CRITICAL`.",
         "",
-        "### 9.3. Post-fix trigger outcomes",
-        "- Step 35: `RECALIBRATE_ONLY` (WARNING) — prevalence; adversarial corroborating-only.",
-        "- Step 37: `RECALIBRATE_ONLY` (WARNING) — single-step local spike suppressed.",
-        "- Step 43: `RETRAIN` (CRITICAL) — `PerformanceCrash` (frozen F1 = 0.000).",
-        "- Steps 43–49: CRITICAL at 43/44/45/47/48/49; WARNING at 46 (single-step local spike suppressed).",
+        "---",
+        "",
+        "## 10. Lag-Safe Monitoring Pass",
+        "",
+        "### 10.1. What changed and why",
+        f"- **Label delay is a config value**: `label_delay_steps` (default 1; this run L={L}). A decision at step t reads labels of steps <= t-L only. The engine raises `LagViolationError` if a label-based input contains a newer step, so the rule is enforced at the boundary, not just by convention.",
+        "- **PerformanceCrash is lag-safe.** It previously read step t's own F1. It now reads per-step F1 of the deployed model on already-labelled steps (<= t-L), over the last 2 labelled steps with >= 10 illicit labels. **Each step counts once** (step-weighted, not pooled by rows) and the channel is breached when the **worst** of those steps is below the floor, so a large healthy step (e.g. step 42, 239 positives) cannot hide a crash at the next (step 43, 24 positives).",
+        f"- **F1 floor is not taken from steps 43–49.** floor = {FRAC:.2f} x validation F1 = {FRAC:.2f} x {VF:.4f} = **{FLOOR:.4f}**. The validation F1 is the pooled steps 25–34 F1 of the deployed operating point (tau = 0.435) read from `{backtester.metrics_path}`. **Caveat:** only the pooled validation F1 is stored (per-step validation predictions of the 1–24 fit were not saved and cannot be regenerated without refitting), so the rule uses the pooled value, not the median of a per-step distribution. The fraction 0.5 was fixed before the run.",
+        f"- {floor_robust_text}",
+        "- **Score-shift channel added (label-free).** PSI of the deployed model's step-t score distribution against its scores on the last 5 already-labelled steps (steps <= t-L, each step weighted equally; at least 2 needed, else UNAVAILABLE and never fires). Fixed probability bins (0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90). Standard bands: **PSI >= 0.25 is CRITICAL**, 0.10-0.25 is WARNING. Neither band was tuned on 43–49. It reads no label of step t, so it can fire during label delay.",
+        "- **Feature-shift channel demoted to WARNING only.** The % of local features with PSI > 0.25 can no longer raise `CRITICAL`.",
+        "- **Status output**: `/monitoring/status` gains `label_delay_steps`, `label_delay_assumption` and `channel_breakdown` (new fields only).",
+        "",
+        "### 10.2. Lag-safe decision table (steps 35–49)",
+        "Window F1 = worst per-step F1 over the labelled steps listed (labels <= t-L). Score PSI is against labelled reference steps. Channel statuses: CRITICAL / WARNING / OK / UNAVAILABLE.",
+        "",
+        "| Step | Labelled steps read (perf) | Worst per-step F1 | Performance | Score PSI | Score shift | Prevalence | Feature shift (warn-only) | CRITICAL channels | Decision |",
+        "| :--- | :--- | ---: | :--- | ---: | :--- | :--- | :--- | :--- | :--- |",
+        f"{lag_table_str}",
+        "",
+        "### 10.3. Which channel fires first",
+        f"- {step43_text}",
+        f"- {first_fire_text}",
+        f"- {perf_text}",
+        f"- {prev_text}",
+        f"- {order_text}",
+        "",
+        "### 10.4. Limitations",
+        "- Score PSI is computed on labelled transactions only here (`predictions.csv` holds scores for labelled rows); in production it would use every scored transaction.",
+        "- The score reference rolls over the last 5 labelled steps, so a *sustained* shift eventually becomes the reference and the channel goes quiet; it is an onset detector, not a persistent-degradation detector. The performance and prevalence channels cover persistence.",
+        "- The prevalence collapse floor (3.5%) and the 30% local-feature threshold are pre-existing constants, unchanged in this pass.",
+        "- Same-step F1, adaptive and oracle thresholds in Sections 1, 2 and 4 are hindsight diagnostics. They use step t's labels and are not inputs to any decision.",
     ]
 
     return "\n".join(report_lines)
@@ -445,7 +613,7 @@ def main():
         features_path="Og data/txs_features.csv",
         predictions_path="results/xgboost/predictions.csv",
         window_size=5,
-        label_lag=1,
+        label_delay_steps=1,
         frozen_threshold=0.435,
         baseline_prevalence=0.115809,
     )

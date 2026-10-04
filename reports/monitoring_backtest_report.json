@@ -4,7 +4,7 @@
     "model": "XGBoost Optimized (Frozen, Phase 2)",
     "test_window": "35-49",
     "timestamp": "2026-10-01",
-    "execution_time_seconds": 214.26
+    "execution_time_seconds": 160.54
   },
   "simulation_steps": [
     {
@@ -95,7 +95,7 @@
         "n_reference_samples": 1200,
         "n_target_samples": 1200,
         "n_folds": 3,
-        "execution_time_seconds": 0.6122,
+        "execution_time_seconds": 0.4929,
         "model_type": "logistic",
         "is_periodic_run": true,
         "reasons": [
@@ -144,11 +144,14 @@
           "feature_triad": "STABLE",
           "feature_local": "STABLE",
           "feature_overall": "STABLE",
+          "score_shift": "UNAVAILABLE",
+          "performance": "UNAVAILABLE",
           "prevalence": "WARNING",
           "adversarial": "ALERT"
         },
         "telemetry_summary": {
           "time_step": 35,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.33750138848191547,
             "Aggregate_feature_43": 0.3977324934840467,
@@ -157,14 +160,95 @@
           "pct_local_drifted_sig": 6.451612903225806,
           "pct_local_drifted_mod": 16.129032258064516,
           "local_drift_streak": 0,
+          "score_psi": null,
+          "score_reference_steps": [],
+          "lag_safe_f1_min": null,
+          "lag_safe_f1_steps": [],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.1682322801024765,
           "prevalence_rel_change_pct": 45.26701733239776,
           "adversarial_auc": 0.9002145833333334,
-          "frozen_f1": 0.9595687331536388,
-          "adaptive_f1": 0.9595687331536388,
-          "bayes_f1": 0.9595687331536388,
-          "pr_auc": 0.9934392989321705
+          "same_step_frozen_f1_diagnostic_only": 0.9595687331536388,
+          "same_step_pr_auc_diagnostic_only": 0.9934392989321705
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0483,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 6.4516,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "UNAVAILABLE",
+            "value": null,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "Need >= 2 labelled reference steps (<= 34); have 0."
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "UNAVAILABLE",
+            "value": null,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "No labelled step <= 34 with >= 10 illicit labels yet."
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.1682,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [30, 31, 32, 33, 34]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.9002,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 35,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 34,
+        "max_label_step_used": null,
+        "steps_used": [],
+        "per_step_f1": {},
+        "per_step_positives": {},
+        "f1_min": null,
+        "f1_mean": null,
+        "f1_floor": 0.4802,
+        "available": false,
+        "breached": false,
+        "note": "No labelled step <= 34 with >= 10 illicit labels yet."
+      },
+      "score_shift": {
+        "time_step": 35,
+        "available": false,
+        "psi": null,
+        "level": "UNAVAILABLE",
+        "reference_steps": [],
+        "n_current_scores": 1341,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": "Need >= 2 labelled reference steps (<= 34); have 0."
       }
     },
     {
@@ -291,10 +375,13 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "UNAVAILABLE",
+          "performance": "OK",
           "prevalence": "WARNING"
         },
         "telemetry_summary": {
           "time_step": 36,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.46534250685082384,
             "Aggregate_feature_43": 0.2941638033124664,
@@ -303,13 +390,106 @@
           "pct_local_drifted_sig": 22.58064516129032,
           "pct_local_drifted_mod": 51.61290322580645,
           "local_drift_streak": 0,
+          "score_psi": null,
+          "score_reference_steps": [
+            35
+          ],
+          "lag_safe_f1_min": 0.9595687331536388,
+          "lag_safe_f1_steps": [
+            35
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.15935334872979215,
           "prevalence_rel_change_pct": 37.600142242651394,
-          "frozen_f1": 0.8354430379746836,
-          "adaptive_f1": 0.9696969696969697,
-          "bayes_f1": 0.7415730337078652,
-          "pr_auc": 0.994628982128982
+          "same_step_frozen_f1_diagnostic_only": 0.8354430379746836,
+          "same_step_pr_auc_diagnostic_only": 0.994628982128982
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0421,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 22.5806,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "UNAVAILABLE",
+            "value": null,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "Need >= 2 labelled reference steps (<= 35); have 1."
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.9596,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'35': 0.9596}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.1594,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [31, 32, 33, 34, 35]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 36,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 35,
+        "max_label_step_used": 35,
+        "steps_used": [
+          35
+        ],
+        "per_step_f1": {
+          "35": 0.9596
+        },
+        "per_step_positives": {
+          "35": 182
+        },
+        "f1_min": 0.9596,
+        "f1_mean": 0.9596,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 36,
+        "available": false,
+        "psi": null,
+        "level": "UNAVAILABLE",
+        "reference_steps": [
+          35
+        ],
+        "n_current_scores": 1708,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": "Need >= 2 labelled reference steps (<= 35); have 1."
       }
     },
     {
@@ -426,18 +606,21 @@
         "time_step": 37,
         "action": "RECALIBRATE_ONLY",
         "severity": "WARNING",
-        "primary_reason": "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+        "primary_reason": "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (>= 30%). Feature-shift is a WARNING-only channel and cannot raise CRITICAL.",
         "reasons": [
-          "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation."
+          "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (>= 30%). Feature-shift is a WARNING-only channel and cannot raise CRITICAL."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "STABLE"
         },
         "telemetry_summary": {
           "time_step": 37,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 1.0402110880701738,
             "Aggregate_feature_43": 1.433122167571281,
@@ -446,13 +629,112 @@
           "pct_local_drifted_sig": 34.40860215053764,
           "pct_local_drifted_mod": 51.61290322580645,
           "local_drift_streak": 1,
+          "score_psi": 0.018992965337064193,
+          "score_reference_steps": [
+            35,
+            36
+          ],
+          "lag_safe_f1_min": 0.8354430379746836,
+          "lag_safe_f1_steps": [
+            35,
+            36
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.11580330330330331,
           "prevalence_rel_change_pct": -0.004919044890022306,
-          "frozen_f1": 0.8115942028985508,
-          "adaptive_f1": 0.7692307692307693,
-          "bayes_f1": 0.8115942028985508,
-          "pr_auc": 0.8893308691794047
+          "same_step_frozen_f1_diagnostic_only": 0.8115942028985508,
+          "same_step_pr_auc_diagnostic_only": 0.8893308691794047
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0456,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 34.4086,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=1"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.019,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [35, 36]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.8354,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'35': 0.9596, '36': 0.8354}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.1158,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [32, 33, 34, 35, 36]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 37,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 36,
+        "max_label_step_used": 36,
+        "steps_used": [
+          35,
+          36
+        ],
+        "per_step_f1": {
+          "35": 0.9596,
+          "36": 0.8354
+        },
+        "per_step_positives": {
+          "35": 182,
+          "36": 33
+        },
+        "f1_min": 0.8354,
+        "f1_mean": 0.8975,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 37,
+        "available": true,
+        "psi": 0.019,
+        "level": "STABLE",
+        "reference_steps": [
+          35,
+          36
+        ],
+        "n_current_scores": 498,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -579,10 +861,13 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "WARNING"
         },
         "telemetry_summary": {
           "time_step": 38,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.13126398615016224,
             "Aggregate_feature_43": 0.9066184029489586,
@@ -591,13 +876,114 @@
           "pct_local_drifted_sig": 4.301075268817205,
           "pct_local_drifted_mod": 26.881720430107524,
           "local_drift_streak": 0,
+          "score_psi": 0.05189997111837292,
+          "score_reference_steps": [
+            35,
+            36,
+            37
+          ],
+          "lag_safe_f1_min": 0.8115942028985508,
+          "lag_safe_f1_steps": [
+            36,
+            37
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.06995336442371752,
           "prevalence_rel_change_pct": -39.59591704986873,
-          "frozen_f1": 0.9181818181818182,
-          "adaptive_f1": 0.9326923076923077,
-          "bayes_f1": 0.9174311926605505,
-          "pr_auc": 0.9532094081576619
+          "same_step_frozen_f1_diagnostic_only": 0.9181818181818182,
+          "same_step_pr_auc_diagnostic_only": 0.9532094081576619
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0603,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 4.3011,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0519,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [35, 36, 37]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.8116,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'36': 0.8354, '37': 0.8116}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.07,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [33, 34, 35, 36, 37]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 38,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 37,
+        "max_label_step_used": 37,
+        "steps_used": [
+          36,
+          37
+        ],
+        "per_step_f1": {
+          "36": 0.8354,
+          "37": 0.8116
+        },
+        "per_step_positives": {
+          "36": 33,
+          "37": 40
+        },
+        "f1_min": 0.8116,
+        "f1_mean": 0.8235,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 38,
+        "available": true,
+        "psi": 0.0519,
+        "level": "STABLE",
+        "reference_steps": [
+          35,
+          36,
+          37
+        ],
+        "n_current_scores": 756,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -723,10 +1109,13 @@
           "feature_triad": "MODERATE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "STABLE"
         },
         "telemetry_summary": {
           "time_step": 39,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.9085311368946534,
             "Aggregate_feature_43": 1.4354456803060556,
@@ -735,13 +1124,116 @@
           "pct_local_drifted_sig": 21.50537634408602,
           "pct_local_drifted_mod": 41.935483870967744,
           "local_drift_streak": 0,
+          "score_psi": 0.036809787346143485,
+          "score_reference_steps": [
+            35,
+            36,
+            37,
+            38
+          ],
+          "lag_safe_f1_min": 0.8115942028985508,
+          "lag_safe_f1_steps": [
+            37,
+            38
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.08364466583644665,
           "prevalence_rel_change_pct": -27.773604956051205,
-          "frozen_f1": 0.9101796407185628,
-          "adaptive_f1": 0.9487179487179487,
-          "bayes_f1": 0.926829268292683,
-          "pr_auc": 0.9608283362476222
+          "same_step_frozen_f1_diagnostic_only": 0.9101796407185628,
+          "same_step_pr_auc_diagnostic_only": 0.9608283362476222
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.1132,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 21.5054,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0368,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [35, 36, 37, 38]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.8116,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'37': 0.8116, '38': 0.9182}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.0836,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [34, 35, 36, 37, 38]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 39,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 38,
+        "max_label_step_used": 38,
+        "steps_used": [
+          37,
+          38
+        ],
+        "per_step_f1": {
+          "37": 0.8116,
+          "38": 0.9182
+        },
+        "per_step_positives": {
+          "37": 40,
+          "38": 111
+        },
+        "f1_min": 0.8116,
+        "f1_mean": 0.8649,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 39,
+        "available": true,
+        "psi": 0.0368,
+        "level": "STABLE",
+        "reference_steps": [
+          35,
+          36,
+          37,
+          38
+        ],
+        "n_current_scores": 1183,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -832,7 +1324,7 @@
         "n_reference_samples": 1200,
         "n_target_samples": 1200,
         "n_folds": 3,
-        "execution_time_seconds": 1.0108,
+        "execution_time_seconds": 0.422,
         "model_type": "logistic",
         "is_periodic_run": true,
         "reasons": [
@@ -880,11 +1372,14 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "STABLE",
           "adversarial": "ALERT"
         },
         "telemetry_summary": {
           "time_step": 40,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.3546891257828824,
             "Aggregate_feature_43": 1.6574923894494258,
@@ -893,14 +1388,119 @@
           "pct_local_drifted_sig": 3.225806451612903,
           "pct_local_drifted_mod": 21.50537634408602,
           "local_drift_streak": 0,
+          "score_psi": 0.019882532702902186,
+          "score_reference_steps": [
+            35,
+            36,
+            37,
+            38,
+            39
+          ],
+          "lag_safe_f1_min": 0.9101796407185628,
+          "lag_safe_f1_steps": [
+            38,
+            39
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.08148013124316442,
           "prevalence_rel_change_pct": -29.642660550419723,
           "adversarial_auc": 0.8776604166666666,
-          "frozen_f1": 0.7715736040609137,
-          "adaptive_f1": 0.776595744680851,
-          "bayes_f1": 0.7772020725388601,
-          "pr_auc": 0.767752672527802
+          "same_step_frozen_f1_diagnostic_only": 0.7715736040609137,
+          "same_step_pr_auc_diagnostic_only": 0.767752672527802
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0588,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 3.2258,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0199,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [35, 36, 37, 38, 39]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.9102,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'38': 0.9182, '39': 0.9102}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.0815,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [35, 36, 37, 38, 39]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.8777,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 40,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 39,
+        "max_label_step_used": 39,
+        "steps_used": [
+          38,
+          39
+        ],
+        "per_step_f1": {
+          "38": 0.9182,
+          "39": 0.9102
+        },
+        "per_step_positives": {
+          "38": 111,
+          "39": 81
+        },
+        "f1_min": 0.9102,
+        "f1_mean": 0.9142,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 40,
+        "available": true,
+        "psi": 0.0199,
+        "level": "STABLE",
+        "reference_steps": [
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "n_current_scores": 1211,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1027,10 +1627,13 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "WARNING"
         },
         "telemetry_summary": {
           "time_step": 41,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.905113021361348,
             "Aggregate_feature_43": 1.4297665957380232,
@@ -1039,13 +1642,118 @@
           "pct_local_drifted_sig": 16.129032258064516,
           "pct_local_drifted_mod": 39.784946236559136,
           "local_drift_streak": 0,
+          "score_psi": 0.01766770875588325,
+          "score_reference_steps": [
+            36,
+            37,
+            38,
+            39,
+            40
+          ],
+          "lag_safe_f1_min": 0.7715736040609137,
+          "lag_safe_f1_steps": [
+            39,
+            40
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.0703883495145631,
           "prevalence_rel_change_pct": -39.220311448537586,
-          "frozen_f1": 0.944206008583691,
-          "adaptive_f1": 0.9646017699115044,
-          "bayes_f1": 0.9606986899563319,
-          "pr_auc": 0.9640915486597283
+          "same_step_frozen_f1_diagnostic_only": 0.944206008583691,
+          "same_step_pr_auc_diagnostic_only": 0.9640915486597283
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0357,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 16.129,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0177,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [36, 37, 38, 39, 40]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.7716,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'39': 0.9102, '40': 0.7716}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.0704,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [36, 37, 38, 39, 40]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 41,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 40,
+        "max_label_step_used": 40,
+        "steps_used": [
+          39,
+          40
+        ],
+        "per_step_f1": {
+          "39": 0.9102,
+          "40": 0.7716
+        },
+        "per_step_positives": {
+          "39": 81,
+          "40": 112
+        },
+        "f1_min": 0.7716,
+        "f1_mean": 0.8409,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 41,
+        "available": true,
+        "psi": 0.0177,
+        "level": "STABLE",
+        "reference_steps": [
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "n_current_scores": 1132,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1170,10 +1878,13 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "OK",
           "prevalence": "STABLE"
         },
         "telemetry_summary": {
           "time_step": 42,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.97499555910317,
             "Aggregate_feature_43": 1.4603555868103109,
@@ -1182,13 +1893,118 @@
           "pct_local_drifted_sig": 2.1505376344086025,
           "pct_local_drifted_mod": 25.806451612903224,
           "local_drift_streak": 0,
+          "score_psi": 0.0055467080136810155,
+          "score_reference_steps": [
+            37,
+            38,
+            39,
+            40,
+            41
+          ],
+          "lag_safe_f1_min": 0.7715736040609137,
+          "lag_safe_f1_steps": [
+            40,
+            41
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.09623430962343096,
           "prevalence_rel_change_pct": -16.902564029193787,
-          "frozen_f1": 0.847682119205298,
-          "adaptive_f1": 0.8775981524249422,
-          "bayes_f1": 0.8533333333333334,
-          "pr_auc": 0.8935297438703486
+          "same_step_frozen_f1_diagnostic_only": 0.847682119205298,
+          "same_step_pr_auc_diagnostic_only": 0.8935297438703486
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0084,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 2.1505,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0055,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [37, 38, 39, 40, 41]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.7716,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'40': 0.7716, '41': 0.9442}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.0962,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [37, 38, 39, 40, 41]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 42,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 41,
+        "max_label_step_used": 41,
+        "steps_used": [
+          40,
+          41
+        ],
+        "per_step_f1": {
+          "40": 0.7716,
+          "41": 0.9442
+        },
+        "per_step_positives": {
+          "40": 112,
+          "41": 116
+        },
+        "f1_min": 0.7716,
+        "f1_mean": 0.8579,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 42,
+        "available": true,
+        "psi": 0.0055,
+        "level": "STABLE",
+        "reference_steps": [
+          37,
+          38,
+          39,
+          40,
+          41
+        ],
+        "n_current_scores": 2154,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1305,18 +2121,21 @@
         "time_step": 43,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0365).",
+        "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.609 >= 0.25 against labelled steps [38, 39, 40, 41, 42] (label-free).",
         "reasons": [
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0365)."
+          "ScoreShift: PSI of the deployed model's score distribution = 0.609 >= 0.25 against labelled steps [38, 39, 40, 41, 42] (label-free)."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "CRITICAL",
+          "performance": "OK",
           "prevalence": "STABLE"
         },
         "telemetry_summary": {
           "time_step": 43,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.20591659117338923,
             "Aggregate_feature_43": 0.350394810766821,
@@ -1325,13 +2144,118 @@
           "pct_local_drifted_sig": 7.526881720430108,
           "pct_local_drifted_mod": 46.236559139784944,
           "local_drift_streak": 0,
+          "score_psi": 0.6087752130922075,
+          "score_reference_steps": [
+            38,
+            39,
+            40,
+            41,
+            42
+          ],
+          "lag_safe_f1_min": 0.847682119205298,
+          "lag_safe_f1_steps": [
+            41,
+            42
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.1023927905531386,
           "prevalence_rel_change_pct": -11.584772726525049,
-          "frozen_f1": 0.0,
-          "adaptive_f1": 0.0,
-          "bayes_f1": 0.0,
-          "pr_auc": 0.036512374546720676
+          "same_step_frozen_f1_diagnostic_only": 0.0,
+          "same_step_pr_auc_diagnostic_only": 0.036512374546720676
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0505,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 7.5269,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "CRITICAL",
+            "value": 0.6088,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [38, 39, 40, 41, 42]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.8477,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'41': 0.9442, '42': 0.8477}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.1024,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [38, 39, 40, 41, 42]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 43,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 42,
+        "max_label_step_used": 42,
+        "steps_used": [
+          41,
+          42
+        ],
+        "per_step_f1": {
+          "41": 0.9442,
+          "42": 0.8477
+        },
+        "per_step_positives": {
+          "41": 116,
+          "42": 239
+        },
+        "f1_min": 0.8477,
+        "f1_mean": 0.8959,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": false,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 43,
+        "available": true,
+        "psi": 0.6088,
+        "level": "CRITICAL",
+        "reference_steps": [
+          38,
+          39,
+          40,
+          41,
+          42
+        ],
+        "n_current_scores": 1370,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1448,18 +2372,22 @@
         "time_step": 44,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0727 (PR-AUC=0.0372).",
+        "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.262 >= 0.25 against labelled steps [39, 40, 41, 42, 43] (label-free).",
         "reasons": [
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0727 (PR-AUC=0.0372)."
+          "ScoreShift: PSI of the deployed model's score distribution = 0.262 >= 0.25 against labelled steps [39, 40, 41, 42, 43] (label-free).",
+          "PerformanceCrash: worst per-step F1 over labelled steps [42, 43] = 0.000 < floor 0.480 (labels <= step 43, label delay 1)."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "CRITICAL",
+          "performance": "CRITICAL",
           "prevalence": "STABLE"
         },
         "telemetry_summary": {
           "time_step": 44,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.11503689891365394,
             "Aggregate_feature_43": 0.5928859447634734,
@@ -1468,13 +2396,118 @@
           "pct_local_drifted_sig": 8.60215053763441,
           "pct_local_drifted_mod": 47.31182795698925,
           "local_drift_streak": 0,
+          "score_psi": 0.26157175129691385,
+          "score_reference_steps": [
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            42,
+            43
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.08113475177304964,
           "prevalence_rel_change_pct": -29.9408925273082,
-          "frozen_f1": 0.07272727272727272,
-          "adaptive_f1": 0.05714285714285714,
-          "bayes_f1": 0.0851063829787234,
-          "pr_auc": 0.037187389250635916
+          "same_step_frozen_f1_diagnostic_only": 0.07272727272727272,
+          "same_step_pr_auc_diagnostic_only": 0.037187389250635916
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0356,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 8.6022,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "CRITICAL",
+            "value": 0.2616,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [39, 40, 41, 42, 43]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'42': 0.8477, '43': 0.0}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "OK",
+            "value": 0.0811,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [39, 40, 41, 42, 43]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 44,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 43,
+        "max_label_step_used": 43,
+        "steps_used": [
+          42,
+          43
+        ],
+        "per_step_f1": {
+          "42": 0.8477,
+          "43": 0.0
+        },
+        "per_step_positives": {
+          "42": 239,
+          "43": 24
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.4238,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 44,
+        "available": true,
+        "psi": 0.2616,
+        "level": "CRITICAL",
+        "reference_steps": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "n_current_scores": 1591,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1567,7 +2600,7 @@
         "n_reference_samples": 1200,
         "n_target_samples": 1200,
         "n_folds": 3,
-        "execution_time_seconds": 1.7088,
+        "execution_time_seconds": 0.5651,
         "model_type": "logistic",
         "is_periodic_run": true,
         "reasons": [
@@ -1607,9 +2640,10 @@
         "time_step": 45,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0070).",
+        "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.323 >= 0.25 against labelled steps [40, 41, 42, 43, 44] (label-free).",
         "reasons": [
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0070).",
+          "ScoreShift: PSI of the deployed model's score distribution = 0.323 >= 0.25 against labelled steps [40, 41, 42, 43, 44] (label-free).",
+          "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
           "PrevalenceWarning: Rolling prevalence (0.0691) shifted by -40.4% vs baseline.",
           "AdversarialWarning: Domain classifier AUC=0.8245 shows moderate divergence."
         ],
@@ -1617,11 +2651,14 @@
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "CRITICAL",
+          "performance": "CRITICAL",
           "prevalence": "WARNING",
           "adversarial": "MODERATE"
         },
         "telemetry_summary": {
           "time_step": 45,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.4756577261700252,
             "Aggregate_feature_43": 0.41145887527629943,
@@ -1630,14 +2667,119 @@
           "pct_local_drifted_sig": 6.451612903225806,
           "pct_local_drifted_mod": 22.58064516129032,
           "local_drift_streak": 0,
+          "score_psi": 0.32286204142450337,
+          "score_reference_steps": [
+            40,
+            41,
+            42,
+            43,
+            44
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            43,
+            44
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.0690533655135425,
           "prevalence_rel_change_pct": -40.37305778174191,
           "adversarial_auc": 0.8244572916666667,
-          "frozen_f1": 0.0,
-          "adaptive_f1": 0.0,
-          "bayes_f1": 0.0,
-          "pr_auc": 0.0070351398720408095
+          "same_step_frozen_f1_diagnostic_only": 0.0,
+          "same_step_pr_auc_diagnostic_only": 0.0070351398720408095
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0437,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 6.4516,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "CRITICAL",
+            "value": 0.3229,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [40, 41, 42, 43, 44]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'43': 0.0, '44': 0.0727}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.0691,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [40, 41, 42, 43, 44]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.8245,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 45,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 44,
+        "max_label_step_used": 44,
+        "steps_used": [
+          43,
+          44
+        ],
+        "per_step_f1": {
+          "43": 0.0,
+          "44": 0.0727
+        },
+        "per_step_positives": {
+          "43": 24,
+          "44": 24
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.0364,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 45,
+        "available": true,
+        "psi": 0.3229,
+        "level": "CRITICAL",
+        "reference_steps": [
+          40,
+          41,
+          42,
+          43,
+          44
+        ],
+        "n_current_scores": 1221,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1754,21 +2896,26 @@
       },
       "decision": {
         "time_step": 46,
-        "action": "RECALIBRATE_ONLY",
-        "severity": "WARNING",
-        "primary_reason": "DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+        "action": "RETRAIN",
+        "severity": "CRITICAL",
+        "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
         "reasons": [
-          "DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation.",
+          "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
+          "DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (>= 30%). Feature-shift is a WARNING-only channel and cannot raise CRITICAL.",
+          "ScoreShiftWarning: score PSI = 0.101 in [0.10, 0.25).",
           "PrevalenceWarning: Rolling prevalence (0.0546) shifted by -52.8% vs baseline."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "WARNING",
+          "performance": "CRITICAL",
           "prevalence": "WARNING"
         },
         "telemetry_summary": {
           "time_step": 46,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.4614820744668149,
             "Aggregate_feature_43": 0.32378351494983365,
@@ -1777,13 +2924,118 @@
           "pct_local_drifted_sig": 30.107526881720432,
           "pct_local_drifted_mod": 50.53763440860215,
           "local_drift_streak": 1,
+          "score_psi": 0.10125559384616138,
+          "score_reference_steps": [
+            41,
+            42,
+            43,
+            44,
+            45
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            43,
+            44
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.05463310123192287,
           "prevalence_rel_change_pct": -52.82482256826078,
-          "frozen_f1": 0.13333333333333333,
-          "adaptive_f1": 0.2857142857142857,
-          "bayes_f1": 0.2,
-          "pr_auc": 0.09251731406202951
+          "same_step_frozen_f1_diagnostic_only": 0.13333333333333333,
+          "same_step_pr_auc_diagnostic_only": 0.09251731406202951
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0455,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 30.1075,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=1"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.1013,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [41, 42, 43, 44, 45]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'43': 0.0, '44': 0.0727}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.0546,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [41, 42, 43, 44, 45]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 46,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 45,
+        "max_label_step_used": 44,
+        "steps_used": [
+          43,
+          44
+        ],
+        "per_step_f1": {
+          "43": 0.0,
+          "44": 0.0727
+        },
+        "per_step_positives": {
+          "43": 24,
+          "44": 24
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.0364,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 46,
+        "available": true,
+        "psi": 0.1013,
+        "level": "WARNING",
+        "reference_steps": [
+          41,
+          42,
+          43,
+          44,
+          45
+        ],
+        "n_current_scores": 712,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -1902,19 +3154,23 @@
         "time_step": 47,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0476).",
+        "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
         "reasons": [
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0476).",
+          "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
+          "ScoreShiftWarning: score PSI = 0.111 in [0.10, 0.25).",
           "PrevalenceAlert: Rolling prevalence (0.0417) shifted by -64.0% vs baseline."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "WARNING",
+          "performance": "CRITICAL",
           "prevalence": "ALERT"
         },
         "telemetry_summary": {
           "time_step": 47,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.33172386674116733,
             "Aggregate_feature_43": 0.6083817966809383,
@@ -1923,13 +3179,118 @@
           "pct_local_drifted_sig": 8.60215053763441,
           "pct_local_drifted_mod": 36.55913978494624,
           "local_drift_streak": 0,
+          "score_psi": 0.11058536548156432,
+          "score_reference_steps": [
+            42,
+            43,
+            44,
+            45,
+            46
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            43,
+            44
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.041713961407491486,
           "prevalence_rel_change_pct": -63.980380274856465,
-          "frozen_f1": 0.0,
-          "adaptive_f1": 0.0,
-          "bayes_f1": 0.0,
-          "pr_auc": 0.04757312927933914
+          "same_step_frozen_f1_diagnostic_only": 0.0,
+          "same_step_pr_auc_diagnostic_only": 0.04757312927933914
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0354,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 8.6022,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.1106,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [42, 43, 44, 45, 46]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'43': 0.0, '44': 0.0727}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "WARNING",
+            "value": 0.0417,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [42, 43, 44, 45, 46]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 47,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 46,
+        "max_label_step_used": 44,
+        "steps_used": [
+          43,
+          44
+        ],
+        "per_step_f1": {
+          "43": 0.0,
+          "44": 0.0727
+        },
+        "per_step_positives": {
+          "43": 24,
+          "44": 24
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.0364,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 47,
+        "available": true,
+        "psi": 0.1106,
+        "level": "WARNING",
+        "reference_steps": [
+          42,
+          43,
+          44,
+          45,
+          46
+        ],
+        "n_current_scores": 846,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -2048,19 +3409,22 @@
         "time_step": 48,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134) plummeted below critical floor (0.0350).",
+        "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [44, 47] = 0.000 < floor 0.480 (labels <= step 47, label delay 1).",
         "reasons": [
-          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134) plummeted below critical floor (0.0350).",
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0500 (PR-AUC=0.1810)."
+          "PerformanceCrash: worst per-step F1 over labelled steps [44, 47] = 0.000 < floor 0.480 (labels <= step 47, label delay 1).",
+          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134, labels <= step 47) plummeted below critical floor (0.0350)."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "CRITICAL",
           "prevalence": "ALERT"
         },
         "telemetry_summary": {
           "time_step": 48,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.24330483658715957,
             "Aggregate_feature_43": 0.24011217165294796,
@@ -2069,13 +3433,118 @@
           "pct_local_drifted_sig": 17.20430107526882,
           "pct_local_drifted_mod": 39.784946236559136,
           "local_drift_streak": 0,
+          "score_psi": 0.08009952470802983,
+          "score_reference_steps": [
+            43,
+            44,
+            45,
+            46,
+            47
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            44,
+            47
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.013414634146341463,
           "prevalence_rel_change_pct": -88.41658753089875,
-          "frozen_f1": 0.05,
-          "adaptive_f1": 0.047619047619047616,
-          "bayes_f1": 0.0,
-          "pr_auc": 0.18101147752571092
+          "same_step_frozen_f1_diagnostic_only": 0.05,
+          "same_step_pr_auc_diagnostic_only": 0.18101147752571092
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0457,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 17.2043,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0801,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [43, 44, 45, 46, 47]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'44': 0.0727, '47': 0.0}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0134,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [43, 44, 45, 46, 47]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "NOT_EVALUATED",
+            "value": null,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 48,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 47,
+        "max_label_step_used": 47,
+        "steps_used": [
+          44,
+          47
+        ],
+        "per_step_f1": {
+          "44": 0.0727,
+          "47": 0.0
+        },
+        "per_step_positives": {
+          "44": 24,
+          "47": 22
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.0364,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 48,
+        "available": true,
+        "psi": 0.0801,
+        "level": "STABLE",
+        "reference_steps": [
+          43,
+          44,
+          45,
+          46,
+          47
+        ],
+        "n_current_scores": 471,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     },
     {
@@ -2168,7 +3637,7 @@
         "n_reference_samples": 1200,
         "n_target_samples": 1200,
         "n_folds": 3,
-        "execution_time_seconds": 0.5821,
+        "execution_time_seconds": 0.4869,
         "model_type": "logistic",
         "is_periodic_run": true,
         "reasons": [
@@ -2208,21 +3677,24 @@
         "time_step": 49,
         "action": "RETRAIN",
         "severity": "CRITICAL",
-        "primary_reason": "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184) plummeted below critical floor (0.0350).",
+        "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1).",
         "reasons": [
-          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184) plummeted below critical floor (0.0350).",
-          "PerformanceCrash: Frozen threshold F1 collapsed to 0.0282 (PR-AUC=0.1823).",
+          "PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1).",
+          "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184, labels <= step 48) plummeted below critical floor (0.0350).",
           "AdversarialOODAlert: Domain classifier AUC=0.8706 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger)."
         ],
         "component_statuses": {
           "feature_triad": "STABLE",
           "feature_local": "MODERATE",
           "feature_overall": "MODERATE",
+          "score_shift": "STABLE",
+          "performance": "CRITICAL",
           "prevalence": "ALERT",
           "adversarial": "ALERT"
         },
         "telemetry_summary": {
           "time_step": 49,
+          "label_delay_steps": 1,
           "triad_psi": {
             "Aggregate_feature_10": 0.22508774437597145,
             "Aggregate_feature_43": 0.1808292086768243,
@@ -2231,14 +3703,119 @@
           "pct_local_drifted_sig": 11.827956989247312,
           "pct_local_drifted_mod": 45.16129032258064,
           "local_drift_streak": 0,
+          "score_psi": 0.03334347561987562,
+          "score_reference_steps": [
+            44,
+            45,
+            46,
+            47,
+            48
+          ],
+          "lag_safe_f1_min": 0.0,
+          "lag_safe_f1_steps": [
+            47,
+            48
+          ],
+          "f1_floor": 0.48024193548387095,
           "rolling_prevalence": 0.018384631274530057,
           "prevalence_rel_change_pct": -84.12504099462905,
           "adversarial_auc": 0.87056875,
-          "frozen_f1": 0.028169014084507043,
-          "adaptive_f1": 0.027777777777777776,
-          "bayes_f1": 0.03389830508474576,
-          "pr_auc": 0.18225106911311845
+          "same_step_frozen_f1_diagnostic_only": 0.028169014084507043,
+          "same_step_pr_auc_diagnostic_only": 0.18225106911311845
+        },
+        "label_delay_steps": 1,
+        "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+        "channels": {
+          "triad": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0427,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "worst detrended drift score across triad features"
+          },
+          "feature_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 11.828,
+            "threshold": 30.0,
+            "can_trigger_critical": false,
+            "detail": "% of local features with PSI > 0.25; streak=0"
+          },
+          "score_shift": {
+            "kind": "label_free",
+            "status": "OK",
+            "value": 0.0333,
+            "threshold": 0.25,
+            "can_trigger_critical": true,
+            "detail": "reference steps [44, 45, 46, 47, 48]"
+          },
+          "performance": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0,
+            "threshold": 0.48024193548387095,
+            "can_trigger_critical": true,
+            "detail": "per-step F1 {'47': 0.0, '48': 0.05}"
+          },
+          "prevalence": {
+            "kind": "label_dependent",
+            "status": "CRITICAL",
+            "value": 0.0184,
+            "threshold": 0.035,
+            "can_trigger_critical": true,
+            "detail": "window steps [44, 45, 46, 47, 48]"
+          },
+          "adversarial": {
+            "kind": "label_free",
+            "status": "WARNING",
+            "value": 0.8706,
+            "threshold": 0.85,
+            "can_trigger_critical": false,
+            "detail": ""
+          }
         }
+      },
+      "lag_safe_performance": {
+        "time_step": 49,
+        "label_delay_steps": 1,
+        "max_label_step_allowed": 48,
+        "max_label_step_used": 48,
+        "steps_used": [
+          47,
+          48
+        ],
+        "per_step_f1": {
+          "47": 0.0,
+          "48": 0.05
+        },
+        "per_step_positives": {
+          "47": 22,
+          "48": 36
+        },
+        "f1_min": 0.0,
+        "f1_mean": 0.025,
+        "f1_floor": 0.4802,
+        "available": true,
+        "breached": true,
+        "note": ""
+      },
+      "score_shift": {
+        "time_step": 49,
+        "available": true,
+        "psi": 0.0333,
+        "level": "STABLE",
+        "reference_steps": [
+          44,
+          45,
+          46,
+          47,
+          48
+        ],
+        "n_current_scores": 476,
+        "warning_threshold": 0.1,
+        "critical_threshold": 0.25,
+        "note": ""
       }
     }
   ]

@@ -1,7 +1,7 @@
 # Phase 8a: Automated Drift Monitoring & Retraining Triggers — Backtest Report
 
 > **Retrospective Simulation Record.** This report documents the end-to-end retrospective validation of the BitcoinGraphGuard production monitoring system across **steps 35 through 49** on the real Elliptic++ dataset.
-> Execution strictly enforces **no future lookahead**: monitoring evaluations at step t consume streaming feature distributions at t and labeled outcomes available under label-arrival lag L=1 (ground-truth labels up to t-1).
+> Execution strictly enforces **no future lookahead and a label delay of L=1 step(s)**: a decision at step t consumes feature distributions and model scores of step t, and labels of steps <= t-1 only. Step t's own labels (e.g. its F1) are never used; where a same-step F1 appears below it is labelled *hindsight* and is diagnostic only. See Section 10 for the lag-safe rules.
 
 ---
 
@@ -44,17 +44,17 @@ In the initial monitoring implementation, Population Stability Index (PSI) value
 | **Adaptive Rolling F1 tau F1** | **0.8998** (Lift +0.0250) | **0.0597** (Lift +0.0191) | 0.5078 |
 | **Bayesian Prior Shift tau F1** | **0.8685** (Lift -0.0063) | **0.0456** (Lift +0.0050) | 0.4845 |
 | **Oracle Upper-Bound tau F1** | **0.9152** | **0.1324** | 0.5499 |
-| **Primary Retraining Action** | `NO_ACTION` / `RECALIBRATE_ONLY` (1 local-tier false alarm at 37) | `RETRAIN` (100% of Drift Steps) | — |
+| **Primary Retraining Action (lag-safe, L=1)** | no `CRITICAL`; `RECALIBRATE_ONLY` (WARNING) at 35, 36, 37, 38, 39, 40, 41 | `RETRAIN` at 43, 44, 45, 46, 47, 48, 49 (first: 43); other steps WARNING/INFO | — |
 
 ---
 
 ## 2. Step-by-Step Retrospective Monitoring Matrix (Steps 35–49)
 
 ```
-STABLE ENVELOPE (Steps 35-42, local-tier spikes suppressed to WARNING at 37) -> REGIME COLLAPSE & MANDATORY RETRAIN (Steps 43-49)
+STEPS 35-42: CRITICAL at none | STEPS 43-49: CRITICAL at 43, 44, 45, 46, 47, 48, 49 (lag-safe, L=1)
 ```
 
-| Step | Labeled N | Illicit N | Step Prev | Rolling Prev (L=1) | Resid Score 10 | Resid Score 43 | Resid Score 8 | Local Drift % | Adv AUC | Frozen F1 | Adapt F1 | Trigger Decision & Severity |
+| Step | Labeled N | Illicit N | Step Prev | Rolling Prev (labels <= t-L) | Resid Score 10 | Resid Score 43 | Resid Score 8 | Local Drift % | Adv AUC | Same-step F1 (hindsight) | Adapt F1 (hindsight) | Trigger Decision & Severity |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
 | **35** | 1,341 | 182 | 13.57% | 16.82% | 0.048 | 0.043 | 0.036 | 6.5% | 0.9002 | 0.960 | 0.960 | `RECALIBRATE_ONLY` (WARNING) |
 | **36** | 1,708 | 33 | 1.93% | 15.94% | 0.040 | 0.042 | 0.017 | 22.6% | — | 0.835 | 0.970 | `RECALIBRATE_ONLY` (WARNING) |
@@ -67,7 +67,7 @@ STABLE ENVELOPE (Steps 35-42, local-tier spikes suppressed to WARNING at 37) -> 
 | **43** | 1,370 | 24 | 1.75% | 10.24% | 0.051 | 0.035 | 0.043 | 7.5% | — | 0.000 | 0.000 | `RETRAIN` (CRITICAL) |
 | **44** | 1,591 | 24 | 1.51% | 8.11% | 0.033 | 0.036 | 0.033 | 8.6% | — | 0.073 | 0.057 | `RETRAIN` (CRITICAL) |
 | **45** | 1,221 | 5 | 0.41% | 6.91% | 0.040 | 0.044 | 0.026 | 6.5% | 0.8245 | 0.000 | 0.000 | `RETRAIN` (CRITICAL) |
-| **46** | 712 | 2 | 0.28% | 5.46% | 0.011 | 0.046 | 0.000 | 30.1% | — | 0.133 | 0.286 | `RECALIBRATE_ONLY` (WARNING) |
+| **46** | 712 | 2 | 0.28% | 5.46% | 0.011 | 0.046 | 0.000 | 30.1% | — | 0.133 | 0.286 | `RETRAIN` (CRITICAL) |
 | **47** | 846 | 22 | 2.60% | 4.17% | 0.012 | 0.035 | 0.024 | 8.6% | — | 0.000 | 0.000 | `RETRAIN` (CRITICAL) |
 | **48** | 471 | 36 | 7.64% | 1.34% | 0.012 | 0.046 | 0.023 | 17.2% | — | 0.050 | 0.048 | `RETRAIN` (CRITICAL) |
 | **49** | 476 | 56 | 11.76% | 1.84% | 0.009 | 0.043 | 0.023 | 11.8% | 0.8706 | 0.028 | 0.028 | `RETRAIN` (CRITICAL) |
@@ -97,15 +97,15 @@ Drift bands applied to `drift_score`:
 - Measures the percentage of the 93 `Local_feature_*` columns exhibiting significant drift (PSI > 0.25).
 - These features are confirmed non-monotone (median |rho| = 0.29), so static-reference PSI is retained for this tier (see Section 8).
 - The single-step drift ratio is noisy: 6.5% (t=35), 22.6% (t=36), 34.4% (t=37), then 4.3% (t=38); in the drift window it reaches 30.1% at t=46.
-- The trigger now requires **2 consecutive steps** above 30% before contributing to `CRITICAL`, so the step-37 spike (34.4% -> 4.3%) yields a WARNING, not a `CRITICAL` (Section 9, Fix 2).
+- This channel is **WARNING-only** (Section 10): it cannot raise `CRITICAL`, alone or when persistent. It spiked at step 37 (a false alarm) and at step 43 reads 7.5%, inside its pre-drift range of 2.2%-34.4% over 35-42, so it carries no onset signal.
 
 ### 3.3. Prevalence & Label Drift Monitor (`src/monitoring/prevalence_drift.py`)
 - Tracks rolling illicit prevalence over window W=5 under label arrival lag L=1.
 - Baseline training prevalence: 11.58%.
 - At **Step 43**, step prevalence drops from 11.10% (step 42) to **1.75%**.
-- Under lag L=1, when predicting step 43, labels up to step 42 are available (rolling prevalence 10.42%).
-- At **Step 44**, labels from step 43 enter the rolling window, causing rolling prevalence to drop to 8.21% (warning).
-- By **Step 45–47**, rolling prevalence collapses to **1.15%–1.34%**, crossing the absolute collapse floor (< 3.5%) and firing persistent `PrevalenceCollapse` alerts.
+- Under lag L=1, the decision at step 43 sees labels up to step 42: rolling prevalence 10.24%.
+- At step 44 the step-43 labels enter the window and rolling prevalence falls to 8.11%.
+- The rolling prevalence is 6.91% (t=45), 5.46% (t=46), 4.17% (t=47), 1.34% (t=48), 1.84% (t=49); The rolling-prevalence collapse floor (< 3.5%) is first crossed at step 48.
 
 ### 3.4. Periodic Adversarial Validation Monitor (`src/monitoring/adversarial_drift.py`)
 - Distinguishes reference training samples (steps 1–34) from current target transactions using cross-validated domain discrimination.
@@ -164,15 +164,18 @@ Threshold adaptation alone **cannot recover** the 43–49 performance collapse. 
 
 ## 5. Retraining Trigger Timing & Early Warning Verdict
 
-### 5.1. Corrected Trigger Decisions Across Steps 35–49:
-- **Steps 35–42 (Stationary Envelope):** the triad monitor is STABLE, the adversarial channel is corroborating-only (triad excluded from its features), and the local-tier persistence rule is active. Step 35 is `RECALIBRATE_ONLY` (WARNING). There is **no `CRITICAL` anywhere in 35–42**.
-- **Step 43 (Drift Onset):** `RETRAIN` / `CRITICAL` fires from the `PerformanceCrash` channel (frozen F1 = 0.000, PR-AUC = 0.0365) — not from the triad.
-- **Steps 43–49 (Drift Window):** `RETRAIN` / `CRITICAL` at 43, 44, 45, 47, 48, 49 (performance crash / prevalence collapse); step 46 is a WARNING because its single-step local spike is suppressed by the persistence rule.
+### 5.1. Lag-safe trigger decisions across steps 35–49:
+- **Steps 35–42 (pre-drift):** `CRITICAL` at none; WARNING at 35, 36, 37, 38, 39, 40, 41.
+- **Step 43 (drift onset):** **The score-shift channel fires at step 43** (PSI = 0.609 >= 0.25, label-free): it is the only channel that sees the regime change at its onset.
+- **Steps 43–49 (drift window):** `CRITICAL` at 43, 44, 45, 46, 47, 48, 49. The first `CRITICAL` in the drift window is at **step 43**, raised by ScoreShift (label-free).
+- The performance channel first fires at step 44 (= first labelled collapsed step + L = 43 + 1 at the earliest): under label delay it cannot fire at step 43.
+- The rolling-prevalence collapse floor (< 3.5%) is first crossed at step 48.
+- Label-free channels first fire at step 43, label-dependent channels at step 44.
 
-### 5.2. Scientific Verdict on Early Warning:
-- **The triad monitor is now operationally silent by design**, because the three cumulative features carry no regime signal (Section 8). It no longer supplies a false 'always-on' alarm.
-- **The genuine 42→43 escalation comes from the prediction-performance / prevalence channels**, which use labels (not PSI): frozen F1 collapses at step 43.
-- **Local persistence** (Section 9, Fix 2) removes the step-37 false `CRITICAL`: a single-step spike above 30% now yields a WARNING, while two consecutive exceedances still escalate to `CRITICAL`.
+### 5.2. Verdict on early warning:
+- **The triad monitor is operationally silent by design**: the three cumulative features carry no regime signal (Section 8).
+- **Under label delay L=1, no label-based channel can fire at step 43.** The collapse becomes visible to labels one step after it starts. Any earlier warning has to come from a label-free channel, and this report states plainly whether one did (above).
+- The old statement that `PerformanceCrash` fired at step 43 read step 43's *own* F1, a label that has not arrived when step 43 is scored. It was hindsight, and it has been removed (Section 10).
 
 ---
 
@@ -182,10 +185,11 @@ Threshold adaptation alone **cannot recover** the 43–49 performance collapse. 
 - `src/monitoring/prevalence_drift.py`: Lag-aware rolling prevalence monitor.
 - `src/monitoring/adversarial_drift.py`: Periodic adversarial validation discriminator.
 - `src/monitoring/threshold_calibration.py`: Adaptive Bayesian and empirical F1 calibration.
-- `src/monitoring/retraining_trigger.py`: Multi-signal decision engine.
+- `src/monitoring/retraining_trigger.py`: Multi-signal decision engine (lag-checked, channel breakdown).
+- `src/monitoring/lag_safe.py`: Lag-safe performance channel and label-free score-shift channel.
 - `src/monitoring/backtest.py`: Retrospective simulation orchestrator.
 - `scripts/compare_referencing_methods.py`: Four-method monotone-feature re-referencing comparison.
-- `tests/test_monitoring.py`: 14 unit & integration tests (100% passing).
+- `tests/test_monitoring.py`: unit & integration tests, including the lag, score-shift and feature-shift-demotion tests (run `pytest -q` for the current count).
 - `results/monitoring/step_monitoring_metrics.csv`: Per-step monitoring tabular record.
 - `results/monitoring/triad_drift_summary.csv`: Per-step PSI and KS for triad features.
 - `results/monitoring/threshold_comparison_summary.csv`: Per-step frozen vs adaptive metrics.
@@ -272,30 +276,29 @@ Excluding the triad drops step-35 AUC from **0.9928 to 0.9002** (seed range 0.86
 
 `Local_feature_2` and `Local_feature_3` are the two most trend-like *local* features (reference |rho| = 0.79 / 0.80 over steps 1–34), so the residual always-on component is a milder instance of the same time-proxy issue plus genuine step-specific covariate differences. Since the channel is still not regime-discriminative (step 35 >= step 45) and the cause is now attributed, the adversarial `ALERT` remains a corroborating warning and cannot solo-trigger `CRITICAL`. The permanent fix — auto-excluding `|rho| >= 0.99` monotone features from the classifier — is implemented in `src/monitoring/adversarial_drift.py`.
 
-### 8.7. Corrected trigger decisions (all 15 steps)
-| Step | Triad drift_score 10/43/8 | Triad level | Local drift % | Prevalence | Frozen F1 | Trigger decision | Primary reason |
+### 8.7. Trigger decisions (all 15 steps; lag-safe, see Section 10)
+| Step | Triad drift_score 10/43/8 | Triad level | Local drift % | Prevalence | Same-step F1 (hindsight) | Trigger decision | Primary reason |
 | :--- | :--- | :--- | ---: | :--- | ---: | :--- | :--- |
 | **35** | 0.048 / 0.043 / 0.036 | `STABLE` | 6.5% | WARNING | 0.960 | `RECALIBRATE_ONLY` (WARNING) | PrevalenceWarning: Rolling prevalence (0.1682) shifted by +45.3% vs baseline. |
 | **36** | 0.040 / 0.042 / 0.017 | `STABLE` | 22.6% | WARNING | 0.835 | `RECALIBRATE_ONLY` (WARNING) | PrevalenceWarning: Rolling prevalence (0.1594) shifted by +37.6% vs baseline. |
-| **37** | 0.046 / 0.044 / 0.039 | `STABLE` | 34.4% | STABLE | 0.812 | `RECALIBRATE_ONLY` (WARNING) | DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation. |
+| **37** | 0.046 / 0.044 / 0.039 | `STABLE` | 34.4% | STABLE | 0.812 | `RECALIBRATE_ONLY` (WARNING) | DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (>= 30%). Feature-shift is a WARNING-only channel and cannot raise CRITICAL. |
 | **38** | 0.051 / 0.034 / 0.060 | `STABLE` | 4.3% | WARNING | 0.918 | `RECALIBRATE_ONLY` (WARNING) | PrevalenceWarning: Rolling prevalence (0.0700) shifted by -39.6% vs baseline. |
 | **39** | 0.089 / 0.055 / 0.113 | `MODERATE` | 21.5% | STABLE | 0.910 | `RECALIBRATE_ONLY` (WARNING) | FeatureDriftWarning: Triad features show moderate detrended-drift score in [0.10, 0.25]. |
 | **40** | 0.059 / 0.033 / 0.058 | `STABLE` | 3.2% | STABLE | 0.772 | `RECALIBRATE_ONLY` (WARNING) | AdversarialOODAlert: Domain classifier AUC=0.8777 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger). |
 | **41** | 0.036 / 0.019 / 0.022 | `STABLE` | 16.1% | WARNING | 0.944 | `RECALIBRATE_ONLY` (WARNING) | PrevalenceWarning: Rolling prevalence (0.0704) shifted by -39.2% vs baseline. |
 | **42** | 0.004 / 0.002 / 0.008 | `STABLE` | 2.2% | STABLE | 0.848 | `NO_ACTION` (INFO) | All monitoring channels within stable operational envelope. |
-| **43** | 0.051 / 0.035 / 0.043 | `STABLE` | 7.5% | STABLE | 0.000 | `RETRAIN` (CRITICAL) | PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0365). |
-| **44** | 0.033 / 0.036 / 0.033 | `STABLE` | 8.6% | STABLE | 0.073 | `RETRAIN` (CRITICAL) | PerformanceCrash: Frozen threshold F1 collapsed to 0.0727 (PR-AUC=0.0372). |
-| **45** | 0.040 / 0.044 / 0.026 | `STABLE` | 6.5% | WARNING | 0.000 | `RETRAIN` (CRITICAL) | PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0070). |
-| **46** | 0.011 / 0.046 / 0.000 | `STABLE` | 30.1% | WARNING | 0.133 | `RECALIBRATE_ONLY` (WARNING) | DiffuseMicroDriftWarning: 30.1% of local features in significant drift for a single step (need 2 consecutive steps for CRITICAL); awaiting confirmation. |
-| **47** | 0.012 / 0.035 / 0.024 | `STABLE` | 8.6% | ALERT | 0.000 | `RETRAIN` (CRITICAL) | PerformanceCrash: Frozen threshold F1 collapsed to 0.0000 (PR-AUC=0.0476). |
-| **48** | 0.012 / 0.046 / 0.023 | `STABLE` | 17.2% | ALERT | 0.050 | `RETRAIN` (CRITICAL) | PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0134) plummeted below critical floor (0.0350). |
-| **49** | 0.009 / 0.043 / 0.023 | `STABLE` | 11.8% | ALERT | 0.028 | `RETRAIN` (CRITICAL) | PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184) plummeted below critical floor (0.0350). |
+| **43** | 0.051 / 0.035 / 0.043 | `STABLE` | 7.5% | STABLE | 0.000 | `RETRAIN` (CRITICAL) | ScoreShift: PSI of the deployed model's score distribution = 0.609 >= 0.25 against labelled steps [38, 39, 40, 41, 42] (label-free). |
+| **44** | 0.033 / 0.036 / 0.033 | `STABLE` | 8.6% | STABLE | 0.073 | `RETRAIN` (CRITICAL) | ScoreShift: PSI of the deployed model's score distribution = 0.262 >= 0.25 against labelled steps [39, 40, 41, 42, 43] (label-free). |
+| **45** | 0.040 / 0.044 / 0.026 | `STABLE` | 6.5% | WARNING | 0.000 | `RETRAIN` (CRITICAL) | ScoreShift: PSI of the deployed model's score distribution = 0.323 >= 0.25 against labelled steps [40, 41, 42, 43, 44] (label-free). |
+| **46** | 0.011 / 0.046 / 0.000 | `STABLE` | 30.1% | WARNING | 0.133 | `RETRAIN` (CRITICAL) | PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1). |
+| **47** | 0.012 / 0.035 / 0.024 | `STABLE` | 8.6% | ALERT | 0.000 | `RETRAIN` (CRITICAL) | PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1). |
+| **48** | 0.012 / 0.046 / 0.023 | `STABLE` | 17.2% | ALERT | 0.050 | `RETRAIN` (CRITICAL) | PerformanceCrash: worst per-step F1 over labelled steps [44, 47] = 0.000 < floor 0.480 (labels <= step 47, label delay 1). |
+| **49** | 0.009 / 0.043 / 0.023 | `STABLE` | 11.8% | ALERT | 0.028 | `RETRAIN` (CRITICAL) | PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1). |
 
 ### 8.8. Success-criterion assessment
-- **Step 35 is `RECALIBRATE_ONLY` (WARNING) on every channel**, including adversarial (triad excluded; 0.90 AUC is corroborating-only). ✅
-- **The trigger escalates to `CRITICAL` at step 43** via the `PerformanceCrash` channel (frozen F1 = 0.000, PR-AUC = 0.0365), i.e. at the genuine regime onset. ✅
-- **Step 37 no longer produces a standalone `CRITICAL`**: the 34.4% -> 4.3% single-step local spike now yields a WARNING under the 2-step persistence rule (Section 9, Fix 2). ✅
-- Step 46 is likewise downgraded to WARNING (single-step local spike); the drift window still fires `CRITICAL` at 43, 44, 45, 47, 48, 49.
+- Pre-drift (35–42): `CRITICAL` at none. ✅
+- Drift onset (step 43): **The score-shift channel fires at step 43** (PSI = 0.609 >= 0.25, label-free): it is the only channel that sees the regime change at its onset.
+- Drift window: `CRITICAL` at 43, 44, 45, 46, 47, 48, 49. The first `CRITICAL` in the drift window is at **step 43**, raised by ScoreShift (label-free).
 
 ---
 
@@ -306,12 +309,52 @@ Excluding the triad drops step-35 AUC from **0.9928 to 0.9002** (seed range 0.86
 - **Residual attributed.** The remaining ~0.90 separability is dominated by `Local_feature_2` (+0.275 permutation importance) and `Local_feature_3` (+0.110), the two most trend-like local features (reference |rho| 0.79/0.80), plus step covariance.
 - **Fix.** `AdversarialDriftMonitor` now auto-excludes features with `|Spearman rho(step, per-step median)| >= 0.99` (the same rule as `FeatureDriftMonitor`); in practice this removes the triad. Because the residual channel is still non-discriminative with an attributed cause, its `ALERT` remains corroborating-only. Artifacts: `results/monitoring/adversarial_auc_comparison.csv`, `results/monitoring/adversarial_step35_attribution.csv`.
 
-### 9.2. Fix 2 — local-tier temporal persistence
-- `RetrainingTriggerEngine` now requires the broad local-tier drift ratio to exceed 30% for **2 consecutive steps** before contributing to `CRITICAL`; a single-step spike yields at most `WARNING`.
-- Verified on the step-37 case (34.4% -> 4.3%): step 37 is `RECALIBRATE_ONLY` (WARNING), and two synthetic consecutive exceedances still fire `CRITICAL`. Regression test: `test_local_tier_persistence_suppresses_single_step_spike`.
+### 9.2. Fix 2 — local-tier temporal persistence (superseded)
+- Fix 2 added a 2-consecutive-step persistence rule so the step-37 spike (34.4% -> 4.3%) gave a WARNING. That rule still exists but only changes the wording of the warning: the whole channel is now WARNING-only (Section 10), so two consecutive exceedances no longer escalate to `CRITICAL`.
 
-### 9.3. Post-fix trigger outcomes
-- Step 35: `RECALIBRATE_ONLY` (WARNING) — prevalence; adversarial corroborating-only.
-- Step 37: `RECALIBRATE_ONLY` (WARNING) — single-step local spike suppressed.
-- Step 43: `RETRAIN` (CRITICAL) — `PerformanceCrash` (frozen F1 = 0.000).
-- Steps 43–49: CRITICAL at 43/44/45/47/48/49; WARNING at 46 (single-step local spike suppressed).
+---
+
+## 10. Lag-Safe Monitoring Pass
+
+### 10.1. What changed and why
+- **Label delay is a config value**: `label_delay_steps` (default 1; this run L=1). A decision at step t reads labels of steps <= t-L only. The engine raises `LagViolationError` if a label-based input contains a newer step, so the rule is enforced at the boundary, not just by convention.
+- **PerformanceCrash is lag-safe.** It previously read step t's own F1. It now reads per-step F1 of the deployed model on already-labelled steps (<= t-L), over the last 2 labelled steps with >= 10 illicit labels. **Each step counts once** (step-weighted, not pooled by rows) and the channel is breached when the **worst** of those steps is below the floor, so a large healthy step (e.g. step 42, 239 positives) cannot hide a crash at the next (step 43, 24 positives).
+- **F1 floor is not taken from steps 43–49.** floor = 0.50 x validation F1 = 0.50 x 0.9605 = **0.4802**. The validation F1 is the pooled steps 25–34 F1 of the deployed operating point (tau = 0.435) read from `results/xgboost/metrics.json`. **Caveat:** only the pooled validation F1 is stored (per-step validation predictions of the 1–24 fit were not saved and cannot be regenerated without refitting), so the rule uses the pooled value, not the median of a per-step distribution. The fraction 0.5 was fixed before the run.
+- Per-step F1 on steps with >= 10 illicit labels ranges 0.772-0.960 in 35-42 and 0.000-0.073 in 43-49. Any fraction between 0.08 and 0.80 of the validation F1 would give the same performance-channel separation; the declared fraction 0.50 sits inside that range, so the result does not hinge on it (this is a post-hoc robustness check, not how the fraction was chosen).
+- **Score-shift channel added (label-free).** PSI of the deployed model's step-t score distribution against its scores on the last 5 already-labelled steps (steps <= t-L, each step weighted equally; at least 2 needed, else UNAVAILABLE and never fires). Fixed probability bins (0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90). Standard bands: **PSI >= 0.25 is CRITICAL**, 0.10-0.25 is WARNING. Neither band was tuned on 43–49. It reads no label of step t, so it can fire during label delay.
+- **Feature-shift channel demoted to WARNING only.** The % of local features with PSI > 0.25 can no longer raise `CRITICAL`.
+- **Status output**: `/monitoring/status` gains `label_delay_steps`, `label_delay_assumption` and `channel_breakdown` (new fields only).
+
+### 10.2. Lag-safe decision table (steps 35–49)
+Window F1 = worst per-step F1 over the labelled steps listed (labels <= t-L). Score PSI is against labelled reference steps. Channel statuses: CRITICAL / WARNING / OK / UNAVAILABLE.
+
+| Step | Labelled steps read (perf) | Worst per-step F1 | Performance | Score PSI | Score shift | Prevalence | Feature shift (warn-only) | CRITICAL channels | Decision |
+| :--- | :--- | ---: | :--- | ---: | :--- | :--- | :--- | :--- | :--- |
+| **35** | — | — | UNAVAILABLE | — | UNAVAILABLE | WARNING | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **36** | 35 | 0.960 | OK | — | UNAVAILABLE | WARNING | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **37** | 35,36 | 0.835 | OK | 0.019 | OK | OK | WARNING | — | `RECALIBRATE_ONLY` (WARNING) |
+| **38** | 36,37 | 0.812 | OK | 0.052 | OK | WARNING | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **39** | 37,38 | 0.812 | OK | 0.037 | OK | OK | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **40** | 38,39 | 0.910 | OK | 0.020 | OK | OK | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **41** | 39,40 | 0.772 | OK | 0.018 | OK | WARNING | OK | — | `RECALIBRATE_ONLY` (WARNING) |
+| **42** | 40,41 | 0.772 | OK | 0.006 | OK | OK | OK | — | `NO_ACTION` (INFO) |
+| **43** | 41,42 | 0.848 | OK | 0.609 | CRITICAL | OK | OK | score_shift | `RETRAIN` (CRITICAL) |
+| **44** | 42,43 | 0.000 | CRITICAL | 0.262 | CRITICAL | OK | OK | score_shift,performance | `RETRAIN` (CRITICAL) |
+| **45** | 43,44 | 0.000 | CRITICAL | 0.323 | CRITICAL | WARNING | OK | score_shift,performance | `RETRAIN` (CRITICAL) |
+| **46** | 43,44 | 0.000 | CRITICAL | 0.101 | WARNING | WARNING | WARNING | performance | `RETRAIN` (CRITICAL) |
+| **47** | 43,44 | 0.000 | CRITICAL | 0.111 | WARNING | WARNING | OK | performance | `RETRAIN` (CRITICAL) |
+| **48** | 44,47 | 0.000 | CRITICAL | 0.080 | OK | CRITICAL | OK | performance,prevalence | `RETRAIN` (CRITICAL) |
+| **49** | 47,48 | 0.000 | CRITICAL | 0.033 | OK | CRITICAL | OK | performance,prevalence | `RETRAIN` (CRITICAL) |
+
+### 10.3. Which channel fires first
+- **The score-shift channel fires at step 43** (PSI = 0.609 >= 0.25, label-free): it is the only channel that sees the regime change at its onset.
+- The first `CRITICAL` in the drift window is at **step 43**, raised by ScoreShift (label-free).
+- The performance channel first fires at step 44 (= first labelled collapsed step + L = 43 + 1 at the earliest): under label delay it cannot fire at step 43.
+- The rolling-prevalence collapse floor (< 3.5%) is first crossed at step 48.
+- Label-free channels first fire at step 43, label-dependent channels at step 44.
+
+### 10.4. Limitations
+- Score PSI is computed on labelled transactions only here (`predictions.csv` holds scores for labelled rows); in production it would use every scored transaction.
+- The score reference rolls over the last 5 labelled steps, so a *sustained* shift eventually becomes the reference and the channel goes quiet; it is an onset detector, not a persistent-degradation detector. The performance and prevalence channels cover persistence.
+- The prevalence collapse floor (3.5%) and the 30% local-feature threshold are pre-existing constants, unchanged in this pass.
+- Same-step F1, adaptive and oracle thresholds in Sections 1, 2 and 4 are hindsight diagnostics. They use step t's labels and are not inputs to any decision.
