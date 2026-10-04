@@ -1,0 +1,880 @@
+{
+ "metadata": {
+  "phase": "Phase 8a - Drift Monitoring & Retraining Triggers",
+  "model": "XGBoost Optimized (Frozen, Phase 2)",
+  "test_window": "35-49",
+  "generated": "2026-10-01"
+ },
+ "latest_decision": {
+  "time_step": 49,
+  "action": "RETRAIN",
+  "severity": "CRITICAL",
+  "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1).",
+  "reasons": [
+   "PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1).",
+   "PrevalenceRegimeCollapse: Rolling illicit prevalence (0.0184, labels <= step 48) plummeted below critical floor (0.0350).",
+   "AdversarialOODAlert: Domain classifier AUC=0.8706 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger)."
+  ],
+  "component_statuses": {
+   "feature_triad": "STABLE",
+   "feature_local": "MODERATE",
+   "feature_overall": "MODERATE",
+   "score_shift": "STABLE",
+   "performance": "CRITICAL",
+   "prevalence": "ALERT",
+   "adversarial": "ALERT"
+  },
+  "label_delay_steps": 1,
+  "label_delay_assumption": "Labels of step s become usable at step s+1 (label_delay_steps=1); label-based channels read steps <= t-1 only.",
+  "channels": [
+   {
+    "name": "triad",
+    "kind": "label_free",
+    "status": "OK",
+    "value": 0.0427,
+    "threshold": 0.25,
+    "can_trigger_critical": true
+   },
+   {
+    "name": "feature_shift",
+    "kind": "label_free",
+    "status": "OK",
+    "value": 11.828,
+    "threshold": 30.0,
+    "can_trigger_critical": false
+   },
+   {
+    "name": "score_shift",
+    "kind": "label_free",
+    "status": "OK",
+    "value": 0.0333,
+    "threshold": 0.25,
+    "can_trigger_critical": true
+   },
+   {
+    "name": "performance",
+    "kind": "label_dependent",
+    "status": "CRITICAL",
+    "value": 0.0,
+    "threshold": 0.48024193548387095,
+    "can_trigger_critical": true
+   },
+   {
+    "name": "prevalence",
+    "kind": "label_dependent",
+    "status": "CRITICAL",
+    "value": 0.0184,
+    "threshold": 0.035,
+    "can_trigger_critical": true
+   },
+   {
+    "name": "adversarial",
+    "kind": "label_free",
+    "status": "WARNING",
+    "value": 0.8706,
+    "threshold": 0.85,
+    "can_trigger_critical": false
+   }
+  ]
+ },
+ "steps": [
+  {
+   "step": 35,
+   "n_labeled": 1341,
+   "n_illicit": 182,
+   "prevalence": 0.13571961222967935,
+   "rolling_prevalence": 0.1682322801024765,
+   "prevalence_rel_change_pct": 45.27,
+   "local_drift_sig_pct": 6.451612903225806,
+   "adversarial_auc": 0.9002145833333334,
+   "pr_auc": 0.9934392989321705,
+   "frozen_f1": 0.9595687331536388,
+   "adaptive_f1": 0.9595687331536388,
+   "bayes_f1": 0.9595687331536388,
+   "oracle_f1": 0.9776536312849162,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "PrevalenceWarning: Rolling prevalence (0.1682) shifted by +45.3% vs baseline.",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 36,
+   "n_labeled": 1708,
+   "n_illicit": 33,
+   "prevalence": 0.019320843091334895,
+   "rolling_prevalence": 0.15935334872979215,
+   "prevalence_rel_change_pct": 37.6,
+   "local_drift_sig_pct": 22.58064516129032,
+   "adversarial_auc": null,
+   "pr_auc": 0.994628982128982,
+   "frozen_f1": 0.8354430379746836,
+   "adaptive_f1": 0.9696969696969697,
+   "bayes_f1": 0.7415730337078652,
+   "oracle_f1": 0.9846153846153847,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "PrevalenceWarning: Rolling prevalence (0.1594) shifted by +37.6% vs baseline.",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 37,
+   "n_labeled": 498,
+   "n_illicit": 40,
+   "prevalence": 0.08032128514056225,
+   "rolling_prevalence": 0.11580330330330331,
+   "prevalence_rel_change_pct": -0.0,
+   "local_drift_sig_pct": 34.40860215053764,
+   "adversarial_auc": null,
+   "pr_auc": 0.8893308691794047,
+   "frozen_f1": 0.8115942028985508,
+   "adaptive_f1": 0.7692307692307693,
+   "bayes_f1": 0.8115942028985508,
+   "oracle_f1": 0.8235294117647058,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "DiffuseMicroDriftWarning: 34.4% of local features in significant drift for a single step (>= 30%). Feature-shift is a WARNING-only channel and cannot raise CRITICAL.",
+   "prevalence_status": "STABLE",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 38,
+   "n_labeled": 756,
+   "n_illicit": 111,
+   "prevalence": 0.14682539682539683,
+   "rolling_prevalence": 0.06995336442371752,
+   "prevalence_rel_change_pct": -39.6,
+   "local_drift_sig_pct": 4.301075268817205,
+   "adversarial_auc": null,
+   "pr_auc": 0.9532094081576619,
+   "frozen_f1": 0.9181818181818182,
+   "adaptive_f1": 0.9326923076923077,
+   "bayes_f1": 0.9174311926605505,
+   "oracle_f1": 0.9478672985781991,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "PrevalenceWarning: Rolling prevalence (0.0700) shifted by -39.6% vs baseline.",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 39,
+   "n_labeled": 1183,
+   "n_illicit": 81,
+   "prevalence": 0.06846999154691462,
+   "rolling_prevalence": 0.08364466583644665,
+   "prevalence_rel_change_pct": -27.77,
+   "local_drift_sig_pct": 21.50537634408602,
+   "adversarial_auc": null,
+   "pr_auc": 0.9608283362476222,
+   "frozen_f1": 0.9101796407185628,
+   "adaptive_f1": 0.9487179487179487,
+   "bayes_f1": 0.926829268292683,
+   "oracle_f1": 0.9559748427672956,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "FeatureDriftWarning: Triad features show moderate detrended-drift score in [0.10, 0.25].",
+   "prevalence_status": "STABLE",
+   "triad_status": "MODERATE"
+  },
+  {
+   "step": 40,
+   "n_labeled": 1211,
+   "n_illicit": 112,
+   "prevalence": 0.09248554913294797,
+   "rolling_prevalence": 0.08148013124316442,
+   "prevalence_rel_change_pct": -29.64,
+   "local_drift_sig_pct": 3.225806451612903,
+   "adversarial_auc": 0.8776604166666666,
+   "pr_auc": 0.767752672527802,
+   "frozen_f1": 0.7715736040609137,
+   "adaptive_f1": 0.776595744680851,
+   "bayes_f1": 0.7772020725388601,
+   "oracle_f1": 0.7835051546391752,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "AdversarialOODAlert: Domain classifier AUC=0.8777 >= 0.85 (saturated domain separability; corroborating signal only, not a standalone retrain trigger).",
+   "prevalence_status": "STABLE",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 41,
+   "n_labeled": 1132,
+   "n_illicit": 116,
+   "prevalence": 0.10247349823321555,
+   "rolling_prevalence": 0.0703883495145631,
+   "prevalence_rel_change_pct": -39.22,
+   "local_drift_sig_pct": 16.129032258064516,
+   "adversarial_auc": null,
+   "pr_auc": 0.9640915486597283,
+   "frozen_f1": 0.944206008583691,
+   "adaptive_f1": 0.9646017699115044,
+   "bayes_f1": 0.9606986899563319,
+   "oracle_f1": 0.9691629955947136,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "primary_reason": "PrevalenceWarning: Rolling prevalence (0.0704) shifted by -39.2% vs baseline.",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 42,
+   "n_labeled": 2154,
+   "n_illicit": 239,
+   "prevalence": 0.11095636025998143,
+   "rolling_prevalence": 0.09623430962343096,
+   "prevalence_rel_change_pct": -16.9,
+   "local_drift_sig_pct": 2.1505376344086025,
+   "adversarial_auc": null,
+   "pr_auc": 0.8935297438703486,
+   "frozen_f1": 0.847682119205298,
+   "adaptive_f1": 0.8775981524249422,
+   "bayes_f1": 0.8533333333333334,
+   "oracle_f1": 0.8790697674418605,
+   "action": "NO_ACTION",
+   "severity": "INFO",
+   "primary_reason": "All monitoring channels within stable operational envelope.",
+   "prevalence_status": "STABLE",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 43,
+   "n_labeled": 1370,
+   "n_illicit": 24,
+   "prevalence": 0.017518248175182483,
+   "rolling_prevalence": 0.1023927905531386,
+   "prevalence_rel_change_pct": -11.58,
+   "local_drift_sig_pct": 7.526881720430108,
+   "adversarial_auc": null,
+   "pr_auc": 0.036512374546720676,
+   "frozen_f1": 0.0,
+   "adaptive_f1": 0.0,
+   "bayes_f1": 0.0,
+   "oracle_f1": 0.07954545454545454,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.609 >= 0.25 against labelled steps [38, 39, 40, 41, 42] (label-free).",
+   "prevalence_status": "STABLE",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 44,
+   "n_labeled": 1591,
+   "n_illicit": 24,
+   "prevalence": 0.01508485229415462,
+   "rolling_prevalence": 0.08113475177304964,
+   "prevalence_rel_change_pct": -29.94,
+   "local_drift_sig_pct": 8.60215053763441,
+   "adversarial_auc": null,
+   "pr_auc": 0.037187389250635916,
+   "frozen_f1": 0.07272727272727272,
+   "adaptive_f1": 0.05714285714285714,
+   "bayes_f1": 0.0851063829787234,
+   "oracle_f1": 0.125,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.262 >= 0.25 against labelled steps [39, 40, 41, 42, 43] (label-free).",
+   "prevalence_status": "STABLE",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 45,
+   "n_labeled": 1221,
+   "n_illicit": 5,
+   "prevalence": 0.004095004095004095,
+   "rolling_prevalence": 0.0690533655135425,
+   "prevalence_rel_change_pct": -40.37,
+   "local_drift_sig_pct": 6.451612903225806,
+   "adversarial_auc": 0.8244572916666667,
+   "pr_auc": 0.0070351398720408095,
+   "frozen_f1": 0.0,
+   "adaptive_f1": 0.0,
+   "bayes_f1": 0.0,
+   "oracle_f1": 0.024539877300613498,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "ScoreShift: PSI of the deployed model's score distribution = 0.323 >= 0.25 against labelled steps [40, 41, 42, 43, 44] (label-free).",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 46,
+   "n_labeled": 712,
+   "n_illicit": 2,
+   "prevalence": 0.0028089887640449437,
+   "rolling_prevalence": 0.05463310123192287,
+   "prevalence_rel_change_pct": -52.82,
+   "local_drift_sig_pct": 30.107526881720432,
+   "adversarial_auc": null,
+   "pr_auc": 0.09251731406202951,
+   "frozen_f1": 0.13333333333333333,
+   "adaptive_f1": 0.2857142857142857,
+   "bayes_f1": 0.2,
+   "oracle_f1": 0.3333333333333333,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
+   "prevalence_status": "WARNING",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 47,
+   "n_labeled": 846,
+   "n_illicit": 22,
+   "prevalence": 0.026004728132387706,
+   "rolling_prevalence": 0.041713961407491486,
+   "prevalence_rel_change_pct": -63.98,
+   "local_drift_sig_pct": 8.60215053763441,
+   "adversarial_auc": null,
+   "pr_auc": 0.04757312927933914,
+   "frozen_f1": 0.0,
+   "adaptive_f1": 0.0,
+   "bayes_f1": 0.0,
+   "oracle_f1": 0.07339449541284404,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [43, 44] = 0.000 < floor 0.480 (labels <= step 44, label delay 1).",
+   "prevalence_status": "ALERT",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 48,
+   "n_labeled": 471,
+   "n_illicit": 36,
+   "prevalence": 0.07643312101910828,
+   "rolling_prevalence": 0.013414634146341463,
+   "prevalence_rel_change_pct": -88.42,
+   "local_drift_sig_pct": 17.20430107526882,
+   "adversarial_auc": null,
+   "pr_auc": 0.18101147752571092,
+   "frozen_f1": 0.05,
+   "adaptive_f1": 0.047619047619047616,
+   "bayes_f1": 0.0,
+   "oracle_f1": 0.17142857142857143,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [44, 47] = 0.000 < floor 0.480 (labels <= step 47, label delay 1).",
+   "prevalence_status": "ALERT",
+   "triad_status": "STABLE"
+  },
+  {
+   "step": 49,
+   "n_labeled": 476,
+   "n_illicit": 56,
+   "prevalence": 0.11764705882352941,
+   "rolling_prevalence": 0.018384631274530057,
+   "prevalence_rel_change_pct": -84.13,
+   "local_drift_sig_pct": 11.827956989247312,
+   "adversarial_auc": 0.87056875,
+   "pr_auc": 0.18225106911311845,
+   "frozen_f1": 0.028169014084507043,
+   "adaptive_f1": 0.027777777777777776,
+   "bayes_f1": 0.03389830508474576,
+   "oracle_f1": 0.11965811965811966,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "primary_reason": "PerformanceCrash: worst per-step F1 over labelled steps [47, 48] = 0.000 < floor 0.480 (labels <= step 48, label delay 1).",
+   "prevalence_status": "ALERT",
+   "triad_status": "STABLE"
+  }
+ ],
+ "lag_safe": [
+  {
+   "step": 35,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [],
+   "worst_f1": null,
+   "score_psi": null,
+   "channels": {
+    "score_shift": {
+     "status": "UNAVAILABLE",
+     "value": null
+    },
+    "performance": {
+     "status": "UNAVAILABLE",
+     "value": null
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.1682
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 6.4516
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 36,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    35
+   ],
+   "worst_f1": 0.9596,
+   "score_psi": null,
+   "channels": {
+    "score_shift": {
+     "status": "UNAVAILABLE",
+     "value": null
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.9596
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.1594
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 22.5806
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 37,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    35,
+    36
+   ],
+   "worst_f1": 0.8354,
+   "score_psi": 0.019,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.019
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.8354
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.1158
+    },
+    "feature_shift": {
+     "status": "WARNING",
+     "value": 34.4086
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 38,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    36,
+    37
+   ],
+   "worst_f1": 0.8116,
+   "score_psi": 0.0519,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0519
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.8116
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.07
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 4.3011
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 39,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    37,
+    38
+   ],
+   "worst_f1": 0.8116,
+   "score_psi": 0.0368,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0368
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.8116
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.0836
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 21.5054
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 40,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    38,
+    39
+   ],
+   "worst_f1": 0.9102,
+   "score_psi": 0.0199,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0199
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.9102
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.0815
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 3.2258
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 41,
+   "action": "RECALIBRATE_ONLY",
+   "severity": "WARNING",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    39,
+    40
+   ],
+   "worst_f1": 0.7716,
+   "score_psi": 0.0177,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0177
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.7716
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.0704
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 16.129
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 42,
+   "action": "NO_ACTION",
+   "severity": "INFO",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    40,
+    41
+   ],
+   "worst_f1": 0.7716,
+   "score_psi": 0.0055,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0055
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.7716
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.0962
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 2.1505
+    }
+   },
+   "critical_channels": []
+  },
+  {
+   "step": 43,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    41,
+    42
+   ],
+   "worst_f1": 0.8477,
+   "score_psi": 0.6088,
+   "channels": {
+    "score_shift": {
+     "status": "CRITICAL",
+     "value": 0.6088
+    },
+    "performance": {
+     "status": "OK",
+     "value": 0.8477
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.1024
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 7.5269
+    }
+   },
+   "critical_channels": [
+    "score_shift"
+   ]
+  },
+  {
+   "step": 44,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    42,
+    43
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.2616,
+   "channels": {
+    "score_shift": {
+     "status": "CRITICAL",
+     "value": 0.2616
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "OK",
+     "value": 0.0811
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 8.6022
+    }
+   },
+   "critical_channels": [
+    "score_shift",
+    "performance"
+   ]
+  },
+  {
+   "step": 45,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    43,
+    44
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.3229,
+   "channels": {
+    "score_shift": {
+     "status": "CRITICAL",
+     "value": 0.3229
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.0691
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 6.4516
+    }
+   },
+   "critical_channels": [
+    "score_shift",
+    "performance"
+   ]
+  },
+  {
+   "step": 46,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    43,
+    44
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.1013,
+   "channels": {
+    "score_shift": {
+     "status": "WARNING",
+     "value": 0.1013
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.0546
+    },
+    "feature_shift": {
+     "status": "WARNING",
+     "value": 30.1075
+    }
+   },
+   "critical_channels": [
+    "performance"
+   ]
+  },
+  {
+   "step": 47,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    43,
+    44
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.1106,
+   "channels": {
+    "score_shift": {
+     "status": "WARNING",
+     "value": 0.1106
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "WARNING",
+     "value": 0.0417
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 8.6022
+    }
+   },
+   "critical_channels": [
+    "performance"
+   ]
+  },
+  {
+   "step": 48,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    44,
+    47
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.0801,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0801
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "CRITICAL",
+     "value": 0.0134
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 17.2043
+    }
+   },
+   "critical_channels": [
+    "performance",
+    "prevalence"
+   ]
+  },
+  {
+   "step": 49,
+   "action": "RETRAIN",
+   "severity": "CRITICAL",
+   "label_delay_steps": 1,
+   "perf_steps_read": [
+    47,
+    48
+   ],
+   "worst_f1": 0.0,
+   "score_psi": 0.0333,
+   "channels": {
+    "score_shift": {
+     "status": "OK",
+     "value": 0.0333
+    },
+    "performance": {
+     "status": "CRITICAL",
+     "value": 0.0
+    },
+    "prevalence": {
+     "status": "CRITICAL",
+     "value": 0.0184
+    },
+    "feature_shift": {
+     "status": "OK",
+     "value": 11.828
+    }
+   },
+   "critical_channels": [
+    "performance",
+    "prevalence"
+   ]
+  }
+ ],
+ "summary": {
+  "n_steps": 15,
+  "action_counts": {
+   "RECALIBRATE_ONLY": 7,
+   "NO_ACTION": 1,
+   "RETRAIN": 7
+  },
+  "drift_window_mean_frozen_f1": 0.04060423144930187,
+  "drift_window_mean_adaptive_f1": 0.05975056689342403,
+  "drift_window_mean_oracle_f1": 0.13241426452556235,
+  "pre_drift_mean_frozen_f1": 0.8748036455971446
+ },
+ "sources": [
+  "reports/monitoring_backtest_report.json",
+  "results/monitoring/step_monitoring_metrics.csv",
+  "reports/monitoring_backtest_report.json (decision.channels, lag_safe_performance)"
+ ]
+}

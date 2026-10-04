@@ -1,0 +1,80 @@
+/* Design tokens — derived from the Stitch "Editorial Intelligence" design system.
+   One teal accent; red / amber / green are reserved for status. */
+:root {
+  /* surfaces */
+  --canvas: #f8fafc;
+  --card: #ffffff;
+  --well: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* ink */
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --ink-3: #5b6b82; /* 5.2:1 on white — slightly darker than #64748b for small text */
+
+  /* accent (teal) */
+  --accent: #0f766e;
+  --accent-hover: #115e59;
+  --accent-bright: #2dd4bf;
+  --accent-tint: #ccfbf1;
+  --accent-wash: #f0fdfa;
+
+  /* status */
+  --ok: #15803d;
+  --ok-bg: #dcfce7;
+  --ok-line: rgba(22, 163, 74, 0.25);
+  --warn: #b45309;
+  --warn-bg: #fef3c7;
+  --warn-line: rgba(217, 119, 6, 0.3);
+  --crit: #be123c;
+  --crit-solid: #e11d48;
+  --crit-bg: #ffe4e6;
+  --crit-wash: #fff1f2;
+  --crit-line: rgba(225, 29, 72, 0.25);
+
+  /* chart series (fixed order, never cycled) */
+  --s-xgb: #0d9488;
+  --s-sage: #6366f1;
+  --s-hgt: #d97706;
+  --s-rgcn: #fb7185;
+
+  /* type */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* spacing (4px grid) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* shape */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+
+  /* elevation */
+  --shadow-1: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-2: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+
+  /* layout */
+  --nav-h: 56px;
+  --maxw: 1520px;
+  --gutter: 24px;
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur: 160ms;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+  }
+}
