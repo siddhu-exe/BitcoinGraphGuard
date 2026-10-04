@@ -365,6 +365,9 @@ def load_latest_monitoring_decision(
         reasons=list(decision.get("reasons", [])),
         component_statuses=dict(decision.get("component_statuses", {})),
         telemetry_summary=dict(decision.get("telemetry_summary", {})),
+        # Additive lag-safe fields; absent in reports generated before the lag-safe pass.
+        label_delay_steps=int(decision.get("label_delay_steps", 1)),
+        channels=dict(decision.get("channels", {})),
     )
 
 
@@ -399,4 +402,9 @@ async def get_monitoring_status():
         component_statuses=decision.component_statuses,
         telemetry_summary=decision.telemetry_summary,
         all_reasons=decision.reasons,
+        label_delay_steps=decision.label_delay_steps if decision.channels else None,
+        label_delay_assumption=decision.label_delay_assumption
+        if decision.channels
+        else None,
+        channel_breakdown=decision.channels or None,
     )

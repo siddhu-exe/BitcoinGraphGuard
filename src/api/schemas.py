@@ -395,6 +395,25 @@ class MonitoringStatusResponse(BaseModel):
         default_factory=list,
         description="All firing condition reasons for the latest step",
     )
+    label_delay_steps: int | None = Field(
+        None,
+        description="Label delay L assumed by the decision: labels of step s are usable from step s+L.",
+    )
+    label_delay_assumption: str | None = Field(
+        None,
+        description=(
+            "Plain-language statement of the label-delay assumption behind this decision. "
+            "Null when the stored decision predates the lag-safe rules."
+        ),
+    )
+    channel_breakdown: dict[str, dict[str, Any]] | None = Field(
+        None,
+        description=(
+            "Per-channel breakdown (performance, prevalence, score_shift, triad, feature_shift, "
+            "adversarial): kind (label_free | label_dependent), status, value, threshold and "
+            "whether the channel can raise CRITICAL. Null when the stored decision predates it."
+        ),
+    )
     timestamp: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
         description="Evaluation query timestamp",

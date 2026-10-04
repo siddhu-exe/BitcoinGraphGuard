@@ -490,9 +490,9 @@ def test_monitoring_status_endpoint(client: TestClient):
     assert data["primary_reason"] == latest_decision["primary_reason"]
     assert data["requires_retraining"] is True
     assert data["requires_action"] is True
-    assert (
-        "PrevalenceRegimeCollapse" in data["primary_reason"]
-        or "PerformanceCrash" in data["primary_reason"]
+    assert any(
+        k in data["primary_reason"]
+        for k in ("PrevalenceRegimeCollapse", "PerformanceCrash", "ScoreShift")
     )
     # Full artifacts must round-trip unchanged (no hardcoded placeholders).
     assert data["component_statuses"] == latest_decision["component_statuses"]
@@ -502,6 +502,14 @@ def test_monitoring_status_endpoint(client: TestClient):
     assert "feature_triad" in data["component_statuses"]
     assert "triad_feature_drift" not in data["component_statuses"]
     assert "rolling_prevalence" in data["telemetry_summary"]
+    # Additive lag-safe fields (new fields only; nothing above was removed).
+    assert data["label_delay_steps"] == latest_decision["label_delay_steps"]
+    assert str(data["label_delay_steps"]) in data["label_delay_assumption"]
+    assert data["channel_breakdown"] == latest_decision["channels"]
+    assert {"performance", "prevalence", "score_shift", "feature_shift"} <= set(
+        data["channel_breakdown"]
+    )
+    assert data["channel_breakdown"]["feature_shift"]["can_trigger_critical"] is False
 
 
 def test_monitoring_status_unavailable_returns_503(
