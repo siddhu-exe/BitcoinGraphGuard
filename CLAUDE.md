@@ -58,7 +58,7 @@ python scripts/generate_notebook_08b.py      # Generates notebooks/08b_ood_permu
 
 ### Testing (Pytest)
 ```bash
-# Run entire test suite (33 tests: 19 in test_api.py, 14 in test_monitoring.py)
+# Run entire test suite (~49 tests: 19 in test_api.py, 30 in test_monitoring.py)
 pytest -q
 
 # Run single test file or specific test function
@@ -87,6 +87,22 @@ ruff format --check --force-exclude --config .github/ruff-ci.toml src/api src/mo
 ```
 MLflow/DVC (Phase 9) are planned only; there is no `dvc.yaml` yet.
 
+### Monitoring evaluation & dashboard data
+```bash
+python scripts/evaluate_monitoring_signals.py   # -> results/monitoring/signal_evaluation.csv, reports/monitoring_signal_evaluation.md
+python scripts/export_dashboard_data.py         # walk-forward + lag-safe monitoring JSON for the frontend
+python scripts/generate_notebook_09.py          # -> notebooks/09_walkforward_retraining.ipynb (run on Colab)
+```
+
+### Frontend (`frontend/`, React 18 + Vite + TypeScript + Recharts)
+```bash
+cd frontend && npm install
+npm run dev          # dev server
+npm run typecheck    # tsc --noEmit
+npm run build        # typecheck + vite build
+```
+Reads the FastAPI service via `src/lib/api.ts` and static exported data via `src/lib/data.ts` / `walkforward.ts`. Deployed through `frontend/vercel.json`; the API deploys to Render via `render.yaml` / `DEPLOY.md`.
+
 ## Serving & Monitoring Architecture (`src/`)
 
 - `src/api/main.py`: FastAPI app. Endpoints: `GET /`, `GET /health`, `POST /predict`, `POST /batch_predict` (cap via `MAX_BATCH_SIZE`), `GET /monitoring/status`. Prediction audit logs go to JSONL at `PREDICTION_LOG_PATH`.
@@ -114,7 +130,22 @@ Validation-only (no GPU, no data download). `test.yml` runs pytest plus a *scope
 | **Phase 7** | Hetero Graph Transformer | ✅ Complete | 0.4861 | 0.0386 | `docs/HGT.md`, `results/hgt/` |
 | **Phase 7b**| OOD Diagnosis & Leak Audit | ✅ Complete | Adversarial AUC 1.0000 | Locals Only AUC 0.9885 | `docs/OOD_DIAGNOSIS.md`, `results/ood_diagnosis/` (inc. `permutation_check/`) |
 | **Phase 8a–8c**| Monitoring, Serving API, CI | ✅ Complete | Serves Phase 2 XGBoost | — | `src/`, `reports/monitoring_backtest_report.md`, `docs/CI_CD.md` |
+| **Phase 9a** | Walk-forward retraining under label delay (notebook 09) | ✅ Executed; `docs/WALKFORWARD.md` **not yet written** | see `results/walkforward/` | see `results/walkforward/` | `scripts/generate_notebook_09.py`, `results/walkforward/` (read its README: window-level `alert_budget.csv` ceilings are wrong) |
 | **Phase 9** | MLOps (MLflow/DVC) | 🔲 Planned | — | — | `docs/ARCHITECTURE.md`, `docs/PLAN.md` |
+
+## Open Work (source of truth: `docs/IMPROVEMENT_PLAN.md`, plain version `docs/WHAT_TO_CHANGE.md`)
+
+`docs/PROGRESS.md` and `docs/PLAN.md` are **stale** (they still list Phases 8–10 as unchecked and the Phase 2b focal-loss re-run is still pending). Use `IMPROVEMENT_PLAN.md` for what remains. Status as of last check:
+
+- **Done / in working tree (uncommitted):** T1 lag-safe backtest report regeneration, T3 monitoring signal evaluation (`src/monitoring/signal_evaluation.py`, tests, `reports/monitoring_signal_evaluation.md`), T4 README rewrite, T2 walk-forward notebook + results, dashboard frontend.
+- **Not started:** `docs/WALKFORWARD.md` (write from `results/walkforward/` only); T5/T7 bootstrap CIs and precision@k/recall@k (`results/rigor/`, `scripts/bootstrap_metrics.py`; ask before running); GNN seed loops (T5.3) and fair GNN tuning (T8); T9 `confidence_context` basis + `input_ood_score` (still a step lookup in `model_loader.py`); T10 raw-txid feature pipeline; T11 `top_contributions` (SHAP via `pred_contribs`); T12 engineering fixes (CORS is still `*` with credentials, `xgboost>=2.0.0` unpinned → pin `3.4.1`, Dockerfile copies all of `results/`, no auth, no `model_version` on `/health`); T13 docs consolidation; T14 clean per-concern commits (ask first).
+- **Also pending:** Phase 2b focal-loss Colab re-run; Phase 9 MLflow/DVC.
+- **Framing rule (T4):** the step-43 drop is documented in Weber et al. 2019, not a discovery — don't present it as one in new text. Label every aggregate metric as *pooled* or *mean of per-step*. Avoid hype words ("catastrophic", "proving", "production-grade").
+
+## Working Agreement
+
+- The user runs commands themselves: give the exact command, they paste output, you verify. Don't run training, Docker, or long scripts unprompted; use `./bit/bin/python` for any approved local analysis.
+- Never modify frozen artifacts (`results/xgboost/**`, `results/xgboost_v2/**`, `results/temporal_inductive/per_step_metrics.csv`); new experiments write to new folders under `results/`.
 
 ## Strict Carry-Forward Constraints & Evaluation Rules
 
