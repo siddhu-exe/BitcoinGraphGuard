@@ -1,103 +1,209 @@
 # BitcoinGraphGuard
 
-An end-to-end Bitcoin fraud-detection system built on the real **Elliptic++** dataset.
-Transactions and wallet/addresses are modeled as a **temporal heterogeneous graph**,
-combining classical ML baselines, graph neural networks, explainability, drift
-monitoring, and a containerized inference service.
+[![test](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/test.yml/badge.svg)](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/test.yml)
+[![model-consistency-check](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/model-consistency-check.yml/badge.svg)](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/model-consistency-check.yml)
+[![docker-build](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/docker-build.yml/badge.svg)](https://github.com/siddhu-exe/BitcoinGraphGuard/actions/workflows/docker-build.yml)
+![Python](https://img.shields.io/badge/python-3.10--3.12-blue)
 
-> Status: dataset verified; Phases 1–7b complete. Benchmark runs on Google Colab (2026-09-25 through 2026-09-30)
-> establish frozen test 35–49 PR-AUC: XGBoost **0.8013**, GraphSAGE **0.6216**, HeteroRGCN **0.4682**, and HGT **0.4861**.
-> All models experience severe degradation in the late drift window 43–49 (PR-AUC 0.038–0.055) due to a 4x drop in illicit
-> prevalence (9.16% → 2.53%) and continuous covariate shift. Phase 7b OOD diagnosis (`notebooks/08_ood_diagnosis.ipynb`,
-> `docs/OOD_DIAGNOSIS.md`) confirmed 0 mechanical timestamp leaks, robust distributed covariate shift (Locals-only AUC 0.9885),
-> and disjoint fraud vs drift attributions (4/20 overlap), selecting XGBoost Optimized (0.8013) as the production engine.
-> Proceeding to Phase 8 (MLOps & Monitoring) and Phase 9 (Inference Service & Deployment). See `docs/PROGRESS.md` and `docs/PLAN.md`.
+**Bitcoin fraud detection on the real [Elliptic++](https://github.com/git-disl/EllipticPlusPlus)
+dataset, evaluated the way it would be used: train on the past, test on the future, and
+watch what happens when the world changes.**
 
-## Architecture at a Glance
+Elliptic++ is a temporal heterogeneous graph of ~203k transactions and ~823k wallet
+addresses over 49 time steps. This repo benchmarks tabular and graph models on it, diagnoses
+why every model collapses in the last seven steps, tests whether retraining can recover, and
+serves the best model behind a FastAPI service with drift monitoring.
 
-BitcoinGraphGuard runs across **two environments**. Full detail: `docs/ARCHITECTURE.md`.
+## Key findings
 
-- **Laptop — development & documentation only**: code writing/review, Git, documentation,
-  system design, notebook code review, FastAPI, Docker, MLOps engineering, CI/CD,
-  dashboard, configuration.
-- **Kaggle / Google Colab — ALL ML execution, in notebooks**: dataset loading, ML data
-  processing, EDA, feature engineering, graph construction, XGBoost, GraphSAGE, RGCN/HGT,
-  tuning, ablations, temporal/inductive evaluation, error analysis, GNNExplainer, final
-  evaluation.
+- **A well-tuned XGBoost beats every graph model tried.** Test PR-AUC (steps 35–49) is 0.8013
+  for XGBoost versus 0.6209 for GraphSAGE, 0.4861 for HGT and 0.4682 for HeteroRGCN, all
+  evaluated under the same frozen temporal protocol (see Limitations on tuning depth).
+- **Every model fails at the regime shift.** From step 43 illicit prevalence drops from 9.16%
+  to 2.53% and the aggregate features shift. XGBoost PR-AUC falls from 0.9215 (steps 35–42)
+  to 0.0427 (steps 43–49). The step-43 drop is already documented in the original Elliptic
+  work (Weber et al., 2019); the contribution here is measuring it on every model and
+  diagnosing it.
+- **It is covariate drift, not a vanished signal.** A classifier separates steps 1–34 from
+  43–49 perfectly (AUC 1.0000), yet cross-validation *inside* 43–49 reaches PR-AUC 0.9199.
+- **Retraining helps, but only if labels arrive fast.** With a one-step label delay an
+  expanding-window retrain lifts steps 43–49 to PR-AUC 0.6949; at a three-step delay it
+  reaches 0.1377. Verdict: `PARTIAL`.
 
-**No ML runs on the laptop** — not training, and not "lightweight" EDA or feature
-engineering. ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
-`07_final_evaluation.ipynb`) and runs standalone on Colab/Kaggle. Application/serving logic
-lives in `src/`; remote runs export checkpoints, predictions, metrics, and explanations back
-to the laptop for tracking, serving, and monitoring.
+## Results
 
-```text
-Elliptic++ → [Laptop: Verification]
-   → [Kaggle/Colab notebooks: 01 EDA → 02 XGBoost → 03 GraphSAGE → 04 Heterogeneous GNN
-      → 05 Temporal & Inductive → 06 Explainability → 07 Final Evaluation]
-   → Model Artifacts + Metrics → [Laptop: MLflow/DVC → FastAPI → Docker → CI/CD → Monitoring → Dashboard → Deployment]
+Protocol: fit on steps 1–24, validate on 25–34, refit on 1–34, test on 35–49 (16,670 labeled
+transactions, 1,083 illicit). No random splits, and unlabeled class-3 nodes are never used as
+supervision. PR-AUC is the primary metric because prevalence is 6.5% overall.
+
+| Model | PR-AUC | ROC-AUC | F1 (illicit) |
+| :--- | ---: | ---: | ---: |
+| **XGBoost, optimized (served)** | **0.8013** | 0.9281 | 0.7818 |
+| GraphSAGE (homogeneous GNN) | 0.6209 | 0.9044 | 0.5945 |
+| HGT (heterogeneous transformer) | 0.4861 | 0.8937 | 0.3106 |
+| 2-layer MLP | 0.4768 | 0.8912 | 0.5759 |
+| HeteroRGCN (heterogeneous GNN) | 0.4682 | 0.8946 | 0.5295 |
+| Logistic regression | 0.2917 | 0.8828 | 0.4385 |
+| Prevalence baseline | 0.0650 | 0.5000 | 0.1220 |
+
+Pooled over all test transactions. Sources: `results/heterogeneous_gnn/metrics.json`,
+`results/hgt/metrics.json`. The XGBoost F1 recorded in `results/xgboost/metrics.json` is
+0.7799; the difference is in the third decimal and the PR-AUC and ROC-AUC agree.
+
+### The regime shift (steps 43–49)
+
+XGBoost at its validation-selected threshold `tau* = 0.435`:
+
+| Window | Steps | Illicit prevalence | PR-AUC | Recall |
+| :--- | :--- | ---: | ---: | ---: |
+| Early test | 35–42 | 9.16% | 0.9215 | 794 / 914 |
+| Late test (drift) | 43–49 | 2.53% | 0.0427 | 5 / 169 |
+
+Adversarial validation, a leak audit and a permutation check are in `docs/OOD_DIAGNOSIS.md`
+and `results/ood_diagnosis/`. The separation is spread across many `Aggregate_feature_*`
+columns rather than a single timestamp proxy.
+
+### Retraining under label delay
+
+`notebooks/09_walkforward_retraining.ipynb` retrains walk-forward under a lag-safe rule: to
+predict step `t`, only labels from steps `<= t - L` are used.
+
+| Policy | Label delay L | Steps 43–49 PR-AUC [95% CI] |
+| :--- | ---: | :--- |
+| Static (frozen model) | 1 | 0.0406 [0.0248, 0.0943] |
+| Expanding window | 1 | 0.6949 [0.3559, 0.9120] |
+| Expanding window | 3 | 0.1377 [0.1063, 0.4949] |
+
+Intervals are cluster bootstraps over time steps. They are wide because the window has seven
+steps and 169 positives, two of the steps holding 5 and 2. Details: `results/walkforward/`
+(read its `README.md` first; the window-level ceilings in `alert_budget.csv` are wrong).
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    D[Elliptic++ CSVs<br/>49 steps] --> N[Phase notebooks<br/>Colab / Kaggle]
+    N --> R[results/ and reports/<br/>committed artifacts]
+    R --> A[FastAPI service<br/>frozen XGBoost]
+    R --> M[Lag-safe monitoring<br/>drift + retraining trigger]
+    M --> A
+    A --> F[React dashboard]
+    M --> F
 ```
 
-## Dataset
+- **Heavy ML runs off-laptop.** Every dataset load, graph build and training run lives in a
+  per-phase notebook generated by `scripts/generate_notebook_*.py` and executed on Colab or
+  Kaggle. The laptop is for development, tests, serving and docs.
+- **Serving is tabular only.** The API loads the frozen XGBoost model once at startup and
+  deliberately excludes PyTorch, PyG and MLflow.
+- **Monitoring is lag-safe.** A decision at step `t` reads labels from steps `<= t - L` only,
+  and a `LagViolationError` enforces it. Channels are rolling performance and prevalence
+  (label-dependent), score-shift PSI (label-free) and local-feature PSI (warning only).
+  Of nine candidate signals, only some were worth acting on: see
+  `reports/monitoring_signal_evaluation.md`, which also lists what did not work.
 
-Verified Elliptic++ inventory (`docs/DATA_INVENTORY.md`): 203,769 transaction nodes,
-822,942 wallet/address nodes, 49 time steps, ~1.03M unique nodes and ~4.42M heterogeneous
-directed edges, ~2.1 GB raw. Transaction labels: illicit 4,545 / licit 42,019 / unknown
-157,205. Wallet labels: illicit 14,266 / licit 251,088 / unknown 557,588.
+## Quickstart
 
-Unknown labels are **not** legitimate. Temporal order is preserved and never randomly
-split for the primary evaluation. Raw data lives in `Og data/` and is gitignored.
-
-## Repository Layout
-
-| Path | Purpose |
-| :--- | :--- |
-| `docs/OVERVIEW.md` | One-glance project overview |
-| `docs/PROJECT_CONTEXT.md` | Start here — full project context for humans and AI agents |
-| `docs/ARCHITECTURE.md` | Technical architecture: data, ML, training, evaluation, serving |
-| `docs/TIMELINE.md` | Nine-phase roadmap with objectives and completion criteria |
-| `docs/DATA_INVENTORY.md` | Verified dataset inventory and data-quality report |
-| `docs/EDA.md` | Phase 1 exploratory data analysis — completed run (2026-09-25) |
-| `docs/XGBOOST.md` | Phase 2 XGBoost baseline — design and executed results (leakage controls, metrics, temporal windows, error and feature analysis) |
-| `docs/GRAPHSAGE.md` | Phase 3 GraphSAGE baseline — methodology, executed results, and intra-step analysis (executed 2026-09-25) |
-| `docs/HETEROGENEOUS_GNN.md` | Phase 4 HeteroRGCN — design, leakage controls, and executed results (executed 2026-09-25) |
-| `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` | Phase 5 temporal & inductive evaluation — design and executed results (executed 2026-09-27) |
-| `docs/EXPLAINABILITY.md` | Phase 6 explainability (SHAP, Captum, relation ablations) — completed run (2026-09-30) |
-| `docs/HGT.md` | Phase 7 Heterogeneous Graph Transformer (HGT) — completed run (2026-09-30) |
-| `docs/OOD_DIAGNOSIS.md` | Phase 7b Out-of-Distribution (OOD) diagnosis & leak audit — completed run (2026-09-30) |
-| `notebooks/` | One notebook per ML phase; runs on Kaggle/Colab (`01_eda` through `08b_ood_permutation_check`) |
-| `results/` | Canonical artifacts exported from executed Colab/Kaggle runs (`xgboost/`, `graphsage/`, `heterogeneous_gnn/`, `temporal_inductive/`, `explainability/`, `hgt/`, `ood_diagnosis/`) |
-| `scripts/` | Notebook authoring scripts (`generate_notebook_*.py`) and memory-safe verifiers |
-| `Og data/` | Raw Elliptic++ CSVs (gitignored, read-only) |
-| `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/OBJECTIVES.md` | Roadmap, status, objective |
-| `AGENTS.md`, `CLAUDE.md` | Contributor/agent operating rules |
-| `requirements.txt` | Tiered Python dependencies |
-| `src/`, `tests/` | Application and serving code (Phase 8–9, planned) |
-
-## Getting Started
+Python 3.10–3.12. You do **not** need the raw dataset to run the API, tests or dashboard;
+the model and report artifacts are committed.
 
 ```bash
-uv venv .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-python scripts/verify_dataset.py    # memory-safe dataset verification
+git clone git@github.com:siddhu-exe/BitcoinGraphGuard.git
+cd BitcoinGraphGuard
+uv venv .venv && source .venv/bin/activate
+uv pip install -r requirements-serving.txt
 ```
 
-Heavy dependencies (`torch`, `torch-geometric`) install in the Colab/Kaggle runtime, not on
-the laptop. All ML execution — EDA onward — happens in the phase notebooks.
+**Run the API**
 
-## Documentation Index
+```bash
+uvicorn src.api.main:app --reload --port 8000
+curl http://localhost:8000/health
+```
 
-- `docs/OVERVIEW.md` — one-glance project overview
-- `docs/PROJECT_CONTEXT.md` — read-first project context
-- `docs/ARCHITECTURE.md` — implementation architecture and compute split
-- `docs/TIMELINE.md` — detailed nine-phase roadmap
-- `docs/DATA_INVENTORY.md` — dataset facts, quality, graph relationships
-- `docs/EDA.md` — Phase 1 exploratory data analysis report
-- `docs/XGBOOST.md` — Phase 2 XGBoost baseline report and optimization results
-- `docs/GRAPHSAGE.md` — Phase 3 GraphSAGE baseline methodology and design
-- `docs/HETEROGENEOUS_GNN.md` — Phase 4 HeteroRGCN methodology and executed results
-- `docs/TEMPORAL_INDUCTIVE_EVALUATION.md` — Phase 5 temporal & inductive evaluation design
-- `docs/OBJECTIVES.md` — goal, requirements, definition of done
-- `docs/PLAN.md` — phased roadmap with execution environments
-- `docs/PROGRESS.md` — current status and next actions
+Interactive docs are at `http://localhost:8000/docs`. `POST /predict` takes a `time_step`
+and the 165 Elliptic++ transaction features by name; `tests/test_api.py::SAMPLE_TX_1813992_FEATURES`
+is a complete working payload (transaction 1813992 at step 35 scores about `1.7188735e-05`).
+
+| Endpoint | Purpose |
+| :--- | :--- |
+| `GET /health` | Model, feature and metrics-source status |
+| `POST /predict` | Score one transaction, with a `confidence_context` for its time step |
+| `POST /batch_predict` | Score many (capped by `MAX_BATCH_SIZE`) |
+| `GET /monitoring/status` | Latest monitoring decision, with the label-delay assumption |
+
+**Run with Docker** (CPU-only, 1.5 GB memory cap)
+
+```bash
+docker compose up --build
+```
+
+**Run the tests and lint**
+
+```bash
+pytest -q
+ruff check --force-exclude --config .github/ruff-ci.toml src/api src/monitoring tests
+```
+
+**Run the dashboard**
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+**Reproduce the experiments**
+
+The raw CSVs go in `Og data/` (gitignored, read-only). Verify them with a memory-safe
+streaming check, then regenerate and run a phase notebook on Colab or Kaggle:
+
+```bash
+python scripts/verify_dataset.py
+python scripts/generate_notebook_09.py   # writes notebooks/09_walkforward_retraining.ipynb
+```
+
+## Repository layout
+
+| Path | Contents |
+| :--- | :--- |
+| `notebooks/` | One notebook per phase, `01_eda` through `09_walkforward_retraining` |
+| `scripts/` | Notebook generators, dataset verification, monitoring backtest and evaluation |
+| `src/api/` | FastAPI inference service and model loader |
+| `src/monitoring/` | Drift engines, lag-safe decision rules, retraining trigger, backtest |
+| `frontend/` | React 18 + Vite + TypeScript dashboard |
+| `results/`, `reports/` | Saved metrics and reports from executed runs; every number above traces here |
+| `tests/` | Pytest suite for the API and monitoring |
+| `docs/` | Architecture, per-phase write-ups, CI/CD, roadmap |
+| `.github/workflows/` | Tests, model-consistency gates, Docker build |
+
+## Limitations
+
+- **Precomputed features only.** The API needs the 165 Elliptic++ features, so it cannot
+  score a raw transaction hash.
+- **Near-random in the drift window.** At the frozen threshold, steps 43–49 are poorly
+  ranked. The API labels that regime but cannot repair it.
+- **`confidence_context` is not a probability of being right.** It maps the caller's
+  `time_step` to a historical regime label (`reliable`, `degraded`, `unknown`).
+- **Small late-window sample.** Steps 43–49 hold 169 illicit transactions, so per-step
+  metrics carry wide uncertainty.
+- **One dataset, one era.** Elliptic++ covers one regime change in 2016–17 activity. Monitoring
+  thresholds were validated on this backtest only.
+- **Graph models were not tuned to the same depth as XGBoost.** Treat the gap as a result for
+  this protocol, not a general claim about graph methods.
+
+## Documentation
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): system design and the compute split
+- [`docs/OOD_DIAGNOSIS.md`](docs/OOD_DIAGNOSIS.md): drift diagnosis and leak audit
+- [`docs/XGBOOST.md`](docs/XGBOOST.md), [`docs/GRAPHSAGE_V2.md`](docs/GRAPHSAGE_V2.md),
+  [`docs/HETEROGENEOUS_GNN.md`](docs/HETEROGENEOUS_GNN.md), [`docs/HGT.md`](docs/HGT.md): model records
+- [`docs/EXPLAINABILITY.md`](docs/EXPLAINABILITY.md): SHAP, Captum and relation ablation
+- [`docs/CI_CD.md`](docs/CI_CD.md), [`DEPLOY.md`](DEPLOY.md): CI gates and Render deployment
+- [`docs/IMPROVEMENT_PLAN.md`](docs/IMPROVEMENT_PLAN.md): what remains to be done
+- [`AGENTS.md`](AGENTS.md): contributor and agent rules
+
+## References
+
+- Weber et al., *Anti-Money Laundering in Bitcoin: Experimenting with Graph Convolutional
+  Networks for Financial Forensics*, KDD Workshop on Anomaly Detection in Finance, 2019.
+- Elmougy & Liu, *Demystifying Fraudulent Transactions and Illicit Nodes in the Bitcoin
+  Network for the Post-Processing Era*, KDD, 2023 (Elliptic++).
