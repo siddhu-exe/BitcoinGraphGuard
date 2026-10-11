@@ -21,6 +21,10 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.monitoring.backtest import MonitoringBacktester
+from src.monitoring.signal_evaluation import (
+    format_signal_evaluation_markdown,
+    load_and_evaluate,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -626,6 +630,14 @@ def main():
 
     # Markdown report
     md_content = format_markdown_report(backtester, tables, elapsed)
+
+    # Signal evaluation section (false-alarm rate and detection lead per channel).
+    signal_table = load_and_evaluate()
+    signal_table.to_csv("results/monitoring/signal_evaluation.csv", index=False)
+    with open("reports/monitoring_signal_evaluation.md", "w") as f:
+        f.write(format_signal_evaluation_markdown(signal_table) + "\n")
+    md_content = md_content + "\n\n---\n\n" + format_signal_evaluation_markdown(signal_table) + "\n"
+
     with open("reports/monitoring_backtest_report.md", "w") as f:
         f.write(md_content)
 

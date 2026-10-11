@@ -1,0 +1,10 @@
+signal,label_dependent,n_evaluated_35_42,alerts_35_42,false_alarm_rate_35_42,n_evaluated_43_49,alerts_43_49,first_alert_step_43_49,detection_lead_vs_43,detected_43_49
+triad_feature_drift,False,8,1,0.125,7,0,,,False
+local_feature_shift,False,8,1,0.125,7,1,46.0,3.0,True
+score_shift_psi,False,6,0,0.0,7,5,43.0,0.0,True
+rolling_prevalence,True,8,4,0.5,7,5,45.0,2.0,True
+performance_crash,True,7,0,0.0,7,6,44.0,1.0,True
+retraining_trigger,True,8,7,0.875,7,7,43.0,0.0,True
+adversarial_validation,False,2,2,1.0,2,1,49.0,6.0,True
+score_ks,False,7,2,0.2857142857142857,7,5,44.0,1.0,True
+score_positive_rate,False,7,1,0.14285714285714285,7,6,43.0,0.0,True

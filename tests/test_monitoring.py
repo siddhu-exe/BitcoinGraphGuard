@@ -30,6 +30,11 @@ from src.monitoring.prevalence_drift import (
     PrevalenceDriftMonitor,
     PrevalenceDriftReport,
 )
+from src.monitoring.signal_evaluation import (
+    evaluate_score_channels,
+    evaluate_signals,
+    format_signal_evaluation_markdown,
+)
 from src.monitoring.retraining_trigger import (
     AlertSeverity,
     RetrainingTriggerEngine,
@@ -642,3 +647,91 @@ def test_score_shift_reference_uses_labelled_steps_only_and_needs_two():
     )
     assert dec.action == TriggerAction.NO_ACTION
     assert dec.channels["score_shift"]["status"] == "UNAVAILABLE"
+
+
+# ---------------------------------------------------------------------------
+# Signal evaluation (T3)
+# ---------------------------------------------------------------------------
+
+
+def _synthetic_step_metrics(**overrides):
+    """One row per step 35-49 with every status column present."""
+    steps = list(range(35, 50))
+    columns = {
+        "triad_status": ["STABLE"] * 15,
+        "feature_shift_status": ["OK"] * 15,
+        "score_shift_status": ["OK"] * 15,
+        "prevalence_channel_status": ["OK"] * 15,
+        "performance_status": ["OK"] * 15,
+        "trigger_severity": ["INFO"] * 15,
+    }
+    columns.update(overrides)
+    frame = pd.DataFrame({"time_step": steps})
+    for name, values in columns.items():
+        frame[name] = values
+    return frame
+
+
+def test_signal_evaluation_false_alarm_rate_and_detection_lead():
+    """A channel that never alerts in 35-42 and alerts at 43 has 0% false alarms, lead 0."""
+    frame = _synthetic_step_metrics(triad_status=["STABLE"] * 8 + ["MODERATE"] * 7)
+    table = evaluate_signals(frame).set_index("signal")
+    row = table.loc["triad_feature_drift"]
+    assert row["label_dependent"] == False
+    assert row["false_alarm_rate_35_42"] == 0.0
+    assert row["first_alert_step_43_49"] == 43
+    assert row["detection_lead_vs_43"] == 0
+    assert row["detected_43_49"] == True
+
+
+def test_signal_evaluation_reports_noisy_and_never_firing_channels():
+    """A channel that fires early is a false alarm; one that never fires is undetected."""
+    frame = _synthetic_step_metrics(
+        prevalence_channel_status=["WARNING"] * 15,
+        triad_status=["STABLE"] * 15,
+    )
+    table = evaluate_signals(frame).set_index("signal")
+    assert table.loc["rolling_prevalence", "false_alarm_rate_35_42"] == 1.0
+    assert table.loc["rolling_prevalence", "label_dependent"] == True
+    assert table.loc["triad_feature_drift", "detected_43_49"] == False
+    assert pd.isna(table.loc["triad_feature_drift", "first_alert_step_43_49"])
+
+
+def test_signal_evaluation_adversarial_uses_auc_band_only():
+    """The adversarial channel is evaluated only where an AUC exists and alerts above its band."""
+    frame = _synthetic_step_metrics()
+    frame["adversarial_auc"] = [np.nan] * 15
+    frame.loc[frame["time_step"].isin([35, 40, 45, 49]), "adversarial_auc"] = [0.7, 0.9, 0.9, 0.95]
+    row = evaluate_signals(frame).set_index("signal").loc["adversarial_validation"]
+    assert row["n_evaluated_35_42"] == 2
+    assert row["alerts_35_42"] == 1
+    assert row["first_alert_step_43_49"] == 45
+
+
+def test_score_channel_evaluation_is_label_free_and_uses_past_reference():
+    """A step-43 score shift must be detected from scores alone, using steps <= t-1."""
+    steps = list(range(35, 50))
+    scores = [0.01] * 500
+    rows = []
+    for step in steps:
+        values = [0.99] * 500 if step == 43 else scores
+        rows += [{"time_step": step, "xgboost_score": v} for v in values]
+    predictions = pd.DataFrame(rows)  # intentionally has no label column
+
+    table = evaluate_score_channels(predictions, threshold=0.435).set_index("signal")
+    assert table.loc["score_positive_rate", "false_alarm_rate_35_42"] == 0.0
+    assert table.loc["score_positive_rate", "first_alert_step_43_49"] == 43
+    assert table.loc["score_positive_rate", "detection_lead_vs_43"] == 0
+    assert table.loc["score_ks", "detected_43_49"] == True
+
+
+def test_signal_evaluation_markdown_states_what_did_not_work():
+    """The rendered section names the failing signals instead of only printing a table."""
+    frame = _synthetic_step_metrics(
+        triad_status=["STABLE"] * 15,
+        prevalence_channel_status=["WARNING"] * 15,
+    )
+    markdown = format_signal_evaluation_markdown(evaluate_signals(frame))
+    assert "What did NOT work" in markdown
+    assert "rolling_prevalence" in markdown
+    assert "triad_feature_drift" in markdown
