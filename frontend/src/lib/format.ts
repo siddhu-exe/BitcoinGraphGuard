@@ -1,31 +1,28 @@
-export const fmt = (v: number | null | undefined, digits = 3): string =>
-  v === null || v === undefined || Number.isNaN(v) ? "—" : v.toFixed(digits);
+/** Number formatting. Missing values render as "n/a" — never a guessed number. */
 
-export const pct = (v: number | null | undefined, digits = 1): string =>
-  v === null || v === undefined || Number.isNaN(v) ? "—" : `${(v * 100).toFixed(digits)}%`;
+export const NA = "n/a";
 
-export const signedPct = (v: number | null | undefined, digits = 1): string =>
-  v === null || v === undefined ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(digits)}%`;
+export const num = (v: number | null | undefined, digits = 3): string =>
+  v === null || v === undefined || Number.isNaN(v) ? NA : v.toFixed(digits);
 
-export const sci = (v: number): string => (v !== 0 && Math.abs(v) < 0.001 ? v.toExponential(3) : v.toFixed(4));
+/** Two-decimal percent, e.g. 0.0916 → "9.16%". */
+export const pct = (v: number | null | undefined, digits = 2): string =>
+  v === null || v === undefined || Number.isNaN(v) ? NA : `${(v * 100).toFixed(digits)}%`;
 
-export const ACTION_LABEL: Record<string, string> = {
-  NO_ACTION: "No action",
-  RECALIBRATE_ONLY: "Recalibrate",
-  RETRAIN: "Retrain",
+/** Drop trailing zeros: 0.810 → "0.81", 0.0750 → "0.075". */
+export const trim = (v: number | null | undefined, maxDp = 3): string => {
+  if (v === null || v === undefined || Number.isNaN(v)) return NA;
+  const s = v.toFixed(maxDp);
+  return s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s;
 };
 
-export const DRIFT_START = 43;
-
-export const CHANNEL_LABEL: Record<string, string> = {
-  score_shift: "Score shift",
-  performance: "Performance",
-  prevalence: "Prevalence",
-  feature_shift: "Feature shift",
-  triad: "Triad drift",
-  adversarial: "Adversarial",
+/** Probability for the Try It card: tiny scores stay readable. */
+export const prob = (v: number | null | undefined): string => {
+  if (v === null || v === undefined || Number.isNaN(v)) return NA;
+  if (v === 0) return "0";
+  if (v < 1e-3) return v.toFixed(7).replace(/0+$/, "").replace(/\.$/, "");
+  return v.toFixed(4);
 };
 
-/** Status badge tone for a monitoring channel state. */
-export const channelTone = (status: string): "crit" | "warn" | "ok" | "neutral" =>
-  status === "CRITICAL" ? "crit" : status === "WARNING" ? "warn" : status === "OK" ? "ok" : "neutral";
+/** "43–49" (en dash). */
+export const span = (a: number | string, b: number | string): string => `${a}–${b}`;
