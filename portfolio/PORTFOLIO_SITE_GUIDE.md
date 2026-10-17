@@ -85,7 +85,7 @@ Files here: `images/` (6 charts, §5) and `scripts/generate_portfolio_images.py`
 3. **Retraining recovers only if labels arrive fast.** Steps 43-49 PR-AUC with expanding-window retraining: **0.695 at 1-step label delay, 0.388 at 2, 0.138 at 3, 0.105 at 5**; the frozen model scores 0.041 (L=1). Always quote the delays together.
 
 ### Monitor (lag-safe, label delay L=1; `reports/monitoring_backtest_report.md`, `results/walkforward/monitor_concordance.csv`)
-- The label-free **score-shift channel fires at step 43**, the first drift step (score PSI 0.529 vs the 0.25 critical level).
+- The label-free **score-shift channel fires at step 43**, the first drift step (score PSI 0.609 in the deployed monitor, `reports/monitoring_backtest_report.json`; the 0.25 critical level).
 - The label-dependent **performance channel fires at step 44**, because step-43 labels only arrive one step later.
 - **No CRITICAL alarm during steps 35-42.** One WARNING-level feature-shift alert occurs at step 37.
 - Validated on **one** drift event only.
