@@ -59,8 +59,9 @@ RUN groupadd -g 1000 appgroup && \
 
 # Copy application source code and necessary production artifacts
 COPY --chown=appuser:appgroup src/ /app/src/
-COPY --chown=appuser:appgroup results/ /app/results/
-COPY --chown=appuser:appgroup reports/ /app/reports/
+COPY --chown=appuser:appgroup results/xgboost/xgb_model_optimized.json results/xgboost/selected_features.json /app/results/xgboost/
+COPY --chown=appuser:appgroup results/temporal_inductive/per_step_metrics.csv /app/results/temporal_inductive/
+COPY --chown=appuser:appgroup reports/monitoring_backtest_report.json /app/reports/
 
 USER appuser
 

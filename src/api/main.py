@@ -101,13 +101,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for Phase 9 frontend / dashboard access
+# CORS: explicit allow-list from ALLOWED_ORIGINS (comma-separated). The dashboard
+# sends no cookies or auth headers, so credentials stay disabled.
+DEFAULT_ALLOWED_ORIGINS = "http://localhost:5173,https://bitcoingraphguard.vercel.app"
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ALLOWED_ORIGINS).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -191,6 +199,7 @@ async def health_check():
             status="healthy" if container.startup_validations_passed else "degraded",
             model_name="XGBoost Optimized (Frozen Phase 2)",
             model_type="xgboost.Booster",
+            model_version=container.model_version,
             n_features=len(container.features),
             operating_threshold=container.threshold,
             startup_timestamp=container.load_timestamp or "unknown",

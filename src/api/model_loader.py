@@ -8,6 +8,7 @@ and context-aware reliability assessments based on empirical regime benchmarks.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from datetime import datetime, timezone
@@ -62,6 +63,7 @@ class ModelContainer:
         self.model: xgb.Booster | None = None
         self.features: list[str] = []
         self.load_timestamp: str | None = None
+        self.model_version: str = "unknown"
         self.startup_validations_passed: bool = False
         self.step_metrics_lookup: dict[int, dict[str, float]] = {}
         self.using_fallback_metrics: bool = False
@@ -153,6 +155,8 @@ class ModelContainer:
         # 4. Load historical per-step metrics lookup if available
         self._load_step_metrics()
 
+        digest = hashlib.sha256(self.model_path.read_bytes()).hexdigest()[:12]
+        self.model_version = f"{self.model_path.name}@{digest}"
         self.load_timestamp = datetime.now(timezone.utc).isoformat()
         self.startup_validations_passed = True
         logger.info(

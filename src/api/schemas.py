@@ -331,6 +331,9 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="'healthy', 'degraded', or 'unhealthy'")
     model_name: str = Field(..., description="Model identifier")
     model_type: str = Field(..., description="Architecture type (e.g. XGBoost)")
+    model_version: str = Field(
+        ..., description="Model artifact file name and short SHA-256 of its contents"
+    )
     n_features: int = Field(..., description="Number of model features expected (165)")
     operating_threshold: float = Field(
         ..., description="Frozen operating threshold tau*"

@@ -18,3 +18,6 @@ services:
       # Ephemeral disk on the free plan: resets on every deploy/restart.
       - key: PREDICTION_LOG_PATH
         value: /app/logs/predictions.jsonl
+      # Comma-separated CORS allow-list. Set to the real Vercel frontend origin(s).
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:5173,https://bitcoingraphguard.vercel.app"
