@@ -37,7 +37,7 @@ $$\text{Prevalence (0.0650)} \longrightarrow \text{Logistic Regression (0.2917)}
 
 ### Hypothesis 2: Late Temporal Drift Window (Steps 43–49 — The Decisive Test)
 - In steps 43–49, illicit transaction prevalence abruptly drops from 9.16% to **2.53%**, and all previous models collapsed identically to $\approx 0.04 - 0.055$ PR-AUC (XGBoost 0.0427, GraphSAGE 0.0505, RGCN 0.0550).
-- **The Decisive Test:** If HGT improves performance on steps 35–42 but still collapses to $\sim 0.05$ on 43–49, this empirically proves that the late drift failure is **not an aggregation-weighting flaw**, but an **irreducible out-of-distribution regime shift** requiring continuous retraining or active supervision.
+- **The Decisive Test:** If HGT improves performance on steps 35–42 but still collapses to $\sim 0.05$ on 43–49, this empirically proves that the late drift failure is **not an aggregation-weighting flaw**, but an **out-of-distribution regime shift** that architecture changes did not fix and that requires retraining or active supervision (later walk-forward results: `WALKFORWARD.md`).
 
 ---
 
@@ -114,7 +114,7 @@ Under the strict temporal protocol (Fit 1–24 / Validation 25–34 / Train 1–
 **The Decisive Scientific Verdict:**
 - On the stationary early window (steps 35–42), HGT demonstrates strong discriminatory power (**PR-AUC 0.6921**, **ROC-AUC 0.9374**, Recall 92.89%), significantly surpassing RGCN (0.6083).
 - On the late drift window (steps 43–49), HGT collapses to **0.0386 PR-AUC**, falling directly within the identical ~0.04–0.055 failure band shared by XGBoost (0.0427), GraphSAGE (0.0505), and RGCN (0.0550).
-- **Core Conclusion**: The late drift collapse is **not an aggregation-weighting artifact**. Relational attention cannot recover performance in steps 43–49. The failure is an **irreducible out-of-distribution regime shift** caused by the sudden drop in prevalence (9.16% $\to$ 2.53%) and covariate distribution drift (adversarial validation AUC 1.0000).
+- **Core Conclusion**: The late drift collapse is **not an aggregation-weighting artifact**. Relational attention cannot recover performance in steps 43–49. The failure is an **out-of-distribution regime shift** (not recoverable by architecture changes; see `WALKFORWARD.md` for retraining under label delay) caused by the sudden drop in prevalence (9.16% $\to$ 2.53%) and covariate distribution drift (adversarial validation AUC 1.0000).
 
 ---
 

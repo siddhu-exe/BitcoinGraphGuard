@@ -9,8 +9,9 @@
 
 ## One-Line Description
 
-A temporal heterogeneous graph-based Bitcoin fraud detection system built using the real
-Elliptic++ dataset.
+A Bitcoin fraud detector that knows when to stop trusting itself: a temporal heterogeneous
+graph-based fraud detection system built on the real Elliptic++ dataset, with drift monitoring, a
+serving API and a live dashboard (https://bitcoin-graph-delta.vercel.app).
 
 ## Problem
 
@@ -38,8 +39,8 @@ Bitcoin fraud detection is difficult because:
 ## Dataset
 
 The project uses **Elliptic++**, a real Bitcoin dataset of transactions, wallets/addresses,
-and the relationships between them, spread across **49 time steps** (each step is roughly a
-two-week window of blockchain activity).
+and the relationships between them, spread across **49 time steps** (each step is about two
+weeks of blockchain activity, per Weber et al., 2019).
 
 Verified statistics (see `DATA_INVENTORY.md`):
 
@@ -83,18 +84,18 @@ production-oriented fraud detection pipeline.
 
 ## Models
 
-The planned progression, from simplest to most complex:
+All four were trained and evaluated under one temporal protocol (fit 1-24, validate 25-34, refit
+1-34, test 35-49):
 
-1. **XGBoost baseline** — classical gradient boosting on engineered transaction features.
-   Establishes how far non-graph ML gets and gives a fair reference point.
-2. **GraphSAGE** — a homogeneous graph neural network baseline. Learns from neighbourhood
-   structure and shows how much graph structure adds over XGBoost.
-3. **RGCN** (Relational GCN) — a heterogeneous GNN that respects different edge types
-   (tx→tx, wallet→tx, tx→wallet, wallet→wallet).
-4. **HGT** (Heterogeneous Graph Transformer) — evaluated **only if justified** as a
-   stronger alternative to RGCN.
+| Model | Test PR-AUC (35-49) | Drift-window PR-AUC (43-49) |
+| :--- | ---: | ---: |
+| XGBoost, optimized (deployed) | 0.8013 | 0.0427 |
+| GraphSAGE | 0.6209 | 0.0505 |
+| HGT | 0.4861 | 0.0386 |
+| HeteroRGCN | 0.4682 | 0.0550 |
 
-No later model is claimed to be better until it is actually trained and evaluated.
+The graph models were tuned less deeply than XGBoost, so the ranking is a result for this protocol,
+not a general claim about graph methods.
 
 ## Evaluation
 
@@ -114,17 +115,17 @@ the model flagged an address or transaction. GNN explainability (e.g. GNNExplain
 to identify the influential nodes, edges, and subgraphs behind selected predictions, and to
 study **false positives** (innocent wallets flagged) and **false negatives** (missed fraud).
 
-## MLOps
+## Serving, monitoring and MLOps
 
-* **DVC** — version datasets and pipelines.
-* **MLflow** — track experiments, parameters, metrics, and model metadata.
-* **Model artifacts** — save checkpoints and metadata reproducibly.
-* **Drift monitoring** — watch both model performance and graph structure
-  (degree distribution, communities, temporal degradation).
-* **Retraining triggers** — retraining is driven by defined thresholds, not guesswork.
-* **FastAPI** — serve model inference.
-* **Docker** — package production services.
-* **CI/CD** — automated checks with GitHub Actions.
+* **FastAPI** serves the frozen XGBoost model (threshold 0.435); each prediction carries a
+  `confidence_context` for its time step. **Done.**
+* **Docker** packages the service and **GitHub Actions** runs tests, frozen-model consistency gates
+  and the image build. **Done.**
+* **Lag-safe drift monitoring** and a retraining trigger: a decision at step t reads labels of
+  steps <= t - L only. **Done.**
+* **Walk-forward retraining** under label delay (`WALKFORWARD.md`). **Done.**
+* **Deployment:** API on Render, React dashboard on Vercel. **Done.**
+* **MLflow / DVC:** experiment tracking and data versioning. **Not started.**
 
 ## Compute Strategy
 
@@ -140,50 +141,31 @@ Work is split across two environments. This is a hard rule, not a preference.
 
 **Do not execute ML work on the laptop** — including EDA, feature engineering, and training.
 The ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
-`notebooks/07_final_evaluation.ipynb`), and notebooks must run standalone on Colab/Kaggle.
+`notebooks/09_walkforward_retraining.ipynb`), and notebooks must run standalone on Colab/Kaggle.
 Application and serving logic lives in `src/`. See `ARCHITECTURE.md`.
 
 ## Current Status
 
-Dataset verification and the exploratory data analysis are **complete** (see `PROGRESS.md` and
-`EDA.md`):
+Everything through modeling, explainability, drift diagnosis, monitoring, walk-forward retraining,
+the API, Docker, CI and deployment is **done** (`PROGRESS.md`, `PLAN.md`).
 
-* **Done (Phase 1):** Elliptic++ downloaded and fully verified with a streaming, low-memory verifier
-  (`../scripts/verify_dataset.py`); data inventory in `DATA_INVENTORY.md`;
-  `notebooks/01_eda.ipynb` authored as the canonical EDA entrypoint and **executed end to end on
-  Google Colab on 2026-09-25**, with results recorded in `EDA.md` and artifacts exported to
-  `eda/` (`../scripts/eda_phase2.py` is the superseded reference implementation of the same
-  logic); `requirements.txt` created; implementation architecture and compute split defined.
-* **Done (Phase 2):** `notebooks/02_xgboost.ipynb` — the Phase 2 classical baseline
-  (leakage audit, prevalence baseline, Logistic Regression, XGBoost, temporal and error analysis)
-  ran end to end on Google Colab on 2026-09-25 in two passes, with artifacts exported to `xgboost/`
-  and results recorded in `XGBOOST.md`. The recorded 500-tree baseline reaches PR-AUC 0.8007 /
-  ROC-AUC 0.9317 on test 35–49; the optimisation pass that lifted the budget to 1500 trees, searched
-  20 seeded parameter trials on validation PR-AUC and dropped `has_addresses` reaches **0.8013 /
-  0.9281** — so the tree budget was not the constraint and the tabular features set the ceiling.
-  Both beat a 0.0650 constant-score baseline and 0.2917 / 0.8828 for Logistic Regression; the 43–49
-  sub-window degrades to 0.0427.
-* **Done (Phase 3):** `notebooks/03_graphsage.ipynb` — homogeneous GraphSAGE baseline and 2-layer MLP
-  twin ablation on `txs_edgelist.csv` executed end-to-end on Google Colab (CUDA GPU) on 2026-09-25 with
-  artifacts exported to `GraphSage/` and results recorded in `docs/GRAPHSAGE.md`. GraphSAGE achieves
-  **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP **0.4768 / 0.8912 / 0.5759** (+0.1442 lift)
-  and frozen XGBoost **0.8013 / 0.9281 / 0.7818**. Intra-step edge confinement (100% intra-step) proves
-  homogeneous GNNs cannot bridge temporal steps without wallet nodes.
-* **Done (Phase 4):** `notebooks/04_heterogeneous_gnn.ipynb` — heterogeneous RGCN over all 4 edge types
-  (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`) executed on Google Colab (CUDA GPU) on 2026-09-25 with
-  artifacts in `results/heterogeneous_gnn/`. HeteroRGCN reaches **PR-AUC 0.4682 / ROC-AUC 0.8946**
-  (46/46 checks). Record: `docs/HETEROGENEOUS_GNN.md`.
-* **Authored, awaiting remote run (Phase 5):** `notebooks/05_temporal_inductive_evaluation.ipynb` —
-  per-step evaluation over 35-49, drift diagnostics, static vs expanding/rolling RGCN retraining,
-  seen/unseen address-context and historical `T->A->T` breakdowns, and frozen-vs-adaptive thresholds.
-  Methodology in `docs/TEMPORAL_INDUCTIVE_EVALUATION.md`; results PENDING until it runs on Colab/Kaggle.
-* **Not done yet:** Phase 5 remote execution; Phase 6 onwards (`06_explainability.ipynb` through
-  `07_final_evaluation.ipynb`); DVC setup; `src/` application structure; MLflow tracking.
+Key results (sources in `results/` and `reports/`):
 
-**Experimental results are frozen through Phase 4** under fit 1–24 / validation 25–34 / refit 1–34 /
-test 35–49: XGBoost 0.8013, GraphSAGE 0.6209, HeteroRGCN 0.4682 (35–49 PR-AUC). Phase 5 is authored and
-awaiting its remote run; it must not change the RGCN architecture or start HGT. The next architecture
-is chosen only from the Phase 5 temporal and inductive evidence.
+* Test PR-AUC on steps 35-49: XGBoost 0.8013, best graph model (GraphSAGE) 0.6209.
+* All four models collapse after step 43: XGBoost 0.9215 on steps 35-42, 0.0427 on 43-49.
+* Adversarial validation separates steps 1-34 from 43-49 perfectly (AUC 1.0000), yet 5-fold CV
+  inside 43-49 reaches PR-AUC 0.9199, so the signal is present and the transfer fails.
+* Expanding-window retraining on steps 43-49: PR-AUC 0.6949 at label delay L=1, 0.3878 at L=2,
+  0.1377 at L=3, 0.1050 at L=5 (frozen model 0.0406 at L=1). Verdict `PARTIAL`.
+* Monitor (L=1): the label-free score-shift channel fires at step 43, the performance channel at
+  step 44, and no critical alarm fires during steps 35-42. Validated on one drift event.
+
+**Open work:** MLflow/DVC (Phase 9), `confidence_context` basis and `input_ood_score` (T9), a raw
+transaction-ID feature pipeline (T10), per-prediction SHAP contributions (T11). See
+`IMPROVEMENT_PLAN.md`.
+
+**Limitations:** one drift event, real label delay unknown, XGBoost is the deployed model, and the
+literature notes split-leakage concerns on Elliptic.
 
 ## Important Rules
 

@@ -82,7 +82,7 @@ The notebook's final execution cell programmatically assigns one of three verdic
 
 | Verdict Code | Title | Mathematical Condition | Scientific Interpretation |
 | :--- | :--- | :--- | :--- |
-| `(a) CONFIRMED` | **Distributed OOD Regime Shift** | $\text{AUC}_{\text{DropTop20}} \ge 0.90 \land N_{\text{TimeProxies}} = 0 \land \text{Top3Share} < 70\%$ | Adversarial separability is broadly distributed across dozens of features; the 43–49 collapse is an irreducible regime shift requiring continuous retraining / active domain adaptation. |
+| `(a) CONFIRMED` | **Distributed OOD Regime Shift** | $\text{AUC}_{\text{DropTop20}} \ge 0.90 \land N_{\text{TimeProxies}} = 0 \land \text{Top3Share} < 70\%$ | Adversarial separability is broadly distributed across dozens of features; the 43–49 collapse is a regime shift requiring continuous retraining / active domain adaptation (see `WALKFORWARD.md` for how label delay limits that). |
 | `(b) PARTIALLY CONFIRMED` | **Multi-Feature Covariate Shift with Specific Concentration** | $\text{AUC}_{\text{DropTop3}} \ge 0.85 \land (\text{Top3Share} \ge 50\% \lor \text{LocalsOnly AUC} < 0.80)$ | Adversarial AUC remains high, but drift is heavily concentrated within the 72 `Aggregate_feature_*` block rather than the 93 local transaction metrics. |
 | `(c) NOT CONFIRMED` | **Mechanical Leak / Trivial Single-Feature Concentration** | $\text{AUC}_{\text{DropTop3}} < 0.80 \lor N_{\text{TimeProxies}} \ge 5 \lor \text{Top3Share} \ge 70\%$ | Separability collapses upon removing 1–3 top features; the $\text{AUC}=1.0000$ result is an artifact of cumulative time leakage. |
 
@@ -198,6 +198,8 @@ To test whether separability collapses when the dominant trending features are e
 ### 6.5. Per-Step Granular Adversarial AUC vs. Train (1–34)
 
 > **Correction (monitoring fix pass).** An earlier version of this table listed a near-constant "illicit prevalence" of about 2.4–2.6% for every step 43–49 (and 8.3–10.8% for 35–42). Those values do not match the labelled data: they look like the class mix of the balanced subsample used to fit the adversarial classifier, not the per-step prevalence. The column below is recomputed from `results/temporal_inductive/per_step_label_counts.csv` (labelled transactions only). The real illicit counts in steps 43–49 are **24, 24, 5, 2, 22, 36, 56**. The window aggregate (169 / 6,687 = 2.53%) is correct, but it hides a wide per-step spread (0.28% at step 46 to 11.76% at step 49), so statements that read the drop as a uniform ~2.5% per step do not hold. The adversarial AUC column is unchanged.
+
+> **Note on the aggregate "triad" features (added after the monitoring fix pass).** `Aggregate_feature_10`, `Aggregate_feature_43` and `Aggregate_feature_8`, which dominate the adversarial classifier above, were later shown to be near-deterministic time ramps: their per-step medians have Spearman rho = 1.0000 against the time step over steps 1–49 and are almost exactly linear in it (`reports/monitoring_backtest_report.md`, section on secular trending features). Their adversarial dominance therefore reflects the passage of time, not a fraud-relevant drift mechanism. Separability remains high without them (see the leave-one-out table), so the conclusion that the collapse is a distributed shift stands, but these three features should not be read as evidence about how illicit behaviour changed.
 
 | Time Step $t$ | Evaluation Subgroup | Labeled $N$ | Illicit $n$ | Adversarial AUC (Mean $\pm$ Std) | Illicit Prevalence |
 | :--- | :--- | :--- | :--- | :--- | :--- |

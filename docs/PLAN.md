@@ -1,275 +1,50 @@
 # Plan
 
-Each phase is annotated with its **execution environment** and, where ML is involved, the
-notebook that implements it. All ML execution — EDA, feature engineering, training,
-evaluation, explainability — runs in notebooks on **Kaggle / Google Colab**; the laptop
-handles engineering, documentation, and MLOps only. See `ARCHITECTURE.md`.
+Checkbox tracker. Every phase is complete except MLflow/DVC and the engineering items listed under
+"Open". Heavy ML ran in notebooks on Kaggle / Google Colab; the laptop handled engineering,
+documentation and serving. See `ARCHITECTURE.md`.
 
-## Notebook Map
+## Notebook map
 
 | Notebook | Phase |
 | :--- | :--- |
-| `notebooks/01_eda.ipynb` | Phase 1 — EDA |
-| `notebooks/02_xgboost.ipynb` | Phase 2 — Classical Baseline (XGBoost) |
-| `notebooks/03_graphsage.ipynb` | Phase 3 — Homogeneous Graph Baseline (GraphSAGE) |
-| `notebooks/04_heterogeneous_gnn.ipynb` | Phase 4 — Heterogeneous GNN (RGCN / HGT) |
-| `notebooks/05_temporal_inductive_evaluation.ipynb` | Phase 5 — Temporal & Inductive Evaluation |
-| `notebooks/06_explainability.ipynb` | Phase 6 — Explainability |
-| `notebooks/07_hgt.ipynb` | Phase 7 — Heterogeneous Graph Transformer (HGT) |
-| `notebooks/07_final_evaluation.ipynb` | Phase 9 — Final Evaluation |
+| `notebooks/01_eda.ipynb` | 1: EDA |
+| `notebooks/02_xgboost.ipynb`, `02_xgboost_v2.ipynb` | 2, 2b: XGBoost baseline and drift study |
+| `notebooks/03_graphsage.ipynb` | 3, 3b: GraphSAGE |
+| `notebooks/04_heterogeneous_gnn.ipynb` | 4: HeteroRGCN |
+| `notebooks/05_temporal_inductive_evaluation.ipynb` | 5: temporal and inductive evaluation |
+| `notebooks/06_explainability.ipynb` | 6: explainability |
+| `notebooks/07_hgt.ipynb` | 7: HGT |
+| `notebooks/08_ood_diagnosis.ipynb`, `08b_ood_permutation_check.ipynb` | 7b: OOD diagnosis |
+| `notebooks/09_walkforward_retraining.ipynb` | 9a: walk-forward retraining |
 
-One notebook per phase; do not create a notebook per small step.
+## Done
 
-## Phase 1 — Data & Foundation
+- [x] **Phase 1, data and EDA.** Dataset verified (0 structural failures); EDA run on Colab.
+- [x] **Phase 2, XGBoost.** Baseline and optimized model; frozen at PR-AUC 0.8013 (steps 35-49).
+- [x] **Phase 2b, XGBoost drift study.** v2 reference 0.8070 (35-49), 0.0483 (43-49).
+- [x] **Phase 3, GraphSAGE** (0.6209) and **3b** cross-step variant (0.6216).
+- [x] **Phase 4, HeteroRGCN** over all four edge types (0.4682).
+- [x] **Phase 5, temporal and inductive evaluation.**
+- [x] **Phase 6, explainability.** SHAP, Captum/GNNExplainer, relation ablation.
+- [x] **Phase 7, HGT** (0.4861).
+- [x] **Phase 7b, OOD diagnosis.** Adversarial AUC 1.0000, leak audit, permutation check.
+- [x] **Phase 8a, lag-safe monitoring.** Backtest, signal evaluation, retraining trigger.
+- [x] **Phase 8b, FastAPI service and Docker.** Frozen XGBoost at tau* = 0.435; 49 pytest tests.
+- [x] **Phase 8c, CI.** Tests plus scoped lint, model-consistency gates, Docker build.
+- [x] **Phase 8d, deployment.** API on Render (`render.yaml`), dashboard on Vercel.
+- [x] **Dashboard.** React + Vite + TypeScript, reading the API and exported artifacts.
+- [x] **Phase 9a, walk-forward retraining** (`WALKFORWARD.md`). Verdict `PARTIAL`.
+- [x] **API hardening (T12 subset).** CORS allow-list from `ALLOWED_ORIGINS`, xgboost pinned to
+  3.4.1, slim Docker image, `model_version` on `/health`.
 
-*Environment: Laptop for repo/environment setup; notebook `01_eda.ipynb` on Kaggle/Colab for EDA.*
+## Open
 
-* [ ] Create project structure
-* [ ] Configure Python environment (in progress — `requirements.txt` created, user-managed install)
-* [ ] Install and pin dependencies
-* [x] Download and verify Elliptic++ dataset
-* [x] Inspect dataset structure and metadata
-* [x] Validate transaction and actor/wallet data
-* [x] Identify missing values, duplicates, invalid relationships, and label distribution
-* [x] Analyze temporal structure (notebook, 2026-09-25; see `docs/EDA.md`)
-* [x] Analyze class imbalance (notebook, 2026-09-25; see `docs/EDA.md`)
-* [x] Perform graph-level EDA (notebook, 2026-09-25; see `docs/EDA.md`)
-* [x] Author the Phase 1 EDA notebook (`notebooks/01_eda.ipynb`)
-* [x] Execute `notebooks/01_eda.ipynb` on Colab and record the results in `docs/EDA.md`
-      (run 2026-09-25, artifacts in `eda/`)
-* [ ] Configure DVC
-* [ ] Establish reproducibility and configuration system
+- [ ] **Phase 9, MLflow and DVC.** Experiment tracking and data/pipeline versioning.
+- [ ] **T9.** Basis for `confidence_context` beyond a step lookup; `input_ood_score`.
+- [ ] **T10.** Raw-transaction-ID feature pipeline.
+- [ ] **T11.** Per-prediction `top_contributions` from SHAP `pred_contribs`.
+- [ ] **Rigor extras.** Bootstrap CIs for the model table, GNN seed loops, fair GNN tuning, Phase 2b
+  focal-loss re-run.
 
-## Phase 2 — Classical Baselines (XGBoost)
-
-*Environment: Kaggle/Colab notebook `02_xgboost.ipynb`; laptop for MLflow configuration.*
-
-*Status: COMPLETE (executed 2026-09-25 on Colab in two passes). The first pass is the recorded 500-tree
-baseline; the second lifts the budget to 1500 trees (582 kept, so the cap no longer binds) and adds a
-controlled 20-trial randomised search, a `has_addresses` ablation and one label-free redundancy
-ablation. `notebooks/02_xgboost.ipynb` covers the leakage audit, the prevalence baseline, Logistic
-Regression and XGBoost on the 165 non-domain transaction features, evaluated fit 1–24 / validation
-25–34 / refit 1–34 / test 35–49.*
-
-Measured on the test period 35–49 (16,670 labeled, 1,083 illicit): prevalence baseline PR-AUC
-0.0650, Logistic Regression 0.2917, XGBoost baseline 0.8007 (ROC-AUC 0.9317), optimised XGBoost
-0.8013 (ROC-AUC 0.9281). Retuning bought +0.0006 PR-AUC while ROC-AUC and F1 fell: the tree budget
-was not the constraint and the tabular features set the performance ceiling. Sub-window PR-AUC is
-0.9215 on 35–42 but 0.0427 on 43–49, where prevalence drops to 2.53%. `has_addresses` was dropped
-after scoring +0.000933 against a pre-registered +0.005 margin. Record: `docs/XGBOOST.md`.
-
-* [x] Build the Phase 2 dataset: 165 non-domain transaction features (`has_addresses` tested and
-      dropped by the pre-registered ablation)
-* [x] Run the feature leakage audit (`xgboost/leakage_audit.csv`, `xgboost/checks.csv`)
-* [x] Train the prevalence baseline, Logistic Regression and XGBoost baseline (remote)
-* [x] Establish fraud-detection evaluation metrics (PR-AUC primary; ROC-AUC, P, R, F1, confusion)
-* [x] Implement the temporal evaluation protocol and sub-window reporting
-* [x] Revise the notebook for the binding tree cap (1500 trees, patience 100), randomised
-      search, `has_addresses` ablation and redundancy ablation
-* [x] Re-execute the revised notebook on Colab/Kaggle (2026-09-25) and record the optimised result
-      alongside the 0.8007 baseline rather than replacing it
-* [ ] Configure MLflow experiment tracking
-
-## Phase 2b — XGBoost Drift Investigation
-
-*Environment: Kaggle/Colab notebook `02_xgboost_v2.ipynb` (generated by `scripts/generate_notebook_02_v2.py`).*
-
-*Status: COMPLETE (executed on Colab 2026-09-29; artifacts in `results/xgboost_v2/`). A diagnostic
-pass on top of the frozen Phase 2 model — the protocol is unchanged (fit 1–24 / validation 25–34 /
-refit 1–34 / test 35–49) and no feature was added or removed. Model selection moves to a late,
-low-prevalence slice `validation_late` 33–34. Ten configurations are reported, each with PR-AUC /
-ROC-AUC / F1 on 35–49, 35–42 and 43–49 separately. The code-matched control reproduces the recorded
-Phase 2 numbers (validation 25–34 PR-AUC 0.987135, 582 trees, threshold 0.435). Findings:
-late-slice selection is methodologically right but immaterial (+0.0018 on 43–49); `scale_pos_weight`
-is flat; recency weighting is the only lever (43–49 PR-AUC 0.0483, +0.0056 over Phase 2, with 35–42
-and 35–49 improving too); and the drift audit resolves to **covariate drift** — adversarial
-validation AUC 1.0000, median top-15 KS 0.5336 (13 of 15 `Aggregate_feature_*`), median within-class
-KS 0.6870 — against an in-window 5-fold CV PR-AUC of 0.9199 on 43–49, i.e. the signal is present
-and the failure is in transfer. 69 of 71 checks pass; the two failures are the focal-loss row (a
-notebook reporting bug, now fixed, awaiting a re-run) and the self-referential summary row. Record:
-`docs/XGBOOST_V2.md`.*
-
-* [x] Add a low-prevalence late validation slice and report both validation slices separately
-* [x] Sweep `scale_pos_weight` and re-optimise the threshold against the late slice
-* [ ] Implement focal-loss-style reweighting and re-run (code fixed; Colab re-run pending)
-* [x] Run the per-feature drift audit (KS / PSI, train 1–34 vs test 43–49) and report the top 15
-* [x] Decide covariate vs concept drift from adversarial validation, within-class KS and an in-window probe
-* [x] Try linear and exponential recency weighting of the training window
-* [x] Keep the 165-feature set unchanged and log provenance for every feature
-* [x] Export artifacts to `results/xgboost_v2/` without touching the frozen `xgboost/` exports
-
-## Phase 3 — Homogeneous Graph Baseline (GraphSAGE)
-
-*Environment: Kaggle/Colab notebook `03_graphsage.ipynb` (graph construction, training, ablation).*
-
-*Status: COMPLETE (executed 2026-09-25 on Colab with CUDA GPU; artifacts in `GraphSage/`). Evaluates
-homogeneous transaction graph (`txs_edgelist.csv`) with 165 features under fit 1–24 / validation 25–34 /
-train 1–34 / test 35–49. GraphSAGE reaches **PR-AUC 0.6209 / ROC-AUC 0.9044 / F1 0.5945** vs 2-layer MLP
-**0.4768 / 0.8912 / 0.5759** (+0.1442 lift over neural baseline) and frozen XGBoost **0.8013 / 0.9281 / 0.7818**.
-Intra-step edge confinement empirically verified (100% intra-step, 0 cross-step), explaining why homogeneous
-GNNs cannot bridge temporal steps without wallet nodes. Full record: `docs/GRAPHSAGE.md`.*
-
-* [x] Author `notebooks/03_graphsage.ipynb` — standalone Colab/Kaggle notebook for GraphSAGE & MLP
-* [x] Author `docs/GRAPHSAGE.md` — design, structural verification, ablation, and artifact specification
-* [x] Empirically verify intra-step edge confinement (234,355 intra-step, 0 cross-step)
-* [x] Formulate architectural twin MLP baseline for controlled graph ablation
-* [x] Implement leakage-free feature scaling (`StandardScaler` on fit/train only) and historical `pos_weight`
-* [x] Implement validation PR-AUC early stopping (steps 25–34) and F1-maximizing operating threshold
-* [x] Implement connected (`degree >= 1`, 100%) vs isolated (`degree == 0`, 0%) test decomposition
-* [x] Implement automated sanity assertion suite (`checks.csv`) and artifact export
-* [x] Execute `notebooks/03_graphsage.ipynb` on Google Colab (GPU runtime)
-* [x] Export artifacts to `GraphSage/` and review results against frozen XGBoost baseline (0.8013)
-* [x] Populate experimental results in `docs/GRAPHSAGE.md`
-
-## Phase 3 v2 — GraphSAGE Cross-Step & Lag Feature Investigation
-
-*Environment: Kaggle/Colab notebook `03_graphsage.ipynb` (generated by `scripts/generate_notebook_03_v2.py`).*
-
-*Status: COMPLETE (executed on Colab 2026-09-30 with CUDA GPU; artifacts in `results/graphsage_v2/`).
-Evaluates whether giving homogeneous GraphSAGE cross-temporal reach — either via 12 temporal address-history
-lag features (O2) or 95,215 projected cross-step edges via shared addresses (O3), depth-3 control (O4),
-or combined (O5) — closes the gap to XGBoost (0.8013). Results on test 35–49: O1 Baseline 0.6216 (reproduced),
-O2 Lag Features 0.5238, O3 Projected Graph 0.5959, O4 Depth-3 Control 0.6001 (0.7596 on 35–42), O5 Combined 0.5085.
-Findings confirm that unweighted mean-aggregation across projected edges dilutes local signal, and lag features
-suffer from 74.6% zero-sparsity and covariate shift, establishing the necessity of Phase 7 (HGT with learned
-relational attention). 83/83 checks passing. Full record: `docs/GRAPHSAGE_V2.md`.*
-
-* [x] Construct projected cross-step edges ($W=5$, strictly past-to-future, 95,215 edges, 28.89% cross-step fraction)
-* [x] Extract 12 temporal address-history lag features ($t_{\text{snapshot}} < t_{\text{tx}}$ leakage-free)
-* [x] Train and evaluate all 5 options under the canonical temporal protocol (fit 1–24 / val 25–34 / test 35–49)
-* [x] Execute on Google Colab and export artifacts to `results/graphsage_v2/`
-* [x] Author comprehensive documentation in `docs/GRAPHSAGE_V2.md`
-
-## Phase 4 — Heterogeneous Graph Deep Learning (RGCN)
-
-*Environment: Kaggle/Colab notebook `04_heterogeneous_gnn.ipynb` (graph construction and training).*
-
-*Status: COMPLETE (executed 2026-09-25 on Colab with CUDA GPU; artifacts in `results/heterogeneous_gnn/`).
-Evaluates 4-relation heterogeneous graph (203,769 transactions, 822,942 wallets, 4.42M edges) under fit 1–24 /
-validation 25–34 / train 1–34 / test 35–49. HeteroRGCN reaches **PR-AUC 0.4682 / ROC-AUC 0.8946 / F1 0.5295** vs
-homogeneous GraphSAGE **0.6209 / 0.9044 / 0.5945** and frozen XGBoost **0.8013 / 0.9281 / 0.7818**.
-Analysis reveals that unweighted relational mean aggregation over 2.87M dense `AddrAddr` edges causes message
-dilution and over-smoothing, while persistent wallet connectivity provides modest stability in the 43–49 drift window
-(RGCN PR-AUC 0.0550 vs GraphSAGE 0.0504 vs XGBoost 0.0427). 46/46 automated checks passing. Full record: `docs/HETEROGENEOUS_GNN.md`.*
-
-* [x] Author `notebooks/04_heterogeneous_gnn.ipynb` — standalone Colab/Kaggle notebook for Heterogeneous RGCN
-* [x] Author `docs/HETEROGENEOUS_GNN.md` — methodology, architectural specification, leakage controls, and benchmark progression
-* [x] Construct heterogeneous transaction + wallet graph (`AddrTx`, `TxAddr`, `AddrAddr`, `txs_edgelist`)
-* [x] Formulate bipartite cross-temporal flow diagnostics proving transaction connection across steps via wallets
-* [x] Implement leakage-safe historical address snapshot aggregation (zero future lookahead)
-* [x] Implement 2-layer RGCN architecture (hidden dim 128, dropout 0.3, relation-specific transformations)
-* [x] Execute `notebooks/04_heterogeneous_gnn.ipynb` on Google Colab / Kaggle (CUDA GPU)
-* [x] Export artifacts to `results/heterogeneous_gnn/` and evaluate benchmark progression against XGBoost (0.8013) and GraphSAGE (0.6209)
-* [x] Evaluate multi-relational ablations and temporal sub-window degradation (35–42 vs 43–49)
-* [x] Populate experimental results in `docs/HETEROGENEOUS_GNN.md`
-
-## Phase 5 — Temporal & Inductive Evaluation
-
-*Environment: Kaggle/Colab notebook `05_temporal_inductive_evaluation.ipynb`.*
-
-*Status: COMPLETE.* 
-
-* [x] Author the Phase 5 notebook and its methodology document
-* [x] Evaluate the frozen XGBoost / GraphSAGE / RGCN models per step for 35-49 (`per_step_metrics.csv`)
-* [x] Measure label-free graph, address, and feature drift per step (`drift_metrics.csv`)
-* [x] Compare static (1-34) vs expanding (1..t-1) RGCN retraining (`static_vs_expanding.csv`)
-* [x] Test one pre-registered rolling window, W=20 (`rolling_window.csv`)
-* [x] Break RGCN performance down by seen/unseen address context (`inductive_metrics.csv`)
-* [x] Recompute historical `T->A->T` availability under the prediction-time rule (`historical_path_metrics.csv`)
-* [x] Compare frozen vs adaptive thresholds, keeping PR-AUC (threshold-free) primary (`threshold_analysis.csv`)
-* [x] Execute on Colab/Kaggle and populate the results sections from the artifacts
-
-## Phase 6 — Explainability
-
-*Environment: Kaggle/Colab notebook `06_explainability.ipynb` (SHAP, Captum, Relation Ablation).*
-
-*Status: COMPLETE (executed 2026-09-30 on Colab; artifacts in `results/explainability/`, record in `docs/EXPLAINABILITY.md`).*
-
-* [x] Write Phase 6 explainability notebook generator
-* [x] Execute Phase 6 explainability notebook generator
-* [x] Create explainability artifacts directory scaffold
-* [x] Author docs/EXPLAINABILITY.md scaffold with strict methodology
-* [x] Execute `notebooks/06_explainability.ipynb` on Colab/Kaggle
-* [x] Transfer exported artifacts to `results/explainability/`
-* [x] Populate `docs/EXPLAINABILITY.md` with results
-
-## Phase 7 — Heterogeneous Graph Transformer (HGT)
-
-*Environment: Kaggle/Colab notebook `07_hgt.ipynb`.*
-
-*Status: COMPLETE (executed 2026-09-30 on Colab; artifacts in `results/hgt/`, record in `docs/HGT.md`).*
-
-* [x] Construct heterogeneous transaction + wallet graph with 4 relations (`tx_to_tx`, `addr_to_tx`, `tx_to_addr`, `addr_to_addr`)
-* [x] Implement full HGT architecture (learned relational and neighborhood attention)
-* [x] Implement strictly comparable experimental setup as Phase 4/5 (same splits, batch sizes, neighbor sampling limit, baseline checks)
-* [x] Analyze temporal performance degradation (35-42 vs 43-49) vs RGCN
-* [x] Evaluate inductive context subgroups (seen, unseen, no-linkage)
-* [x] Analyze historical `T->A->T` paths
-* [x] Analyze and quantify attention weights per relation and regime
-* [x] Perform relation ablation comparison (HGT vs RGCN sensitivity)
-* [x] Enforce computational discipline (neighbor sampling, chunking, fixed parameters without extensive search)
-* [x] Execute `notebooks/07_hgt.ipynb` on Google Colab (CUDA GPU)
-* [x] Export artifacts to `results/hgt/` and document methodology and findings in `docs/HGT.md`
-
-## Phase 7b — Out-of-Distribution (OOD) Diagnosis & Leak-Feature Audit
-
-*Environment: Kaggle/Colab notebooks `08_ood_diagnosis.ipynb` & `08b_ood_permutation_check.ipynb` (generated by `scripts/generate_notebook_08.py` & `scripts/generate_notebook_08b.py`).*
-
-*Status: COMPLETE (executed 2026-09-30 on Google Colab; artifacts in `results/ood_diagnosis/` and `results/ood_diagnosis/permutation_check/`, record in `docs/OOD_DIAGNOSIS.md`).
-The 6-step diagnostic protocol and follow-up permutation audit decouple whether the adversarial validation $\text{AUC} = 1.0000$ (steps 1–34 vs 43–49) stems from
-distributed behavioral regime shift or trivial mechanical timestamp proxies. Results confirm 0 mechanical time proxies in the Top 20,
-persistent separability under feature ablation (Drop Top 20: AUC 0.9904; Locals Only: AUC 0.9885), disjoint fraud vs drift attributions (only 4/20 overlap),
-and genuine concentration in macro aggregate drivers (Top-3 Permutation Share 99.88%; Focal Triad grouped drop $\Delta \text{AUC} = 0.3055$).
-The audit establishes two decoupled drift mechanisms: localized macro aggregate secular drift and diffuse micro local behavioral drift.*
-
-* [x] Define a 6-step diagnostic protocol to decouple dataset compilation artifacts from true covariate drift.
-* [x] Author the OOD diagnosis notebook (`scripts/generate_notebook_08.py` -> `notebooks/08_ood_diagnosis.ipynb`) and document methodology in `docs/OOD_DIAGNOSIS.md`.
-* [x] Execute `notebooks/08_ood_diagnosis.ipynb` on Google Colab/Kaggle and export artifacts to `results/ood_diagnosis/`.
-* [x] Execute follow-up permutation audit (`scripts/generate_notebook_08b.py` -> `notebooks/08b_ood_permutation_check.ipynb`) and export artifacts to `results/ood_diagnosis/permutation_check/`.
-* [x] Record the definitive scientific verdict.
-
-## Phase 8 — MLOps & Monitoring
-
-*Environment: Laptop.*
-
-* [ ] Track experiments with MLflow
-* [ ] Version datasets and pipelines with DVC
-* [ ] Track model artifacts
-* [ ] Define model-quality monitoring
-* [ ] Define graph-structural drift metrics
-* [ ] Monitor temporal performance degradation
-* [ ] Define retraining thresholds and trigger logic
-
-## Phase 9 — ML System & Deployment
-
-*Environment: Laptop.*
-
-* [ ] Design production inference architecture
-* [ ] Implement model loading and inference service
-* [ ] Build FastAPI endpoints
-* [ ] Add request validation, logging, and error handling
-* [ ] Dockerize inference service
-* [ ] Create CI/CD pipeline with GitHub Actions
-* [ ] Deploy inference service
-
-## Phase 10 — Monitoring & Dashboard
-
-*Environment: Laptop.*
-
-* [ ] Build model monitoring dashboard
-* [ ] Display fraud predictions and model metrics
-* [ ] Display temporal performance and graph/model drift
-* [ ] Display retraining status
-* [ ] Add representative explainability visualizations
-
-## Phase 11 — Finalization
-
-*Environment: Kaggle/Colab notebook `08_final_evaluation.ipynb` for final runs; laptop for documentation and packaging.*
-
-* [ ] Run final reproducible experiments
-* [ ] Freeze final model/version
-* [ ] Record final metrics
-* [ ] Document architecture, experiments, ablations, and limitations
-* [ ] Write numbers-first README
-* [ ] Prepare project demonstration
-* [ ] Final end-to-end validation
+Detail and priorities: `IMPROVEMENT_PLAN.md`.

@@ -7,14 +7,21 @@ the end.
 
 **BitcoinGraphGuard** is a temporal heterogeneous graph-based Bitcoin fraud detection system
 built on the real **Elliptic++** dataset. It detects illicit activity at the **transaction**
-and **wallet/address** level using classical ML, graph neural networks, and production-grade
-MLOps.
+and **wallet/address** level using classical ML, graph neural networks, drift monitoring,
+and a deployed inference service.
 
-**Status:** Dataset verified, **Phase 1 EDA complete**, and the **Phase 2 baseline executed** —
-both `notebooks/01_eda.ipynb` and `notebooks/02_xgboost.ipynb` were run end to end on Google Colab
-on 2026-09-25, with results in `EDA.md` (artifacts in `eda/`) and `XGBOOST.md` (artifacts in
-`xgboost/`). XGBoost reaches PR-AUC 0.8007 / ROC-AUC 0.9317 on test 35–49, degrading to PR-AUC
-0.0423 on the recent 43–49 window. Phase 2 awaits review sign-off; no graph model has been trained.
+**Status:** The modelling, drift diagnosis, monitoring, walk-forward retraining, serving API,
+Docker image, CI and deployment are complete. The open items are MLflow/DVC and a few API
+improvements (see `PROGRESS.md`). Live demo: https://bitcoin-graph-delta.vercel.app
+
+**Three findings** (steps 35-49 pooled unless stated; sources in `results/` and `reports/`):
+
+1. XGBoost beat every graph model: PR-AUC 0.8013 against 0.6209 for the best GNN (GraphSAGE).
+2. All four models collapse after step 43: XGBoost goes from 0.9215 on steps 35-42 to 0.0427 on
+   43-49.
+3. Retraining recovers only with fast labels: expanding-window retraining reaches 0.6949 PR-AUC on
+   steps 43-49 at a one-step label delay, 0.3878 at two, 0.1377 at three and 0.1050 at five
+   (frozen model: 0.0406 at one).
 
 ## The Problem
 
@@ -29,7 +36,7 @@ Detecting fraud on Bitcoin is hard because:
 
 ## Dataset at a Glance
 
-Real Elliptic++ data across **49 time steps** (roughly two-week windows).
+Real Elliptic++ data across **49 time steps** (about two weeks each, per Weber et al., 2019).
 
 | Item | Count |
 | :--- | :--- |
@@ -59,15 +66,17 @@ Model transactions and wallets as one heterogeneous temporal graph, then combine
 classical ML · graph ML · deep learning · temporal evaluation · inductive evaluation ·
 explainability · MLOps.
 
-## Models (planned progression)
+## Models
 
-1. **XGBoost** — classical baseline on engineered graph features.
-2. **GraphSAGE** — homogeneous GNN baseline.
-3. **RGCN** — heterogeneous GNN that respects the four edge types.
-4. **HGT** — only if RGCN results justify it.
+| Model | Test PR-AUC (35-49) | Drift-window PR-AUC (43-49) |
+| :--- | ---: | ---: |
+| XGBoost (deployed) | 0.8013 | 0.0427 |
+| GraphSAGE | 0.6209 | 0.0505 |
+| HGT | 0.4861 | 0.0386 |
+| HeteroRGCN | 0.4682 | 0.0550 |
 
-Each model must beat the previous one *under the same evaluation protocol* before any
-improvement is claimed.
+All four were trained and evaluated under the same temporal protocol. The graph models were tuned
+less deeply than XGBoost, so the gap is a result for this protocol, not a general claim.
 
 ## Evaluation
 
@@ -78,9 +87,8 @@ improvement is claimed.
 
 ## Explainability
 
-Investigators need to know *why* a wallet was flagged. GNNExplainer (or equivalent)
-surfaces the influential nodes, edges, and subgraphs, and is applied to real fraud cases,
-false positives, and false negatives.
+Investigators need to know *why* a wallet was flagged. SHAP explains the XGBoost model
+and Captum/GNNExplainer plus relation ablation explain the graph models (`EXPLAINABILITY.md`).
 
 ## Compute Strategy
 
@@ -97,17 +105,14 @@ Two environments. This is a hard rule.
 
 **No ML runs on the laptop** — not training, and not "lightweight" EDA or feature
 engineering. The ML work lives in one notebook per phase (`notebooks/01_eda.ipynb` through
-`notebooks/07_final_evaluation.ipynb`), and notebooks must run standalone on Colab/Kaggle.
+`notebooks/09_walkforward_retraining.ipynb`), and notebooks run standalone on Colab/Kaggle.
 Application/serving logic lives in `src/`, and remote runs export artifacts back.
 
-## MLOps
+## Serving and MLOps
 
-**DVC** (data/pipeline versioning) · **MLflow** (experiments & model metadata) ·
-**model artifacts** (reproducible checkpoints) · **drift monitoring** (model quality +
-graph structure) · **retraining triggers** (threshold-driven, never arbitrary) ·
-**FastAPI** (serving) · **Docker** (packaging) · **CI/CD** (GitHub Actions).
-
-The system is **not production-ready** until deployment (Phase 7) is actually completed.
+Done: **FastAPI** serving the frozen XGBoost model, **Docker** packaging, **GitHub Actions** CI
+(tests, model-consistency gates, Docker build), lag-safe **drift monitoring** and a deployed React
+dashboard. Not started: **MLflow** experiment tracking and **DVC** versioning.
 
 ## Key Rules
 
@@ -125,10 +130,12 @@ The system is **not production-ready** until deployment (Phase 7) is actually co
 | :--- | :--- |
 | `PROJECT_CONTEXT.md` | Read first — full project context for humans and AI agents |
 | `ARCHITECTURE.md` | Technical architecture: data, ML, training, evaluation, serving |
-| `TIMELINE.md` | Nine-phase roadmap with objectives and completion criteria |
+| `TIMELINE.md` | Phase roadmap with objectives, outcomes and status |
 | `DATA_INVENTORY.md` | Verified dataset statistics and data-quality report |
 | `OBJECTIVES.md` | Goal, requirements, definition of done |
 | `PLAN.md` | Checkbox tracker for the roadmap |
-| `PROGRESS.md` | Current status and next actions |
+| `PROGRESS.md` | Current status and open work |
+| `WALKFORWARD.md` | Walk-forward retraining under label delay |
+| `IMPROVEMENT_PLAN.md` | What remains to be done |
 | `../AGENTS.md` / `../CLAUDE.md` | Operating rules for AI agents and contributors |
 | `../README.md` | Entry point and setup instructions |
