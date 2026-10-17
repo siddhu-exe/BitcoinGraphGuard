@@ -103,7 +103,7 @@ app = FastAPI(
 
 # CORS: explicit allow-list from ALLOWED_ORIGINS (comma-separated). The dashboard
 # sends no cookies or auth headers, so credentials stay disabled.
-DEFAULT_ALLOWED_ORIGINS = "http://localhost:5173,https://bitcoingraphguard.vercel.app"
+DEFAULT_ALLOWED_ORIGINS = "http://localhost:5173,https://bitcoin-graph-delta.vercel.app"
 ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ALLOWED_ORIGINS).split(",")

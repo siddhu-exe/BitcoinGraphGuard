@@ -20,4 +20,4 @@ services:
         value: /app/logs/predictions.jsonl
       # Comma-separated CORS allow-list. Set to the real Vercel frontend origin(s).
       - key: ALLOWED_ORIGINS
-        value: "http://localhost:5173,https://bitcoingraphguard.vercel.app"
+        value: "http://localhost:5173,https://bitcoin-graph-delta.vercel.app"
