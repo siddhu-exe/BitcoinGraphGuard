@@ -32,12 +32,12 @@ Files here: `images/` (6 charts, §5) and `scripts/generate_portfolio_images.py`
 | Field | Value |
 |---|---|
 | Name | BitcoinGraphGuard |
-| One-liner | Temporal fraud detection on the real Elliptic++ Bitcoin graph, evaluated train-on-past/test-on-future, with a drift-aware API and monitor. |
+| One-liner | A Bitcoin fraud detector that knows when to stop trusting itself, built on real Elliptic++ data (203,769 transactions, 822,942 wallets, ~4.4M edges, 49 time steps). |
 | Role framing | **Data Scientist / ML Engineer** (trains and compares models, builds serving + monitoring). |
 | GitHub | https://github.com/siddhu-exe/BitcoinGraphGuard |
-| Live demo | Dashboard in `frontend/` (Vercel, `frontend/vercel.json`); API on Render (`render.yaml`, `DEPLOY.md`). **Confirm the live URLs before linking**; none are recorded in the repo. |
+| Live demo | https://bitcoin-graph-delta.vercel.app (React dashboard on Vercel; the API runs on Render via `render.yaml`) |
 | Year | 2026 |
-| Dataset | Elliptic++: 203,769 transactions, 822,942 wallets, 4 directed edge types (~4.33M edges listed in `CLAUDE.md`), 49 time steps |
+| Dataset | Elliptic++: 203,769 transactions, 822,942 wallets, 4 directed edge types (~4.4M edges: 4,417,560 listed rows, `docs/EDA.md`), 49 time steps |
 | Labels | Transactions: 4,545 illicit, 42,019 licit, 157,205 unknown. Class 3 (unknown) is never used as supervision. |
 | Protocol | Fit 1-24, validate 25-34, refit 1-34, test 35-49 (16,670 labeled tx, 1,083 illicit). No random splits. |
 | Primary metric | PR-AUC (illicit prevalence 6.5% in test, 2.53% in steps 43-49) |
@@ -70,6 +70,35 @@ Files here: `images/` (6 charts, §5) and `scripts/generate_portfolio_images.py`
   names and order, and fails if metrics fall back silently (`using_fallback_metrics` is exposed on `/health`).
 - **Compute split by design**: all heavy ML on Colab/Kaggle via generated notebooks; the laptop (5.6 GB RAM)
   only serves, tests and documents. Serving excludes PyTorch/PyG/MLflow.
+
+### What was built
+1. Data and graph pipeline: transactions and wallets joined by four directed edge types, split strictly by time.
+2. Four models (XGBoost, GraphSAGE, HeteroRGCN, HGT) under one leakage-free temporal protocol.
+3. A lag-safe drift monitor (a decision at step t uses only labels available by then).
+4. Walk-forward retraining studied under label delay.
+5. FastAPI service, Docker image and GitHub Actions CI.
+6. Live dashboard: https://bitcoin-graph-delta.vercel.app
+
+### Three findings (plain words, one headline number each)
+1. **XGBoost beat every graph model.** Test PR-AUC 0.80 (0.8013) vs 0.62 (0.6209) for the best graph model, GraphSAGE.
+2. **All four models collapsed after step 43.** XGBoost went from 0.92 PR-AUC on steps 35-42 to 0.04 on 43-49 (0.80 pooled over 35-49). The graph models also end at 0.04-0.06 on 43-49: GraphSAGE 0.0505, HeteroRGCN 0.0550, HGT 0.0386.
+3. **Retraining recovers only if labels arrive fast.** Steps 43-49 PR-AUC with expanding-window retraining: **0.695 at 1-step label delay, 0.388 at 2, 0.138 at 3, 0.105 at 5**; the frozen model scores 0.041 (L=1). Always quote the delays together.
+
+### Monitor (lag-safe, label delay L=1; `reports/monitoring_backtest_report.md`, `results/walkforward/monitor_concordance.csv`)
+- The label-free **score-shift channel fires at step 43**, the first drift step (score PSI 0.529 vs the 0.25 critical level).
+- The label-dependent **performance channel fires at step 44**, because step-43 labels only arrive one step later.
+- **No CRITICAL alarm during steps 35-42.** One WARNING-level feature-shift alert occurs at step 37.
+- Validated on **one** drift event only.
+
+### Triage (`results/walkforward/operating_rules.csv`, `results/walkforward/README.md`)
+Instead of one fixed probability threshold, analysts review the top-K scored transactions per step (K = 20, 50, 100). The best possible recall for a given K is
+`sum over steps of min(K, positives_s) / total positives`. On steps 43-49 (169 illicit): **K=20 caps recall at 0.633** (107/169), K=50 at 0.964 (163/169). With expanding-window retraining at L=1, top-20 reaches recall 0.420 and top-50 0.811; at L=3 it is 0.296 and 0.615. The frozen model gets 0.024 / 0.089 (L=1). Do not use the window rows of `alert_budget.csv` (known error).
+
+### Limitations
+- One drift event (step 43) and 7 drift steps with 169 illicit labels, so the intervals are wide.
+- Real-world label delay is unknown; results are shown for L = 1, 2, 3, 5.
+- The deployed model is XGBoost; the graph models are benchmarked, not served.
+- The API needs the 165 precomputed features and cannot score a raw transaction hash.
 
 ### Key results (use these exact numbers)
 
@@ -111,7 +140,7 @@ transactions move to unseen addresses.
   this is a result for this protocol, not a general claim about graph methods.
 - The step-43 drop is already documented by the original Elliptic work (Weber et al., 2019). The contribution is
   measuring it on every model and diagnosing it as covariate drift rather than a vanished signal.
-- Retraining recovers performance only if labels arrive quickly: +0.65 PR-AUC at a one-step delay, +0.11 at three.
+- Retraining recovers performance only if labels arrive quickly: +0.65 PR-AUC at a one-step delay (0.695 vs 0.041), but only +0.11 at three (0.138 vs 0.027). Never quote one without the other.
 
 ---
 
@@ -241,7 +270,7 @@ cp portfolio/images/*.png ../Portfolio/frontend/public/images/bitcoingraphguard/
 - **Shelf `result` line**: `0.80 PR-AUC · drift diagnosed · lag-safe monitoring`
 - **Three highlight bullets**:
   - Temporal benchmark of XGBoost, GraphSAGE, HeteroRGCN and HGT on 203k transactions and 823k wallets; tuned XGBoost wins at 0.8013 PR-AUC.
-  - Diagnosed the step-43 collapse as covariate drift (adversarial AUC 1.0000) and measured how label delay limits retraining recovery (0.69 → 0.14 PR-AUC from L=1 to L=3).
+  - Diagnosed the step-43 collapse as covariate drift (adversarial AUC 1.0000) and measured how label delay limits retraining recovery (0.695 at L=1, 0.388 at L=2, 0.138 at L=3, 0.105 at L=5).
   - FastAPI service with per-step confidence context, lag-safe drift monitor, CI consistency gates and a React dashboard.
 - **Resume bullet**: Built an end-to-end temporal fraud-detection system on Elliptic++ (203k transactions, 823k wallets): benchmarked four model families under leakage-free temporal splits, diagnosed a regime shift as covariate drift, and shipped a FastAPI service with lag-safe drift monitoring and 49 tests.
 
@@ -259,7 +288,10 @@ cp portfolio/images/*.png ../Portfolio/frontend/public/images/bitcoingraphguard/
 - ❌ Presenting `confidence_context` as a probability of being right; it is a historical regime label per step.
 - ❌ Treating the retraining result as precise: 7 steps and 169 positives give wide intervals (see CIs).
 - ❌ Using the window-level ceilings in `results/walkforward/alert_budget.csv`; its README marks them wrong.
-- ❌ Claiming MLflow/DVC: Phase 9 MLOps is planned only.
+- ❌ Claiming MLflow/DVC: MLOps tooling is planned only.
 - ⚠️ Monitoring thresholds were validated on one dataset and one regime change.
-- ⚠️ Edge total: the four edge-type counts in `CLAUDE.md` sum to ~4.33M while its header says ~4.42M; avoid
-  quoting a total, cite per-type counts if needed.
+- ⚠️ "49 two-week steps": the two-week step length is not stated in any repo artifact; say "49 time steps".
+- ⚠️ Edge total: ~4.4M counts raw listed rows (4,417,560, `docs/EDA.md`). The wallet-to-wallet list has 2,868,964 rows but
+  2,784,344 unique pairs; say "~4.4M edge rows" if challenged.
+- ❌ "Irreducible drift": the in-window 5-fold CV score (0.9199) shows the signal is learnable.
+- ❌ Saying the monitor fires at step 43 through performance: the score-shift channel fires at 43, performance at 44.

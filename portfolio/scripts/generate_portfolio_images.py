@@ -71,7 +71,7 @@ def architecture() -> None:
 
     box(0.4, 4.3, 3.1, 2.4, "Elliptic++ (raw)", ["203,769 transactions", "822,942 wallets",
         "4 edge types, 49 steps", "read-only, gitignored"], STEEL)
-    box(4.2, 4.3, 3.6, 2.4, "Phase notebooks", ["XGBoost, GraphSAGE", "HeteroRGCN, HGT",
+    box(4.2, 4.3, 3.6, 2.4, "Colab notebooks", ["XGBoost, GraphSAGE", "HeteroRGCN, HGT",
         "SHAP / Captum / ablation", "drift diagnosis, walk-forward"], AMBER)
     box(8.5, 4.3, 3.3, 2.4, "Saved artifacts", ["results/ and reports/", "frozen XGBoost model",
         "every quoted metric", "traces to a file here"], MINT)
